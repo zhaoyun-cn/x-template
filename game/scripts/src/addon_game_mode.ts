@@ -9,7 +9,7 @@ import './examples/abilities/warrior_thunder_strike';
 import './examples/modifiers/modifier_axe_giant_strike_debuff';
 import './examples/abilities/warrior_deep_wound';
 import './examples/abilities/axe_giant_strike';
-
+import { ExternalRewardItem } from "../src/dungeon/external_reward_pool";
 import { SimpleDungeon } from "./dungeon/simple_dungeon";
 
 declare global {
@@ -132,6 +132,16 @@ function ListenToDungeonSelection() {
                 0
             );
         }
+    });
+    // 监听奖励选择事件
+     CustomGameEventManager.RegisterListener("reward_selected", (eventId, data) => {
+        const playerId = data.PlayerID as PlayerID;
+        const reward = data.reward as ExternalRewardItem;
+
+        print(`[GameMode] 玩家 ${playerId} 选择了奖励: ${reward.name}`);
+
+        // 保存到装备库
+        EquipmentVaultSystem.SaveToVault(playerId, reward);
     });
 }
 

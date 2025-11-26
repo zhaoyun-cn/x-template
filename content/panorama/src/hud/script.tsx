@@ -1,10 +1,9 @@
 import 'panorama-polyfill-x/lib/console';
 import 'panorama-polyfill-x/lib/timers';
-
-$.  Msg('[HUD] script.tsx 开始加载');
+import { ExternalRewardItem } from "./../../../../game/scripts/src/dungeon/external_reward_pool";
 
 import '../utils/hide-default-hud';
-
+import { RewardSelection } from "./reward_selection";
 import { type FC, useState, useEffect } from 'react';
 import { render } from 'react-panorama-x';
 import { PanoramaQRCode } from '../utils/react-panorama-qrcode';
@@ -17,68 +16,8 @@ import { registerCustomKey } from '../utils/keybinding';
 registerCustomKey('D');
 registerCustomKey('F');
 
-setKeyDownCallback('F', () => {
-    $. Msg(`按下了F键!! `);
-    GameEvents.SendCustomGameEventToServer('c2s_test_event', { key: 'F' });
-});
-interface Reward {
-    name: string;
-    type: string;
-    icon: string;
-    attribute: string;
-    value: number;
-}
 
-export const RewardSelection: FC<{ visible: boolean; onSelect: (reward: Reward) => void }> = ({ visible, onSelect }) => {
-    const [rewards, setRewards] = useState<Reward[]>([]);
 
-    // 监听服务端发送的奖励数据
-    useEffect(() => {
-        if (visible) {
-            const listenerId = GameEvents.Subscribe("show_reward_selection", (event) => {
-                $.Msg(`[RewardSelection] Received rewards: ${JSON.stringify(event.rewards)}`);
-                setRewards(event.rewards || []);
-            });
-
-            return () => {
-                GameEvents.Unsubscribe(listenerId);
-            };
-        }
-    }, [visible]);
-
-    if (!visible) return null;
-
-    return (
-        <Panel style={{
-            width: "700px",
-            height: "300px",
-            backgroundColor: "#000000dd",
-            border: "3px solid #ffd700",
-            flowChildren: "right",
-            margin: "auto"
-        }}>
-            {rewards.map((reward, index) => (
-                <Panel
-                    key={index}
-                    style={{
-                        width: "200px",
-                        height: "250px",
-                        backgroundColor: "#1a1a1a",
-                        margin: "10px",
-                        flowChildren: "down",
-                        horizontalAlign: "center",
-                        verticalAlign: "center"
-                    }}
-                    onactivate={() => onSelect(reward)}
-                >
-                    <Image src={reward.icon} style={{ width: "180px", height: "180px" }} />
-                    <Label text={reward.name} style={{ fontSize: "18px", color: "#ffffff", textAlign: "center" }} />
-                    <Label text={`${reward.attribute}+${reward.value}`} style={{ fontSize: "16px", color: "#00ff00", textAlign: "center" }} />
-                </Panel>
-            ))}
-        </Panel>
-    );
-};
 // 副本菜单组件
 const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, onClose }) => {
     const [selectedDungeon, setSelectedDungeon] = useState<string | null>(null);
@@ -425,56 +364,33 @@ if (selectedDungeon === "A") {
 
 const Root: FC = () => {
     const [menuVisible, setMenuVisible] = useState(false);
-    
-    const url = `https://github.com/XavierCHN/x-template`;
-    const go = React.useCallback(() => {
-        const wait = new WaitAction(0.5);
-        const showTextTooltip = new DispatchEventAction(`DOTAShowTextTooltip`, $(`#QRCode`), `正在打开链接`);
-        const hideTextTooltip = new DispatchEventAction(`DOTAHideTextTooltip`, $(`#QRCode`));
-        const playSound = new FunctionAction(() => PlayUISoundScript('DotaSOS.TestBeep'));
-        const gotoUrl = new DispatchEventAction(`ExternalBrowserGoToURL`, url);
-        RunSequentialActions([showTextTooltip, wait, hideTextTooltip, wait, playSound, gotoUrl]);
-    }, [url]);
+     const [rewardVisible, setRewardVisible] = useState(false);
 
-    const dPressed = useKeyPressed(`D`);
+   const onSelectReward = (reward: ExternalRewardItem) => {
+    $.Msg(`[Root] Selected reward: ${reward.name}`);
+
+    GameEvents.SendCustomGameEventToServer("reward_selected", {
+        PlayerID: Players.GetLocalPlayer(),
+        reward: reward
+    });
+
+    setRewardVisible(false); // 关闭奖励界面
+};
 
     useEffect(() => {
-        $. Msg('[Root] 注册事件监听器');
-        const listenerId = GameEvents.Subscribe('show_dungeon_menu', () => {
-            $. Msg('[Root] 收到 show_dungeon_menu 事件');
-            setMenuVisible(true);
+        const listenerId = GameEvents.Subscribe("show_reward_selection", () => {
+            setRewardVisible(true);
         });
-        
+
         return () => {
             GameEvents.Unsubscribe(listenerId);
         };
     }, []);
 
-    $. Msg(`[Root] 渲染，menuVisible = ${menuVisible}`);
-
     return (
         <>
-            <RageBar />
-            
-            <DungeonMenu visible={menuVisible} onClose={() => {
-                $. Msg('[Root] 关闭菜单');
-                setMenuVisible(false);
-            }} />
-            
-            <PanoramaQRCode
-                style={{ preTransformScale2d: dPressed ? `1. 5` : `1` }}
-                id="QRCode"
-                onactivate={go}
-                value={url}
-                size={128}
-                excavate={8}
-                className={`QRCode`}
-            >
-                <Image
-                    src="file://{images}/logos/dota_logo_bright.psd"
-                    style={{ width: `32px`, height: `32px`, horizontalAlign: `center`, verticalAlign: `center` }}
-                />
-            </PanoramaQRCode>
+            {/* 奖励选择界面 */}
+            <RewardSelection visible={rewardVisible} onSelect={onSelectReward} />
         </>
     );
 };

@@ -10,8 +10,7 @@ import {
 import { ShadowFiendBoss } from "./boss/shadow_fiend_boss";
 import { LootSystem } from "./loot_system";
 import { DungeonDifficulty, DIFFICULTY_NAMES, DIFFICULTY_MULTIPLIERS } from "./reward_config";
-import { EXTERNAL_REWARD_POOL, ExternalRewardItem } from "./external_reward_pool";  // 引入新奖励池
-
+import { EXTERNAL_REWARD_POOL, ExternalRewardItem } from "./external_reward_pool";
 export class SimpleDungeon {
     private monsters: CDOTA_BaseNPC[] = [];
     private currentRoom: number = 0;
@@ -19,6 +18,8 @@ export class SimpleDungeon {
     private bossManager: ShadowFiendBoss | undefined;
     private currentDifficulty: DungeonDifficulty = DungeonDifficulty.NORMAL_1;  // ⭐ 默认普通1星
 
+
+    
     constructor() {
         print("=". repeat(50));
         print("[SimpleDungeon] Constructor called!");
@@ -204,7 +205,7 @@ export class SimpleDungeon {
             }
             
             // ⭐ 应用难度系数
-            heroBoss.SetBaseStrength(Math.floor(400 * multiplier));
+            heroBoss.SetBaseStrength(Math.floor(5000 * multiplier));
             heroBoss.SetBaseAgility(Math.floor(50 * multiplier));
             heroBoss.SetBaseIntellect(Math.floor(50 * multiplier));
             
@@ -327,44 +328,27 @@ export class SimpleDungeon {
         print(`[SimpleDungeon] Boss enhanced!  HP: ${boss.GetMaxHealth()}`);
     }
 
- private OnEntityKilled(event: EntityKilledEvent): void {
-    const killedUnit = EntIndexToHScript(event.entindex_killed);
-    if (!killedUnit) return;
-
-    const index = this.monsters.indexOf(killedUnit as CDOTA_BaseNPC);
-    if (index !== -1) {
-        this.monsters.splice(index, 1);
-        print(`[SimpleDungeon] Monster killed! Remaining: ${this.monsters.length}`);
-
-        if (this.currentRoom === 3 && this.monsters.length === 0) {
-            // Boss击败，触发奖励选择界面
-            this.TriggerRewardSelection();
-        }
-    }
-}
-
-// ⭐ 添加奖励选择触发逻辑
-private TriggerRewardSelection(): void {
+   private TriggerRewardSelection(): void {
     print("[SimpleDungeon] Triggering reward selection!");
 
     const playerId = this.playerId;
     if (!playerId) return;
 
-    const rewards = this.GenerateRewards();
+    const rewards: ExternalRewardItem[] = this.GenerateRewards();
     print(`[SimpleDungeon] Generated rewards: ${rewards.map(r => r.name).join(", ")}`);
 
-    // 发送数据给客户端
+    // 发送奖励数据到客户端
     CustomGameEventManager.Send_ServerToPlayer(
         PlayerResource.GetPlayer(playerId)!,
         "show_reward_selection",
-        { rewards }
+        { rewards } // rewards 必须是 ExternalRewardItem[]
     );
 }
 
-// ⭐ 从 REWARD_POOL 随机生成 3 件装备
-private GenerateRewards(): RewardItem[] {
-    const rewards: RewardItem[] = [];
-    const pool = [...REWARD_POOL]; // 深拷贝池子，避免被修改
+// 方法：从 EXTERNAL_REWARD_POOL 中随机选择 3 件装备
+private GenerateRewards(): ExternalRewardItem[] {
+    const rewards: ExternalRewardItem[] = [];
+    const pool = [...EXTERNAL_REWARD_POOL]; // 深拷贝池子，避免被修改
 
     for (let i = 0; i < 3; i++) {
         if (pool.length === 0) break;
@@ -375,6 +359,23 @@ private GenerateRewards(): RewardItem[] {
     }
 
     return rewards;
+}
+
+// 在 OnEntityKilled 方法中触发奖励逻辑：击败 Boss 后调用 TriggerRewardSelection
+private OnEntityKilled(event: EntityKilledEvent): void {
+    const killedUnit = EntIndexToHScript(event.entindex_killed);
+    if (!killedUnit) return;
+
+    const index = this.monsters.indexOf(killedUnit as CDOTA_BaseNPC);
+    if (index !== -1) {
+        this.monsters.splice(index, 1);
+        print(`[SimpleDungeon] Monster killed! Remaining: ${this.monsters.length}`);
+
+        if (this.currentRoom === 3 && this.monsters.length === 0) {
+            // Boss 击败后触发奖励选择
+            this.TriggerRewardSelection();
+        }
+    }
 }
 
     private OnRoomCleared(): void {
