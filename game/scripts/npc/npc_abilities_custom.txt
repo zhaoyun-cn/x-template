@@ -199,7 +199,7 @@
     "AbilityCastPoint"              "0.3"
     "AbilityCastRange"              "300"
     
-    "MaxLevel"                      "3"
+    "MaxLevel"                      "1"
     "RequiredLevel"                 "6"
     "LevelsBetweenUpgrades"         "6"
     
@@ -219,4 +219,30 @@
     "AbilityBehavior"               "DOTA_ABILITY_BEHAVIOR_PASSIVE"
     "MaxLevel"                      "1"
 }
+  "shadow_explosion"
+    {
+        "BaseClass"                     "ability_lua"
+        "ScriptFile"                    "dungeon/boss/abilities/shadow_explosion"
+        "AbilityTextureName"            "nevermore_shadowraze1"
+        
+        "AbilityBehavior"               "DOTA_ABILITY_BEHAVIOR_NO_TARGET"
+        "AbilityUnitDamageType"         "DAMAGE_TYPE_MAGICAL"
+        "SpellImmunityType"             "SPELL_IMMUNITY_ENEMIES_NO"
+        
+        "AbilityCastAnimation"          "ACT_DOTA_CAST_ABILITY_4"
+        "AbilityCastPoint"              "0"
+        
+        "MaxLevel"                      "3"
+        "AbilityCooldown"               "10"
+        "AbilityManaCost"               "0"
+        
+        "AbilityValues"
+        {
+            "projectile_speed"      "800"
+            "projectile_radius"     "150"
+            "damage"                "200 300 400"
+            "stun_duration"         "1. 5"
+            "warning_duration"      "1.5"
+        }
+    }
 }
