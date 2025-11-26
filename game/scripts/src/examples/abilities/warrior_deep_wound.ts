@@ -24,7 +24,7 @@ export class modifier_warrior_deep_wound extends BaseModifier {
 
     OnCreated(): void {
         if (!IsServer()) return;
-        print("[modifier_warrior_deep_wound] Passive activated");
+       // print("[modifier_warrior_deep_wound] Passive activated");
     }
 
     // 🔧 记录暴击状态
@@ -82,7 +82,7 @@ export class modifier_warrior_deep_wound extends BaseModifier {
         const damage_multiplier = ability.GetSpecialValueFor("damage_multiplier") || 0.6;
         const damage_to_add = attackDamage * base_multiplier * damage_multiplier * duration;
 
-        print(`[modifier_warrior_deep_wound] ✓ Crit detected! Adding ${damage_to_add.toFixed(1)} damage to pool on ${target.GetUnitName()}`);
+      //  print(`[modifier_warrior_deep_wound] ✓ Crit detected! Adding ${damage_to_add.toFixed(1)} damage to pool on ${target.GetUnitName()}`);
 
         // 🔧 检查目标是否已有 Debuff
         const existingDebuff = target.FindModifierByName("modifier_warrior_deep_wound_debuff");
@@ -142,7 +142,7 @@ export class modifier_warrior_deep_wound_debuff extends BaseModifier {
         this.tick_rate = ability.GetSpecialValueFor("tick_rate") || 0.5;
         this.pool_drain_rate = ability.GetSpecialValueFor("pool_drain_rate") || 0.2;
 
-        print(`[modifier_warrior_deep_wound_debuff] Created with damage pool: ${this.damage_pool.toFixed(1)}`);
+       // print(`[modifier_warrior_deep_wound_debuff] Created with damage pool: ${this.damage_pool.toFixed(1)}`);
 
         this.StartIntervalThink(this.tick_rate);
         
@@ -179,7 +179,7 @@ export class modifier_warrior_deep_wound_debuff extends BaseModifier {
         }
 
         if (this.damage_pool <= 1) {
-            print(`[modifier_warrior_deep_wound_debuff] Damage pool depleted`);
+           // print(`[modifier_warrior_deep_wound_debuff] Damage pool depleted`);
             this.Destroy();
             return;
         }
@@ -197,7 +197,7 @@ export class modifier_warrior_deep_wound_debuff extends BaseModifier {
 
         const dps = damage_this_tick / this.tick_rate;
 
-        print(`[modifier_warrior_deep_wound_debuff] Dealt ${damage_this_tick.toFixed(1)} damage (${dps.toFixed(1)} DPS), Pool: ${this.damage_pool.toFixed(1)}`);
+       // print(`[modifier_warrior_deep_wound_debuff] Dealt ${damage_this_tick.toFixed(1)} damage (${dps.toFixed(1)} DPS), Pool: ${this.damage_pool.toFixed(1)}`);
     }
     
     OnDestroy(): void {

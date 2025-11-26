@@ -31,7 +31,7 @@ export class modifier_rage_attack_listener extends BaseModifier {
             RageSystem.OnHeroAttack(parent as CDOTA_BaseNPC_Hero, target);
         } else if (target === parent) {
             // 调试：被攻击时输出日志，但不增加怒气
-            print(`[modifier_rage_attack_listener] ℹ️ ${parent.GetUnitName()} was attacked by ${attacker.GetUnitName()}, no rage gain`);
+          //  print(`[modifier_rage_attack_listener] ℹ️ ${parent.GetUnitName()} was attacked by ${attacker.GetUnitName()}, no rage gain`);
         }
     }
 }

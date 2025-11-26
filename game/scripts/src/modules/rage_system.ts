@@ -7,7 +7,7 @@ export class RageSystem {
     private static rageAbilities = new Map<string, number>();
     
     static Init() {
-        print("[RageSystem] Initializing...");
+      //  print("[RageSystem] Initializing...");
         
         // 注册需要怒气的技能
         this.RegisterRageAbility("axe_giant_strike", 20);
@@ -19,12 +19,12 @@ export class RageSystem {
             }
         }, null);
         
-        print("[RageSystem] Initialized!");
+     //   print("[RageSystem] Initialized!");
     }
     
     static RegisterRageAbility(abilityName: string, rageCost: number) {
         this.rageAbilities.set(abilityName, rageCost);
-        print(`[RageSystem] Registered ability: ${abilityName} (cost: ${rageCost} rage)`);
+       // print(`[RageSystem] Registered ability: ${abilityName} (cost: ${rageCost} rage)`);
     }
     
     static CanCastAbility(hero: CDOTA_BaseNPC_Hero, abilityName: string): boolean {
@@ -46,11 +46,11 @@ export class RageSystem {
         const currentRage = this.GetRage(hero);
         if (currentRage >= rageCost) {
             this.SetRage(hero, currentRage - rageCost);
-            print(`[RageSystem] ${hero.GetUnitName()} consumed ${rageCost} rage for ${abilityName}`);
+          //  print(`[RageSystem] ${hero.GetUnitName()} consumed ${rageCost} rage for ${abilityName}`);
             return true;
         }
         
-        print(`[RageSystem] ${hero.GetUnitName()} cannot cast ${abilityName}: insufficient rage (${currentRage}/${rageCost})`);
+      //  print(`[RageSystem] ${hero.GetUnitName()} cannot cast ${abilityName}: insufficient rage (${currentRage}/${rageCost})`);
         this.ShowInsufficientRageWarning(hero);
         return false;
     }
@@ -69,18 +69,18 @@ export class RageSystem {
                 const ability = hero.FindAbilityByName(abilityName);
                 if (ability) {
                     hero.AddNewModifier(hero, ability, "modifier_rage_ability_checker", {});
-                    print(`[RageSystem] Added checker for ${abilityName}`);
+                  //  print(`[RageSystem] Added checker for ${abilityName}`);
                 }
             });
             
             this.UpdateRageUI(hero);
             
-            print(`[RageSystem] Initialized rage system for ${heroName}`);
+         //   print(`[RageSystem] Initialized rage system for ${heroName}`);
         }
     }
     
     static OnHeroAttack(hero: CDOTA_BaseNPC_Hero, target: CDOTA_BaseNPC) {
-        print(`[RageSystem] OnHeroAttack called for ${hero.GetUnitName()}`);
+       // print(`[RageSystem] OnHeroAttack called for ${hero.GetUnitName()}`);
         this.AddRage(hero, this.RAGE_PER_ATTACK);
     }
     
@@ -97,7 +97,7 @@ export class RageSystem {
         this.heroRageMap.set(heroIndex, clampedAmount);
         this.UpdateRageUI(hero);
         
-        print(`[RageSystem] ${hero.GetUnitName()} rage set to ${clampedAmount}`);
+     //   print(`[RageSystem] ${hero.GetUnitName()} rage set to ${clampedAmount}`);
     }
     
     static GetRage(hero: CDOTA_BaseNPC_Hero): number {
@@ -135,7 +135,7 @@ export class RageSystem {
         
         const currentRage = this.GetRage(hero);
         
-        print(`[RageSystem] Sending UI update: ${currentRage}/${this.MAX_RAGE}`);
+       // print(`[RageSystem] Sending UI update: ${currentRage}/${this.MAX_RAGE}`);
         
         (CustomGameEventManager.Send_ServerToPlayer as any)(
             PlayerResource.GetPlayer(playerID)!,

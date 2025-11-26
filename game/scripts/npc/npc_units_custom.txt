@@ -1,1 +1,12 @@
-#base "custom_units.txt"
+"npc_units_custom"
+{
+    "npc_dota_portal_to_dungeon"
+    {
+        "BaseClass"                 "npc_dota_base"
+        "Model"                     "models/props_gameplay/team_portal/team_portal.vmdl"
+        "ModelScale"                "1.2"
+        "StatusHealth"              "999999"
+        "MovementCapabilities"      "DOTA_UNIT_CAP_MOVE_NONE"
+    }
+}
+//#base "custom_units.txt"
