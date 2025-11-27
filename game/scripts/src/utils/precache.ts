@@ -8,7 +8,7 @@ export default function Precache(context: CScriptPrecacheContext) {
             'particles/units/heroes/hero_brewmaster/brewmaster_thunder_clap.vpcf',
             'particles/units/heroes/hero_zuus/zuus_lightning_bolt.vpcf',
             'soundevents/game_sounds_heroes/game_sounds_brewmaster. vsndevts',
-            'soundevents/game_sounds_heroes/game_sounds_zuus. vsndevts',
+            'soundevents/game_sounds_heroes/game_sounds_zuus.vsndevts',
             
             // === 重伤（先天技能） ===
             'particles/units/heroes/hero_bloodseeker/bloodseeker_rupture.vpcf',
@@ -23,7 +23,7 @@ export default function Precache(context: CScriptPrecacheContext) {
             
             // === 巨人打击（W 技能） ===
             'particles/units/heroes/hero_sven/sven_spell_great_cleave.vpcf',
-            'soundevents/game_sounds_heroes/game_sounds_sven. vsndevts',
+            'soundevents/game_sounds_heroes/game_sounds_sven.vsndevts',
             'particles/units/heroes/hero_elder_titan/elder_titan_echo_stomp_cracks.vpcf',
             'particles/units/heroes/hero_zuus/zuus_arc_lightning.vpcf',
 
@@ -53,17 +53,17 @@ export default function Precache(context: CScriptPrecacheContext) {
             'models/items/nevermore/demon_eater/demon_eater_head.vmdl',
             'models/items/nevermore/demon_eater/demon_eater_arms.vmdl',
             'models/items/nevermore/demon_eater/demon_eater_shoulders.vmdl',
-            'particles/econ/items/shadow_fiend/sf_fire_arcana/sf_fire_arcana_ambient.vpcf',
+            'particles/econ/items/shadow_fiend/sf_fire_arcana/sf_fire_arcana_ambient. vpcf',
             
             'models/props_gameplay/team_portal/team_portal.vmdl',// 传送门模型
            
             // === 影魔Boss - 荒芜之臂套装 (Arms of Desolation) ===
-            'models/items/nevermore/arms_of_desolation/arms_of_desolation. vmdl',
+            'models/items/nevermore/arms_of_desolation/arms_of_desolation.vmdl',
             'particles/econ/items/shadow_fiend/sf_arms_of_desolation/sf_desolation_ambient_flame_column.vpcf',
             
             // === 影魔Boss - 音效 ===
             'soundevents/game_sounds_heroes/game_sounds_nevermore. vsndevts',
-            'soundevents/game_sounds_heroes/game_sounds_phoenix.vsndevts',
+            'soundevents/game_sounds_heroes/game_sounds_phoenix. vsndevts',
             'soundevents/game_sounds_heroes/game_sounds_ursa.vsndevts',
             
             // === 通用特效 ===
@@ -72,6 +72,9 @@ export default function Precache(context: CScriptPrecacheContext) {
         ],
         context
     );
+    
+    // ⭐ 预缓存装备图标
+    precacheEquipmentIcons(context);
     
     // 需要预载入的kv文件，会自动解析KV文件中的所有vpcf资源等等
     precacheEveryResourceInKV(
@@ -101,6 +104,27 @@ export default function Precache(context: CScriptPrecacheContext) {
     );
     
     print(`[Precache] Precache finished.`);
+}
+
+// ⭐ 新增：预缓存装备图标
+function precacheEquipmentIcons(context: CScriptPrecacheContext) {
+    const equipmentIcons = [
+        'file://{images}/custom_game/sword.png',
+        'file://{images}/custom_game/sword_steel.png',
+        'file://{images}/custom_game/armor.png',
+        'file://{images}/custom_game/armor_chain.png',
+        'file://{images}/custom_game/helmet.png',
+        'file://{images}/custom_game/helmet_heavy.png',
+        'file://{images}/custom_game/necklace.png',
+        'file://{images}/custom_game/ring.png',
+    ];
+    
+    equipmentIcons.forEach(icon => {
+        // Panorama 图片使用 'panorama' 类型预缓存
+        PrecacheResource('panorama', icon, context);
+    });
+    
+    print(`[Precache] Precached ${equipmentIcons.length} equipment icons.`);
 }
 
 // 预载入KV文件中的所有资源

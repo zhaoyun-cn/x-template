@@ -13,10 +13,12 @@ import React from 'react';
 import { RageBar } from './rage_bar/rage_bar';
 import { setKeyDownCallback, useKeyPressed } from '../hooks/useKeyboard';
 import { registerCustomKey } from '../utils/keybinding';
+import { EquipmentUI } from './equipment_ui';
 
 registerCustomKey('D');
 registerCustomKey('F');
-
+registerCustomKey('B');  // ⭐ 新增：注册 B 键打开仓库
+registerCustomKey('C');  // ⭐ 新增：注册 C 键打开装备界面
 
 
 // 副本菜单组件
@@ -366,56 +368,78 @@ if (selectedDungeon === "A") {
 
 
 const Root: FC = () => {
-    const [menuVisible, setMenuVisible] = useState(false);            // 副本菜单显示状态
-    const [rewardVisible, setRewardVisible] = useState(false);        // 奖励选择显示状态
-    const [vaultVisible, setVaultVisible] = useState(false);  // ⭐ 新增：装备仓库显示状态
-    // 奖励选择回调
-const onSelectReward = (reward: ExternalRewardItem) => {
-    $.Msg(`[Root] Selected reward: ${reward.name}`);
-    setRewardVisible(false); // 只关闭界面
-};
+    const [menuVisible, setMenuVisible] = useState(false);
+    const [rewardVisible, setRewardVisible] = useState(false);
+    const [vaultVisible, setVaultVisible] = useState(false);
+    const [equipmentVisible, setEquipmentVisible] = useState(false);  // ⭐ 新增
+    
+    const onSelectReward = (reward: ExternalRewardItem) => {
+        $. Msg(`[Root] Selected reward: ${reward.name}`);
+        setRewardVisible(false);
+    };
 
-    // QRCODE相关
     const url = `https://github.com/XavierCHN/x-template`;
     const go = React.useCallback(() => {
         const wait = new WaitAction(0.5);
         const showTextTooltip = new DispatchEventAction(`DOTAShowTextTooltip`, $(`#QRCode`), `正在打开链接`);
         const hideTextTooltip = new DispatchEventAction(`DOTAHideTextTooltip`, $(`#QRCode`));
-        const playSound = new FunctionAction(() => PlayUISoundScript('DotaSOS.TestBeep'));
+        const playSound = new FunctionAction(() => PlayUISoundScript('DotaSOS. TestBeep'));
         const gotoUrl = new DispatchEventAction(`ExternalBrowserGoToURL`, url);
         RunSequentialActions([showTextTooltip, wait, hideTextTooltip, wait, playSound, gotoUrl]);
     }, [url]);
+    
     const dPressed = useKeyPressed(`D`);
+    const bPressed = useKeyPressed(`B`);
+    const cPressed = useKeyPressed(`C`);  // ⭐ 监听 C 键
+
+    // B 键打开仓库
+    useEffect(() => {
+        if (bPressed) {
+            $. Msg('[Root] B 键按下，打开仓库');
+            setVaultVisible(true);
+        }
+    }, [bPressed]);
+
+    // ⭐ C 键打开装备界面
+    useEffect(() => {
+        if (cPressed) {
+            $.Msg('[Root] C 键按下，打开装备界面');
+            setEquipmentVisible(true);
+        }
+    }, [cPressed]);
 
     // 事件监听
     useEffect(() => {
-        $.Msg('[Root] 注册事件监听器');
+        $. Msg('[Root] 注册事件监听器');
         
-        // 副本菜单弹出
         const listenerMenu = GameEvents.Subscribe('show_dungeon_menu', () => {
-            $.Msg('[Root] 收到 show_dungeon_menu 事件');
+            $. Msg('[Root] 收到 show_dungeon_menu 事件');
             setMenuVisible(true);
         });
 
-        // 奖励选择弹出
-        const listenerReward = GameEvents.Subscribe("show_reward_selection", () => {
+        const listenerReward = GameEvents. Subscribe("show_reward_selection", () => {
             $.Msg('[Root] 收到 show_reward_selection 事件');
             setRewardVisible(true);
         });
-              // ⭐ 新增：仓库界面
+        
         const listenerVault = GameEvents.Subscribe('show_vault_ui', () => {
-            $.Msg('[Root] 收到 show_vault_ui 事件');
+            $. Msg('[Root] 收到 show_vault_ui 事件');
             setVaultVisible(true);
+        });
+
+        // ⭐ 监听装备界面事件
+        const listenerEquipment = GameEvents.Subscribe('show_equipment_ui', () => {
+            $.Msg('[Root] 收到 show_equipment_ui 事件');
+            setEquipmentVisible(true);
         });
 
         return () => {
             GameEvents.Unsubscribe(listenerMenu);
             GameEvents.Unsubscribe(listenerReward);
             GameEvents.Unsubscribe(listenerVault);
+            GameEvents.Unsubscribe(listenerEquipment);
         };
     }, []);
-
-    $.Msg(`[Root] 渲染，menuVisible = ${menuVisible}, rewardVisible = ${rewardVisible}`);
 
     return (
         <>
@@ -423,17 +447,154 @@ const onSelectReward = (reward: ExternalRewardItem) => {
 
             {/* 副本菜单弹窗 */}
             <DungeonMenu visible={menuVisible} onClose={() => {
-                $.Msg('[Root] 关闭副本菜单');
+                $. Msg('[Root] 关闭副本菜单');
                 setMenuVisible(false);
             }} />
 
             {/* 奖励选择弹窗 */}
             <RewardSelection visible={rewardVisible} onSelect={onSelectReward} />
-             {/* ⭐ 新增：装备仓库弹窗 */}
-            <VaultUI visible={vaultVisible} onClose={() => setVaultVisible(false)} /> 
+            
+            {/* 装备仓库弹窗 */}
+            <VaultUI visible={vaultVisible} onClose={() => setVaultVisible(false)} />
+            
+            {/* ⭐ 装备界面弹窗 */}
+            <EquipmentUI visible={equipmentVisible} onClose={() => setEquipmentVisible(false)} />
+            
+            {/* 右下角按钮区 */}
+            <Panel style={{
+                width: '140px',
+                height: '280px',
+                horizontalAlign: 'right',
+                verticalAlign: 'bottom',
+                marginRight: '20px',
+                marginBottom: '20px',
+                flowChildren: 'down',
+            }}>
+                {/* ⭐ 装备按钮 */}
+                <Button
+                    onactivate={() => {
+                        $.Msg('[Root] 点击装备按钮');
+                        Game.EmitSound('ui.button_click');
+                        setEquipmentVisible(true);
+                    }}
+                    style={{
+                        width: '120px',
+                        height: '120px',
+                        backgroundColor: '#4a148c',
+                        border: '3px solid #9c27b0',
+                        marginBottom: '20px',
+                    }}
+                    onmouseover={(panel) => {
+                        panel.style.backgroundColor = '#6a1b9a';
+                        panel.style.border = '4px solid #ba68c8';
+                        Game.EmitSound('ui. button_over');
+                    }}
+                    onmouseout={(panel) => {
+                        panel.style.backgroundColor = '#4a148c';
+                        panel. style.border = '3px solid #9c27b0';
+                    }}
+                >
+                    <Panel style={{
+                        width: '100%',
+                        height: '100%',
+                        flowChildren: 'down',
+                    }}>
+                        <Label 
+                            text="⚔️"
+                            style={{
+                                fontSize: '50px',
+                                textAlign: 'center',
+                                horizontalAlign: 'center',
+                                marginTop: '15px',
+                            }}
+                        />
+                        <Label 
+                            text="装备"
+                            style={{
+                                fontSize: '22px',
+                                color: '#ba68c8',
+                                textAlign: 'center',
+                                horizontalAlign: 'center',
+                                fontWeight: 'bold',
+                                marginTop: '5px',
+                            }}
+                        />
+                        <Label 
+                            text="(C)"
+                            style={{
+                                fontSize: '16px',
+                                color: '#cccccc',
+                                textAlign: 'center',
+                                horizontalAlign: 'center',
+                            }}
+                        />
+                    </Panel>
+                </Button>
+
+                {/* 仓库按钮 */}
+                <Button
+                    onactivate={() => {
+                        $.Msg('[Root] 点击仓库按钮');
+                        Game.EmitSound('ui.button_click');
+                        setVaultVisible(true);
+                    }}
+                    style={{
+                        width: '120px',
+                        height: '120px',
+                        backgroundColor: '#8b4513',
+                        border: '3px solid #ffd700',
+                    }}
+                    onmouseover={(panel) => {
+                        panel.style.backgroundColor = '#a0522d';
+                        panel.style.border = '4px solid #ffd700';
+                        Game.EmitSound('ui. button_over');
+                    }}
+                    onmouseout={(panel) => {
+                        panel.style.backgroundColor = '#8b4513';
+                        panel. style.border = '3px solid #ffd700';
+                    }}
+                >
+                    <Panel style={{
+                        width: '100%',
+                        height: '100%',
+                        flowChildren: 'down',
+                    }}>
+                        <Label 
+                            text="🎒"
+                            style={{
+                                fontSize: '50px',
+                                textAlign: 'center',
+                                horizontalAlign: 'center',
+                                marginTop: '15px',
+                            }}
+                        />
+                        <Label 
+                            text="仓库"
+                            style={{
+                                fontSize: '22px',
+                                color: '#ffd700',
+                                textAlign: 'center',
+                                horizontalAlign: 'center',
+                                fontWeight: 'bold',
+                                marginTop: '5px',
+                            }}
+                        />
+                        <Label 
+                            text="(B)"
+                            style={{
+                                fontSize: '16px',
+                                color: '#cccccc',
+                                textAlign: 'center',
+                                horizontalAlign: 'center',
+                            }}
+                        />
+                    </Panel>
+                </Button>
+            </Panel>
+
             {/* QRCODE 功能元素 */}
             <PanoramaQRCode
-                style={{ preTransformScale2d: dPressed ? `1.5` : `1` }}
+                style={{ preTransformScale2d: dPressed ?  `1.5` : `1` }}
                 id="QRCode"
                 onactivate={go}
                 value={url}
