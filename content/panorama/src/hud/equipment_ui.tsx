@@ -2,22 +2,28 @@ import React, { useState, useEffect } from 'react';
 
 // 装备槽位枚举
 enum EquipmentSlot {
-    HELMET = 'helmet',      // 头盔
-    NECKLACE = 'necklace',  // 项链
-    RING = 'ring',          // 戒指
-    TRINKET = 'trinket',    // 饰品
-    WEAPON = 'weapon',      // 武器
-    ARMOR = 'armor',        // 护甲
-    BELT = 'belt',          // 腰带
-    BOOTS = 'boots',        // 鞋子
+    HELMET = 'helmet',
+    NECKLACE = 'necklace',
+    RING = 'ring',
+    TRINKET = 'trinket',
+    WEAPON = 'weapon',
+    ARMOR = 'armor',
+    BELT = 'belt',
+    BOOTS = 'boots',
 }
 
+// 装备属性接口
+interface EquipmentStat {
+    attribute: string;
+    value: number;
+}
+
+// 装备物品接口
 interface EquippedItem {
     name: string;
     type: string;
     icon: string;
-    attribute: string;
-    value: number;
+    stats: EquipmentStat[];
 }
 
 interface EquipmentUIProps {
@@ -40,26 +46,48 @@ export const EquipmentUI: React.FC<EquipmentUIProps> = ({ visible, onClose }) =>
 
     const [equippedItems, setEquippedItems] = useState<Record<string, EquippedItem | null>>(initialSlots);
 
-     // 加载装备数据
+    // 加载装备数据
     useEffect(() => {
-        if (!visible) return;
+        if (! visible) return;
 
-        $.Msg('[EquipmentUI] 请求装备数据');
+        $. Msg('[EquipmentUI] 请求装备数据');
         
-        (GameEvents.SendCustomGameEventToServer as any)('request_equipment_data', {
+        (GameEvents. SendCustomGameEventToServer as any)('request_equipment_data', {
             PlayerID: Players.GetLocalPlayer(),
         });
 
-        const listener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
-            $.Msg('[EquipmentUI] 收到装备数据:', data);
+const listener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
+    $. Msg('[EquipmentUI] 收到装备数据:', data);
 
-            // 确保数据格式安全，即便装备槽数据不完整也能渲染
-            const updatedEquipment: Record<string, EquippedItem | null> = {
-                ...initialSlots,
-                ...data.equipment,
+    // ⭐ 转换装备数据，确保 stats 是数组
+    const processedEquipment: Record<string, EquippedItem | null> = {};
+    
+    for (const slot in data.equipment) {
+        const item = data. equipment[slot];
+        
+        if (item) {
+            // 将 stats 对象转为数组
+            const statsArray = Array.isArray(item.stats) 
+                ?  item.stats 
+                : Object.values(item.stats || {});
+            
+            processedEquipment[slot] = {
+                ...item,
+                stats: statsArray  // ✅ 保证 stats 是数组
             };
-            setEquippedItems(updatedEquipment);
-        });
+        } else {
+            processedEquipment[slot] = null;
+        }
+    }
+    
+    // 合并默认槽位和处理后的装备数据
+    const updatedEquipment: Record<string, EquippedItem | null> = {
+        ...initialSlots,
+        ... processedEquipment,
+    };
+    
+    setEquippedItems(updatedEquipment);
+});
 
         return () => {
             GameEvents.Unsubscribe(listener);
@@ -82,14 +110,17 @@ export const EquipmentUI: React.FC<EquipmentUIProps> = ({ visible, onClose }) =>
 
     // 获取品质颜色
     const getQualityColor = (item: EquippedItem): string => {
-        if (item.value >= 15) return '#ff8000';
-        if (item.value >= 12) return '#a335ee';
-        if (item.value >= 8) return '#0070dd';
-        if (item.value >= 5) return '#1eff00';
-        return '#9d9d9d';
+        // 根据属性总和计算品质
+        const totalValue = item.stats.reduce((sum, stat) => sum + stat. value, 0);
+        
+        if (totalValue >= 50) return '#ff8000';  // 橙色 - 传说
+        if (totalValue >= 35) return '#a335ee';  // 紫色 - 史诗
+        if (totalValue >= 20) return '#0070dd';  // 蓝色 - 稀有
+        if (totalValue >= 10) return '#1eff00';  // 绿色 - 优秀
+        return '#9d9d9d';                        // 灰色 - 普通
     };
 
-    // 渲染装备槽位
+    // 渲染装备槽位（支持多属性）
     const renderSlot = (slotName: string, slotLabel: string) => {
         const item = equippedItems[slotName];
         const hasItem = item !== null;
@@ -99,10 +130,10 @@ export const EquipmentUI: React.FC<EquipmentUIProps> = ({ visible, onClose }) =>
                 key={slotName}
                 style={{
                     width: '200px',
-                    height: '100px',
+                    height: '130px',  // 增加高度以容纳多属性
                     margin: '10px',
                     backgroundColor: hasItem ? '#1a1a1a' : '#0a0a0a',
-                    border: hasItem ? `3px solid ${getQualityColor(item!)}` : '2px solid #3a3a3a',
+                    border: hasItem ? `3px solid ${getQualityColor(item! )}` : '2px solid #3a3a3a',
                     flowChildren: 'right',
                     padding: '10px',
                 }}
@@ -129,11 +160,11 @@ export const EquipmentUI: React.FC<EquipmentUIProps> = ({ visible, onClose }) =>
                     height: '80px',
                     backgroundColor: '#0a0a0a',
                     border: '1px solid #555555',
-                    backgroundImage: hasItem ? `url("${item!.icon}")` : 'none',
+                    backgroundImage: hasItem ? `url("${item! .icon}")` : 'none',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                 }}>
-                    {!hasItem && (
+                    {! hasItem && (
                         <Label 
                             text={getSlotIcon(slotName)}
                             style={{
@@ -150,14 +181,14 @@ export const EquipmentUI: React.FC<EquipmentUIProps> = ({ visible, onClose }) =>
                 {/* 装备信息 */}
                 <Panel style={{
                     width: '100px',
-                    height: '80px',
+                    height: '110px',
                     marginLeft: '10px',
                     flowChildren: 'down',
                 }}>
                     <Label 
-                        text={hasItem ? item!.name : slotLabel}
+                        text={hasItem ? item! .name : slotLabel}
                         style={{
-                            fontSize: hasItem ? '18px' : '16px',
+                            fontSize: hasItem ? '16px' : '16px',
                             color: hasItem ? getQualityColor(item!) : '#666666',
                             fontWeight: hasItem ? 'bold' : 'normal',
                             marginBottom: '5px',
@@ -165,20 +196,25 @@ export const EquipmentUI: React.FC<EquipmentUIProps> = ({ visible, onClose }) =>
                     />
                     {hasItem && (
                         <>
-                            <Label 
-                                text={`+${item!.value} ${item!.attribute}`}
-                                style={{
-                                    fontSize: '16px',
-                                    color: '#00ff00',
-                                    marginBottom: '5px',
-                                }}
-                            />
+                            {/* 显示多个属性 */}
+                            {item!.stats.map((stat, index) => (
+                                <Label 
+                                    key={index}
+                                    text={`+${stat.value} ${stat.attribute}`}
+                                    style={{
+                                        fontSize: '13px',
+                                        color: '#00ff00',
+                                        marginBottom: '2px',
+                                    }}
+                                />
+                            ))}
                             <Label 
                                 text="点击卸下"
                                 style={{
-                                    fontSize: '12px',
+                                    fontSize: '11px',
                                     color: '#888888',
                                     fontStyle: 'italic',
+                                    marginTop: '5px',
                                 }}
                             />
                         </>
@@ -200,15 +236,17 @@ export const EquipmentUI: React.FC<EquipmentUIProps> = ({ visible, onClose }) =>
             belt: '🎗️',
             boots: '🥾',
         };
-        return icons[slot] || '?';
+        return icons[slot] || '? ';
     };
 
-    // 计算总属性
+    // 计算总属性（支持多属性）
     const getTotalStats = () => {
         const stats: Record<string, number> = {};
         Object.values(equippedItems).forEach(item => {
-            if (item) {
-                stats[item.attribute] = (stats[item.attribute] || 0) + item.value;
+            if (item && item.stats) {
+                item.stats.forEach(stat => {
+                    stats[stat.attribute] = (stats[stat.attribute] || 0) + stat.value;
+                });
             }
         });
         return stats;
@@ -232,7 +270,7 @@ export const EquipmentUI: React.FC<EquipmentUIProps> = ({ visible, onClose }) =>
             <Panel 
                 style={{
                     width: '900px',
-                    height: '700px',
+                    height: '750px',  // 增加高度
                     horizontalAlign: 'center',
                     verticalAlign: 'center',
                     backgroundColor: '#1c1410',
@@ -273,7 +311,7 @@ export const EquipmentUI: React.FC<EquipmentUIProps> = ({ visible, onClose }) =>
                 </Panel>
 
                 {/* 装备区域 */}
-                <Panel style={{ width: '100%', height: '640px', padding: '20px', flowChildren: 'right' }}>
+                <Panel style={{ width: '100%', height: '690px', padding: '20px', flowChildren: 'right' }}>
                     {/* 左侧槽位 */}
                     <Panel style={{ width: '250px', height: '100%', flowChildren: 'down' }}>
                         {renderSlot('helmet', '头盔')}
@@ -289,17 +327,50 @@ export const EquipmentUI: React.FC<EquipmentUIProps> = ({ visible, onClose }) =>
                         flowChildren: 'down',
                         padding: '20px',
                     }}>
-                        <Label text="总属性加成" style={{ fontSize: '20px', marginBottom: '20px' }} />
-                        {Object.entries(totalStats).map(([attr, value]) => (
-                            <Label key={attr} text={`${attr}: +${value}`} />
-                        ))}
+                        <Label text="总属性加成" style={{ fontSize: '22px', marginBottom: '15px', color: '#ffd700', fontWeight: 'bold' }} />
+                        
+                        {/* 属性列表 */}
+                        <Panel style={{
+                            width: '100%',
+                            backgroundColor: '#0a0a0a',
+                            border: '2px solid #555555',
+                            padding: '15px',
+                            marginBottom: '20px',
+                            flowChildren: 'down',
+                        }}>
+                            {Object.keys(totalStats).length > 0 ? (
+                                Object.entries(totalStats).map(([attr, value]) => (
+                                    <Label 
+                                        key={attr} 
+                                        text={`${attr}: +${value}`}
+                                        style={{ 
+                                            fontSize: '18px', 
+                                            color: '#00ff00', 
+                                            marginBottom: '8px',
+                                            fontWeight: 'bold'
+                                        }}
+                                    />
+                                ))
+                            ) : (
+                                <Label 
+                                    text="未装备任何装备"
+                                    style={{ 
+                                        fontSize: '16px', 
+                                        color: '#888888',
+                                        textAlign: 'center'
+                                    }}
+                                />
+                            )}
+                        </Panel>
+
+                        {/* 角色模型区域 */}
                         <Panel style={{
                             width: '100%',
                             height: '300px',
                             backgroundColor: '#0a0a0a',
                             border: '2px solid #555555',
                         }}>
-                            <Label text="🦸" style={{ fontSize: '120px', textAlign: 'center' }} />
+                            <Label text="🦸" style={{ fontSize: '120px', textAlign: 'center', horizontalAlign: 'center', verticalAlign: 'center' }} />
                         </Panel>
                     </Panel>
 

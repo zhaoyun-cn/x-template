@@ -12,113 +12,148 @@ import { LootSystem } from "./loot_system";
 import { DungeonDifficulty, DIFFICULTY_NAMES, DIFFICULTY_MULTIPLIERS } from "./reward_config";
 import { EXTERNAL_REWARD_POOL, ExternalRewardItem } from "./external_reward_pool";
 import { EquipmentVaultSystem } from "../systems/equipment_vault_system";
+
 export class SimpleDungeon {
     private monsters: CDOTA_BaseNPC[] = [];
     private currentRoom: number = 0;
     private playerId: PlayerID | undefined;
     private bossManager: ShadowFiendBoss | undefined;
-    private currentDifficulty: DungeonDifficulty = DungeonDifficulty.NORMAL_1;  // ⭐ 默认普通1星
-    
-    // ⭐ 新增：缓存当前生成的奖励，供客户端选择后使用
+    private currentDifficulty: DungeonDifficulty = DungeonDifficulty. NORMAL_1;
     private currentRewards: ExternalRewardItem[] = [];
-
-
     
     constructor() {
-        print("=". repeat(50));
+        print("=".  repeat(50));
         print("[SimpleDungeon] Constructor called!");
-        print("=".repeat(50));
+        print("=". repeat(50));
         
         this.RegisterCommand();
         this.ListenToEvents();
         this.ListenToChatCommand();
-        this.RegisterRewardSelectionListener(); // ⭐ 新增
+        this.RegisterRewardSelectionListener();
         
-        print("[SimpleDungeon] Ready!   Type -start in chat");
+        print("[SimpleDungeon] Ready!  Type -start in chat");
     }
 
-private ListenToChatCommand(): void {
-    ListenToGameEvent("player_chat", (event) => {
-        const text = event.text. trim();
-        const playerId = event.playerid as PlayerID;
-        
-        print(`[SimpleDungeon] Received chat: "${text}"`);
-        
-        // 启动副本
-        if (text === "-start" || text === "start") {
-            print(`[SimpleDungeon] Start command triggered by player ${playerId}`);
-            this.StartDungeon(playerId);
-        }
-        
-        // ⭐ 打开仓库 UI
-        if (text === "-vault" || text === "vault" || text === "-v" || text === "v") {
-            const player = PlayerResource. GetPlayer(playerId);
-            if (player) {
-                // 发送事件打开仓库 UI
-                (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'show_vault_ui', {});
-                
-                // 发送仓库数据
-                const vault = EquipmentVaultSystem.GetVault(playerId);
-                (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
-                    items: vault
-                });
-                
-                print(`[SimpleDungeon] 打开仓库 UI，发送 ${vault.length} 件装备数据`);
+    private ListenToChatCommand(): void {
+        ListenToGameEvent("player_chat", (event) => {
+            const text = event.text. trim();
+            const playerId = event.playerid as PlayerID;
+            
+            print(`[SimpleDungeon] Received chat: "${text}"`);
+            
+            if (text === "-start" || text === "start") {
+                print(`[SimpleDungeon] Start command triggered by player ${playerId}`);
+                this. StartDungeon(playerId);
             }
-        }
-    }, this);
-    
-    // ⭐ 监听 UI 请求仓库数据
-    CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: any) => {
-        const playerId = event.PlayerID as PlayerID;
-        const player = PlayerResource.GetPlayer(playerId);
+            
+            if (text === "-vault" || text === "vault" || text === "-v" || text === "v") {
+                const player = PlayerResource.GetPlayer(playerId);
+                if (player) {
+                    (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'show_vault_ui', {});
+                    
+                    const vault = EquipmentVaultSystem.GetVault(playerId);
+                    (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+                        items: vault
+                    });
+                    
+                    print(`[SimpleDungeon] 打开仓库 UI，发送 ${vault.length} 件装备数据`);
+                }
+            }
+        }, this);
         
+CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: any) => {
+    const playerId = event.PlayerID as PlayerID;
+    const player = PlayerResource.GetPlayer(playerId);
+    
+    if (player) {
+        const vault = EquipmentVaultSystem.GetVault(playerId);
+        
+        // ⭐ 序列化为数组，保持 stats 为数组
+        const serializedItems: any[] = [];
+        vault.forEach((item) => {
+            serializedItems. push({
+                name: item. name,
+                type: item. type,
+                icon: item. icon,
+                stats: item. stats  // ✅ 直接使用数组
+            });
+        });
+        
+        (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+            items: serializedItems  // ✅ 发送序列化后的数组
+        });
+        
+        print(`[SimpleDungeon] 响应仓库数据请求：${vault.length} 件装备`);
+    }
+});
+        
+CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event: any) => {
+    const playerId = event.PlayerID as PlayerID;
+    const index = event.index as number;
+    
+    print(`[SimpleDungeon] 玩家${playerId}从 UI 装备索引${index}的物品`);
+    
+    if (EquipmentVaultSystem. EquipItem(playerId, index)) {
+        const player = PlayerResource.GetPlayer(playerId);
         if (player) {
-            const vault = EquipmentVaultSystem. GetVault(playerId);
-            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
-                items: vault
+            // ⭐ 序列化仓库数据
+            const vault = EquipmentVaultSystem.GetVault(playerId);
+            const serializedVault: any[] = [];
+            vault.forEach((item) => {
+                serializedVault.push({
+                    name: item.name,
+                    type: item.type,
+                    icon: item.icon,
+                    stats: item.stats
+                });
             });
             
-            print(`[SimpleDungeon] 响应仓库数据请求：${vault.length} 件装备`);
-        }
-    });
-    
-    // ⭐ 监听 UI 装备物品
-    CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event: any) => {
-        const playerId = event.PlayerID as PlayerID;
-        const index = event.index as number;
-        
-        print(`[SimpleDungeon] 玩家${playerId}从 UI 装备索引${index}的物品`);
-        
-        if (EquipmentVaultSystem.EquipItem(playerId, index)) {
-            const player = PlayerResource. GetPlayer(playerId);
-            if (player) {
-                // 装备成功，更新 UI
-                const vault = EquipmentVaultSystem.GetVault(playerId);
-                (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
-                    items: vault
-                });
-                
-                // 发送成功消息
-                GameRules.SendCustomMessage(
-                    "✅ 装备成功！",
-                    playerId,
-                    0
-                );
-                
-                print(`[SimpleDungeon] 装备成功，更新 UI 数据`);
+            // ⭐ 序列化装备数据
+            const equipment = EquipmentVaultSystem.GetEquipment(playerId);
+            const serializedEquipment: any = {};
+            for (const slot in equipment) {
+                const item = equipment[slot];
+                if (item) {
+                    serializedEquipment[slot] = {
+                        name: item. name,
+                        type: item.type,
+                        icon: item.icon,
+                        stats: item.stats
+                    };
+                } else {
+                    serializedEquipment[slot] = null;
+                }
             }
-        } else {
+            
+            // ⭐ 同时发送仓库和装备数据
+            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+                items: serializedVault
+            });
+            
+            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
+                equipment: serializedEquipment
+            });
+            
             GameRules.SendCustomMessage(
-                "❌ 装备失败！",
+                "✅ 装备成功！",
                 playerId,
                 0
             );
+            
+            print(`[SimpleDungeon] 装备成功，已推送更新数据`);
         }
-    });
-    
-    print("[SimpleDungeon] Chat listener registered");
-}
+    } else {
+        GameRules.SendCustomMessage(
+            "❌ 装备失败！",
+            playerId,
+            0
+        );
+    }
+});
+        
+        print("[SimpleDungeon] Chat listener registered");
+    }
+
     private RegisterCommand(): void {
         Convars.RegisterCommand("start", () => {
             print("[SimpleDungeon] Console command triggered!");
@@ -145,21 +180,19 @@ private ListenToChatCommand(): void {
         print(`[SimpleDungeon] ========== START DUNGEON ==========`);
         print(`[SimpleDungeon] Player ID: ${playerId}, Difficulty: ${diff}`);
         
-        // ⭐ 映射难度字符串到枚举
         const difficultyMap: Record<string, DungeonDifficulty> = {
             "easy_1": DungeonDifficulty.EASY_1,
-            "easy_2": DungeonDifficulty. EASY_2,
+            "easy_2": DungeonDifficulty.  EASY_2,
             "easy_3": DungeonDifficulty.EASY_3,
             "normal_1": DungeonDifficulty.NORMAL_1,
-            "normal_2": DungeonDifficulty. NORMAL_2,
+            "normal_2": DungeonDifficulty.  NORMAL_2,
             "normal_3": DungeonDifficulty.NORMAL_3,
-            "hard_1": DungeonDifficulty. HARD_1,
+            "hard_1": DungeonDifficulty.  HARD_1,
             "hard_2": DungeonDifficulty.HARD_2,
-            "hard_3": DungeonDifficulty. HARD_3
+            "hard_3": DungeonDifficulty.  HARD_3
         };
         
         this.currentDifficulty = difficultyMap[diff] || DungeonDifficulty.NORMAL_1;
-        
         this.playerId = playerId;
         this.currentRoom = 1;
         
@@ -170,19 +203,14 @@ private ListenToChatCommand(): void {
         }
 
         print(`[SimpleDungeon] Hero: ${hero.GetUnitName()}`);
-
-        // 传送到房间1
         this.TeleportToRoom(hero, 1);
-        
-        // 刷房间1的怪
         this.SpawnMonstersForRoom(1);
         
-        // ⭐ 显示难度名称
         const diffName = DIFFICULTY_NAMES[this.currentDifficulty];
-         GameRules.SendCustomMessage(
-        `<font color='#00FF00'>副本开始！房间 1/3 - ${diffName}</font>`, 
-        playerId, 
-        0
+        GameRules.SendCustomMessage(
+            `<font color='#00FF00'>副本开始！房间 1/3 - ${diffName}</font>`, 
+            playerId, 
+            0
         );
     }
 
@@ -206,8 +234,6 @@ private ListenToChatCommand(): void {
 
     private SpawnMonstersForRoom(roomNumber: number): void {
         print(`[SimpleDungeon] ========== SPAWN ROOM ${roomNumber} ==========`);
-        
-        // 清空旧怪物
         this.monsters = [];
 
         let spawnPoints: Vector[];
@@ -262,7 +288,6 @@ private ListenToChatCommand(): void {
     private EnhanceBoss(boss: CDOTA_BaseNPC): void {
         print("[SimpleDungeon] Enhancing Boss...");
         
-        // ⭐ 获取难度系数
         const multiplier = DIFFICULTY_MULTIPLIERS[this.currentDifficulty];
         print(`[SimpleDungeon] Difficulty multiplier: ${multiplier}`);
         
@@ -270,17 +295,15 @@ private ListenToChatCommand(): void {
             const heroBoss = boss as CDOTA_BaseNPC_Hero;
             
             heroBoss.SetTeam(DotaTeam. BADGUYS);
-            
             heroBoss.SetAbilityPoints(0);
+            
             for (let i = 1; i <= 10; i++) {
                 heroBoss.HeroLevelUp(false);
             }
             
-            // ⭐ 应用难度系数
             heroBoss.SetBaseStrength(Math.floor(500 * multiplier));
             heroBoss.SetBaseAgility(Math.floor(50 * multiplier));
             heroBoss.SetBaseIntellect(Math.floor(50 * multiplier));
-            
             heroBoss.SetHealth(heroBoss.GetMaxHealth());
             heroBoss.SetMana(heroBoss.GetMaxMana());
             
@@ -307,7 +330,7 @@ private ListenToChatCommand(): void {
                     for (const abilityName of abilitiesToRemove) {
                         const ability = boss.FindAbilityByName(abilityName);
                         if (ability) {
-                            boss. RemoveAbility(abilityName);
+                            boss.RemoveAbility(abilityName);
                         }
                     }
                     
@@ -374,8 +397,7 @@ private ListenToChatCommand(): void {
             }
             
         } else {
-            // ⭐ 非英雄Boss也应用难度系数
-            boss.SetTeam(DotaTeam. BADGUYS);
+            boss.SetTeam(DotaTeam.BADGUYS);
             boss.SetAttackCapability(UnitAttackCapability.MELEE_ATTACK);
             boss.RemoveModifierByName("modifier_invulnerable");
             
@@ -386,7 +408,6 @@ private ListenToChatCommand(): void {
             const baseAttack = boss.GetBaseDamageMax();
             boss.SetBaseDamageMin(Math.floor(baseAttack * 2 * multiplier));
             boss.SetBaseDamageMax(Math.floor(baseAttack * 2 * multiplier));
-            
             boss.SetBaseMoveSpeed(350);
         }
         
@@ -400,117 +421,102 @@ private ListenToChatCommand(): void {
         print(`[SimpleDungeon] Boss enhanced!  HP: ${boss.GetMaxHealth()}`);
     }
 
-private TriggerRewardSelection(): void {
-    print("[SimpleDungeon] Triggering reward selection!");
+    // ⭐ 修复：直接发送完整对象
+    private TriggerRewardSelection(): void {
+        print("[SimpleDungeon] Triggering reward selection!");
 
-    const playerId = this.playerId;
-    if (! playerId) return;
+        const playerId = this.playerId;
+        if (!playerId) return;
 
-    // ⭐ 生成并缓存奖励
-    this.currentRewards = this.GenerateRewards();
-    print(`[SimpleDungeon] Generated rewards: ${this.currentRewards.map(r => r.name).join(", ")}`);
+        this.currentRewards = this.GenerateRewards();
+        print(`[SimpleDungeon] Generated rewards: ${this.currentRewards. map(r => r.name).join(", ")}`);
 
-    // 发送奖励数据到客户端
-    const player = PlayerResource.GetPlayer(playerId);
-    if (player) {
-        CustomGameEventManager.Send_ServerToPlayer(
-            player,
-            "show_reward_selection",
-            { 
-                rewards: this.currentRewards. map(r => ({
-                    name: r.name,
-                    type: r.type,
-                    icon: r.icon,
-                    attribute: r.attribute,
-                    value: r.value
-                }))
-            }
-        );
-        print("[SimpleDungeon] ✓ Sent reward data to client");
-    } else {
-        print("[SimpleDungeon] ❌ Could not find player!");
-    }
-}
-
-// 方法：从 EXTERNAL_REWARD_POOL 中随机选择 3 件装备
-private GenerateRewards(): ExternalRewardItem[] {
-    const rewards: ExternalRewardItem[] = [];
-    const pool = [...EXTERNAL_REWARD_POOL]; // 深拷贝池子，避免被修改
-
-    for (let i = 0; i < 3; i++) {
-        if (pool.length === 0) break;
-
-        const randomIndex = Math.floor(Math.random() * pool.length);
-        rewards.push(pool[randomIndex]);
-        pool.splice(randomIndex, 1); // 确保同一奖励不重复
-    }
-
-    return rewards;
-}
-
-// ⭐ 新增：注册奖励选择事件监听
-// ⭐ 新增：监听玩家选择奖励
-private RegisterRewardSelectionListener(): void {
-    CustomGameEventManager.RegisterListener("reward_selected", (userId, event) => {
-       const eventData = event as any;  // ⭐ 添加这一行
-        const playerId = eventData.PlayerID as PlayerID;
-        const rewardIndex = eventData.rewardIndex as number;
-        
-        print(`[SimpleDungeon] 玩家${playerId}选择了奖励索引：${rewardIndex}`);
-        
-        // 从缓存中获取奖励
-        if (rewardIndex >= 0 && rewardIndex < this.currentRewards.length) {
-            const selectedReward = this.currentRewards[rewardIndex];
-            
-            // 保存到装备仓库
-            EquipmentVaultSystem.SaveToVault(playerId, selectedReward);
-            
-            print(`[SimpleDungeon] ✓ 已保存奖励：${selectedReward.name}`);
-            
-            // 发送确认消息
-            GameRules.SendCustomMessage(
-                `<font color='#FF6EC7'>💾 已保存装备：${selectedReward.name} (${selectedReward.attribute} +${selectedReward.value})</font>`,
-                playerId,
-                0
+        const player = PlayerResource.GetPlayer(playerId);
+        if (player) {
+            CustomGameEventManager.Send_ServerToPlayer(
+                player,
+                "show_reward_selection",
+                { 
+                    rewards: this.currentRewards  // ⭐ 直接发送完整对象，包含 stats 数组
+                }
             );
+            print("[SimpleDungeon] ✓ Sent reward data to client");
         } else {
-            print(`[SimpleDungeon] ❌ 无效的奖励索引：${rewardIndex}`);
-        }
-    });
-    
-    print("[SimpleDungeon] Reward selection listener registered");
-}
-
-// 在 OnEntityKilled 方法中触发奖励逻辑：击败 Boss 后调用 TriggerRewardSelection
-private OnEntityKilled(event: EntityKilledEvent): void {
-    const killedUnit = EntIndexToHScript(event.entindex_killed);
-    if (!killedUnit) return;
-
-    const index = this.monsters.indexOf(killedUnit as CDOTA_BaseNPC);
-    if (index !== -1) {
-        this.monsters.splice(index, 1);
-        print(`[SimpleDungeon] Monster killed! Remaining: ${this.monsters.length}`);
-
-        if (this.monsters.length === 0) {
-            print(`[SimpleDungeon] 所有怪物已被击杀，房间 ${this.currentRoom} 清空`);
-            
-            // ⭐ Boss 房间特殊处理
-            if (this.currentRoom === 3 && this.playerId !== undefined) {
-                // 1. 触发 Boss 掉落（物品掉落到地面 + 金币）
-                LootSystem.DropBossLoot(
-                    killedUnit as CDOTA_BaseNPC, 
-                    this.currentDifficulty, 
-                    this.playerId
-                );
-                
-                // 2. 触发奖励选择界面（局外装备奖励）
-                this.TriggerRewardSelection();
-            }
-            
-            this.OnRoomCleared();
+            print("[SimpleDungeon] ❌ Could not find player!");
         }
     }
-}
+
+    private GenerateRewards(): ExternalRewardItem[] {
+        const rewards: ExternalRewardItem[] = [];
+        const pool = [... EXTERNAL_REWARD_POOL];
+
+        for (let i = 0; i < 3; i++) {
+            if (pool.length === 0) break;
+
+            const randomIndex = Math.floor(Math. random() * pool.length);
+            rewards.push(pool[randomIndex]);
+            pool.splice(randomIndex, 1);
+        }
+
+        return rewards;
+    }
+
+    private RegisterRewardSelectionListener(): void {
+        CustomGameEventManager.RegisterListener("reward_selected", (userId, event) => {
+            const eventData = event as any;
+            const playerId = eventData.PlayerID as PlayerID;
+            const rewardIndex = eventData.rewardIndex as number;
+            
+            print(`[SimpleDungeon] 玩家${playerId}选择了奖励索引：${rewardIndex}`);
+            
+            if (rewardIndex >= 0 && rewardIndex < this.currentRewards.length) {
+                const selectedReward = this.currentRewards[rewardIndex];
+                
+                EquipmentVaultSystem.SaveToVault(playerId, selectedReward);
+                
+                print(`[SimpleDungeon] ✓ 已保存奖励：${selectedReward.name}`);
+                
+                // ⭐ 修复：使用 stats 数组
+                const statsText = selectedReward.stats.map(s => `${s.attribute} +${s.value}`).join(", ");
+                GameRules. SendCustomMessage(
+                    `<font color='#FF6EC7'>💾 已保存装备：${selectedReward.name} (${statsText})</font>`,
+                    playerId,
+                    0
+                );
+            } else {
+                print(`[SimpleDungeon] ❌ 无效的奖励索引：${rewardIndex}`);
+            }
+        });
+        
+        print("[SimpleDungeon] Reward selection listener registered");
+    }
+
+    private OnEntityKilled(event: EntityKilledEvent): void {
+        const killedUnit = EntIndexToHScript(event.entindex_killed);
+        if (! killedUnit) return;
+
+        const index = this.monsters.indexOf(killedUnit as CDOTA_BaseNPC);
+        if (index !== -1) {
+            this.monsters. splice(index, 1);
+            print(`[SimpleDungeon] Monster killed!  Remaining: ${this.monsters.length}`);
+
+            if (this.monsters.length === 0) {
+                print(`[SimpleDungeon] 所有怪物已被击杀，房间 ${this.currentRoom} 清空`);
+                
+                if (this.currentRoom === 3 && this.playerId !== undefined) {
+                    LootSystem. DropBossLoot(
+                        killedUnit as CDOTA_BaseNPC, 
+                        this.currentDifficulty, 
+                        this.playerId
+                    );
+                    
+                    this.TriggerRewardSelection();
+                }
+                
+                this.OnRoomCleared();
+            }
+        }
+    }
 
     private OnRoomCleared(): void {
         print(`[SimpleDungeon] ========== ROOM ${this.currentRoom} CLEARED ==========`);
@@ -575,17 +581,15 @@ private OnEntityKilled(event: EntityKilledEvent): void {
     }
 
     private OnComplete(): void {
-        print("=".repeat(50));
+        print("=". repeat(50));
         print("[SimpleDungeon] 🎉 DUNGEON COMPLETE! 🎉");
         print("=".repeat(50));
         
-        if (this. playerId !== undefined) {
-            // ⭐ 使用奖励系统给予通关奖励
+        if (this.playerId !== undefined) {
             LootSystem.GiveCompletionReward(this.playerId, this.currentDifficulty);
 
-            // 5秒后传送回主城
             Timers.CreateTimer(5.0, () => {
-                const hero = PlayerResource. GetSelectedHeroEntity(this. playerId!);
+                const hero = PlayerResource.GetSelectedHeroEntity(this.playerId! );
                 if (hero) {
                     FindClearSpaceForUnit(hero, SPAWN_POINT, true);
                     GameRules.SendCustomMessage(
@@ -598,7 +602,6 @@ private OnEntityKilled(event: EntityKilledEvent): void {
             });
         }
 
-        // 重置状态
         this.currentRoom = 0;
         this.monsters = [];
     }

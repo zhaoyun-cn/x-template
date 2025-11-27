@@ -119,7 +119,7 @@ export const RewardSelection: FC<{ visible: boolean; onSelect: (reward: External
                                     }}
                                 />
                                 <Label 
-                                    text={`${reward.type} - ${reward.attribute} +${reward.value}`}
+text={`${reward.type} - ${reward. stats.map((s: any) => `${s.attribute} +${s.value}`).join(", ")}`}
                                     style={{ 
                                         fontSize: "18px", 
                                         color: "#00ff00"
