@@ -12,7 +12,7 @@ import './examples/abilities/axe_giant_strike';
 import { ExternalRewardItem, ExternalItemType, EquipmentAttribute } from "./dungeon/external_reward_pool";
 import { SimpleDungeon } from "./dungeon/simple_dungeon";
 import { EquipmentVaultSystem } from './systems/equipment_vault_system';
-
+declare function require(module: string): void;
 declare global {
     interface CDOTAGameRules {
         SimpleDungeon?: SimpleDungeon;
