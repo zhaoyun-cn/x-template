@@ -14,6 +14,7 @@ import { SimpleDungeon } from "./dungeon/simple_dungeon";
 import { EquipmentVaultSystem } from './systems/equipment_vault_system';
 import './modifiers/modifier_equipment_system';  // ⭐ 添加这一行
 import { ZoneDungeon } from "./zone/zone_dungeon";
+import { MaterialUseSystem } from './zone/zone_loot';
 // 初始化模块
 if (IsServer()) {
     pcall(() => require('init_modifiers'));
@@ -35,7 +36,7 @@ declare global {
         SimpleDungeon?: SimpleDungeon;
     }
 }
-  
+  MaterialUseSystem.Init();
 
 let dungeonPortalInstance: CDOTA_BaseNPC | undefined = undefined;
 const lastMenuTriggerTime: { [key: number]: number } = {};

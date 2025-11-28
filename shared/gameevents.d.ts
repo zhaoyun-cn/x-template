@@ -40,7 +40,17 @@ declare interface CustomGameEventDeclarations {
             value: number;
         }>;
     };
+// 材料使用事件
+use_material: {
+    PlayerID: PlayerID;
+    materialType: string;
+};
 
+material_used: {
+    success: boolean;
+    materialType: string;
+    message: string;
+};
 
 
     // 示例：玩家选择副本的事件
