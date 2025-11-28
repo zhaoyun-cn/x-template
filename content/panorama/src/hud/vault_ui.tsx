@@ -26,6 +26,11 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     const [hoveredItem, setHoveredItem] = useState<number | null>(null);
     const [compareEquipment, setCompareEquipment] = useState<ExternalRewardItem | null>(null);
     const [isEquipping, setIsEquipping] = useState(false);
+    
+    // ⭐ 记录点击位置（格子的行和列）
+    const [selectedPosition, setSelectedPosition] = useState<{ row: number; col: number } | null>(null);
+    // ⭐ 记录悬停位置
+    const [hoveredPosition, setHoveredPosition] = useState<{ row: number; col: number } | null>(null);
 
     const hoverTimeoutRef = useRef<number | null>(null);
     
@@ -105,7 +110,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     // ==================== 装备物品逻辑 ====================
     const onEquipItem = (index: number) => {
         if (isEquipping) {
-            $. Msg('[VaultUI] ⚠️ 正在装备中，请稍候.. .');
+            $. Msg('[VaultUI] ⚠️ 正在装备中，请稍候...');
             return;
         }
         
@@ -118,14 +123,16 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
             index: index
         });
 
-        Game.EmitSound('ui. crafting_gem_create');
+        Game.EmitSound('ui.crafting_gem_create');
         
         setSelectedItem(null);
+        setSelectedPosition(null);
         setHoveredItem(null);
+        setHoveredPosition(null);
         
         setTimeout(() => {
             setIsEquipping(false);
-            $. Msg('[VaultUI] 解除装备锁定');
+            $.Msg('[VaultUI] 解除装备锁定');
         }, 1500);
     };
 
@@ -139,11 +146,12 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
         return null;
     };
 
-    const handleMouseOver = (index: number, item: ExternalRewardItem) => {
+    const handleMouseOver = (index: number, item: ExternalRewardItem, row: number, col: number) => {
         if (hoverTimeoutRef.current) {
             clearTimeout(hoverTimeoutRef.current);
         }
         setHoveredItem(index);
+        setHoveredPosition({ row, col });
         const equipped = findEquippedItemByType(item.type);
         setCompareEquipment(equipped);
     };
@@ -151,26 +159,21 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     const handleMouseOut = () => {
         hoverTimeoutRef.current = setTimeout(() => {
             setHoveredItem(null);
+            setHoveredPosition(null);
             setCompareEquipment(null);
         }, 300) as any;
     };
 
-    const keepComparePanel = () => {
-        if (hoverTimeoutRef.current) {
+    const keepHoverPanel = () => {
+        if (hoverTimeoutRef. current) {
             clearTimeout(hoverTimeoutRef.current);
             hoverTimeoutRef.current = null;
         }
     };
 
-    if (!visible) return null;
-
-    const COLUMNS = 8;
-    const ROWS = 5;
-    const TOTAL_SLOTS = COLUMNS * ROWS;
-    const emptySlots = TOTAL_SLOTS - vaultItems.length;
-
+    // ==================== 获取物品品质颜色 ====================
     const getQualityColor = (item: ExternalRewardItem): string => {
-        const totalValue = item.stats.reduce((sum, stat) => sum + stat. value, 0);
+        const totalValue = item. stats. reduce((sum, stat) => sum + stat.value, 0);
         
         if (totalValue >= 50) return '#ff8000';
         if (totalValue >= 35) return '#a335ee';
@@ -179,527 +182,583 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
         return '#9d9d9d';
     };
 
+    if (!visible) return null;
+
+    const COLUMNS = 8;
+    const ROWS = 5;
+    const TOTAL_SLOTS = COLUMNS * ROWS;
+    const emptySlots = TOTAL_SLOTS - vaultItems.length;
+    
+    // ⭐ 格子尺寸
+    const SLOT_SIZE = 80;
+    const SLOT_MARGIN = 2;
+    const GRID_PADDING = 15;
+
+    // ⭐ 计算弹窗位置
+    const getPopupPosition = (position: { row: number; col: number } | null, popupWidth: number) => {
+        if (!position) return { marginLeft: '0px', marginTop: '0px' };
+        
+        const { row, col } = position;
+        
+        // 计算格子的位置
+        const slotX = GRID_PADDING + col * (SLOT_SIZE + SLOT_MARGIN * 2);
+        const slotY = 60 + GRID_PADDING + row * (SLOT_SIZE + SLOT_MARGIN * 2);
+        
+        // 面板显示在格子右上方
+        let popupX = slotX + SLOT_SIZE + 10;
+        let popupY = slotY - 30;
+        
+        // 确保不超出仓库右边界
+        if (popupX + popupWidth > 740) {
+            popupX = slotX - popupWidth - 10;
+        }
+        
+        // 确保不超出上边界
+        if (popupY < 10) {
+            popupY = 10;
+        }
+        
+        return {
+            marginLeft: `${popupX}px`,
+            marginTop: `${popupY}px`,
+        };
+    };
+
     const hoveredItemData = hoveredItem !== null ? vaultItems[hoveredItem] : null;
 
-   return (
-    <Panel
-        style={{
-            width: '740px',
-            height: '520px',
-            horizontalAlign: 'center',
-            verticalAlign: 'center',
-            backgroundColor: '#1c1410',
-            border: '4px solid #8b7355',
-            flowChildren: 'down',
-        }}
-    >
-        {/* 标题栏 */}
-        <Panel style={{
-            width: '100%',
-            height: '60px',
-            backgroundColor: '#2a1f1a',
-            borderBottom: '3px solid #8b7355',
-            flowChildren: 'right',
-            padding: '10px 20px',
-        }}>
-            <Label 
-                text="⚔️ 装备仓库" 
-                style={{
-                    fontSize: '32px',
-                    color: '#ffd700',
-                    fontWeight: 'bold',
-                }}
-            />
-            <Label 
-                text={`${vaultItems.length} / ${TOTAL_SLOTS}`}
-                style={{
-                    fontSize: '24px',
-                    color: '#cccccc',
-                    marginLeft: '20px',
-                    marginTop: '4px',
-                }}
-            />
-            <Panel style={{ width: 'fill-parent-flow(1)', height: '1px' }} />
-            <Button 
-                onactivate={onClose}
-                style={{
-                    width: '40px',
-                    height: '40px',
-                    backgroundColor: '#8b0000',
-                    border: '2px solid #ff0000',
-                }}
-                onmouseover={(panel) => {
-                    panel.style.backgroundColor = '#b22222';
-                }}
-                onmouseout={(panel) => {
-                    panel.style.backgroundColor = '#8b0000';
-                }}
-            >
-                <Label text="✕" style={{ fontSize: '28px', color: 'white', textAlign: 'center' }} />
-            </Button>
-        </Panel>
+    return (
+        <Panel
+            style={{
+                width: '740px',
+                height: '520px',
+                horizontalAlign: 'center',
+                verticalAlign: 'center',
+                backgroundColor: '#1c1410',
+                border: '4px solid #8b7355',
+                flowChildren: 'down',
+            }}
+        >
+            {/* 标题栏 */}
+            <Panel style={{
+                width: '100%',
+                height: '60px',
+                backgroundColor: '#2a1f1a',
+                borderBottom: '3px solid #8b7355',
+                flowChildren: 'right',
+                padding: '10px 20px',
+            }}>
+                <Label 
+                    text="⚔️ 装备仓库" 
+                    style={{
+                        fontSize: '32px',
+                        color: '#ffd700',
+                        fontWeight: 'bold',
+                    }}
+                />
+                <Label 
+                    text={`${vaultItems.length} / ${TOTAL_SLOTS}`}
+                    style={{
+                        fontSize: '24px',
+                        color: '#cccccc',
+                        marginLeft: '20px',
+                        marginTop: '4px',
+                    }}
+                />
+                <Panel style={{ width: 'fill-parent-flow(1)', height: '1px' }} />
+                <Button 
+                    onactivate={onClose}
+                    style={{
+                        width: '40px',
+                        height: '40px',
+                        backgroundColor: '#8b0000',
+                        border: '2px solid #ff0000',
+                    }}
+                    onmouseover={(panel) => {
+                        panel. style.backgroundColor = '#b22222';
+                    }}
+                    onmouseout={(panel) => {
+                        panel. style.backgroundColor = '#8b0000';
+                    }}
+                >
+                    <Label text="✕" style={{ fontSize: '28px', color: 'white', textAlign: 'center' }} />
+                </Button>
+            </Panel>
 
-        {/* 网格容器 */}
-        <Panel style={{
-            width: '100%',
-            height: '460px',
-            padding: '15px',
-            flowChildren: 'right-wrap',
-        }}>
-            {vaultItems.map((item, index) => {
-                const qualityColor = getQualityColor(item);
-                const normalBorder = `3px solid ${qualityColor}`;
-                const hoverBorder = `4px solid ${qualityColor}`;
-                const isHovered = hoveredItem === index;
-                
-                return (
+            {/* 网格容器 */}
+            <Panel style={{
+                width: '100%',
+                height: '460px',
+                padding: '15px',
+                flowChildren: 'right-wrap',
+            }}>
+                {vaultItems.map((item, index) => {
+                    const qualityColor = getQualityColor(item);
+                    const normalBorder = `3px solid ${qualityColor}`;
+                    const hoverBorder = `4px solid ${qualityColor}`;
+                    const isHovered = hoveredItem === index;
+                    
+                    // ⭐ 计算当前格子的行和列
+                    const row = Math.floor(index / COLUMNS);
+                    const col = index % COLUMNS;
+                    
+                    return (
+                        <Panel 
+                            key={`item-${index}`}
+                            style={{
+                                width: '80px',
+                                height: '80px',
+                                margin: '2px',
+                                backgroundColor: isHovered ? '#1a1a1a' : '#0a0a0a',
+                                border: isHovered ? hoverBorder : normalBorder,
+                                backgroundImage: `url("${item.icon}")`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                            }}
+                            onactivate={() => {
+                                Game.EmitSound('ui.button_click');
+                                setSelectedItem(index);
+                                setSelectedPosition({ row, col });
+                            }}
+                            onmouseover={() => {
+                                handleMouseOver(index, item, row, col);
+                                Game.EmitSound('ui.button_over');
+                            }}
+                            onmouseout={() => {
+                                handleMouseOut();
+                            }}
+                        >
+                            {selectedItem === index && (
+                                <Panel style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    backgroundColor: '#ffffff40',
+                                }} />
+                            )}
+                        </Panel>
+                    );
+                })}
+
+                {Array.from({ length: emptySlots }, (_, index) => (
                     <Panel 
-                        key={`item-${index}`}
+                        key={`empty-${index}`}
                         style={{
                             width: '80px',
                             height: '80px',
                             margin: '2px',
-                            backgroundColor: isHovered ? '#1a1a1a' : '#0a0a0a',
-                            border: isHovered ?  hoverBorder : normalBorder,
-                            backgroundImage: `url("${item.icon}")`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
+                            backgroundColor: '#0a0a0a',
+                            border: '2px solid #3a3a3a',
                         }}
-                        onactivate={() => {
-                            Game.EmitSound('ui. button_click');
-                            setSelectedItem(index);
-                        }}
-                        onmouseover={() => {
-                            handleMouseOver(index, item);
-                            Game.EmitSound('ui.button_over');
-                        }}
-                        onmouseout={() => {
-                            handleMouseOut();
+                    />
+                ))}
+            </Panel>
+
+            {/* ⭐ 装备悬停对比面板 */}
+            {hoveredItem !== null && hoveredItemData && hoveredPosition && ! selectedItem && (() => {
+                const hoverPos = getPopupPosition(hoveredPosition, 350);
+                
+                return (
+                    <Panel  hittest={false}
+                        style={{
+                            width: '740px',
+                            height: '520px',
+                            marginTop: '-520px',
                         }}
                     >
-                        {selectedItem === index && (
-                            <Panel style={{
-                                width: '100%',
-                                height: '100%',
-                                backgroundColor: '#ffffff40',
-                            }} />
-                        )}
-                    </Panel>
-                );
-            })}
-
-            {Array.from({ length: emptySlots }, (_, index) => (
-                <Panel 
-                    key={`empty-${index}`}
-                    style={{
-                        width: '80px',
-                        height: '80px',
-                        margin: '2px',
-                        backgroundColor: '#0a0a0a',
-                        border: '2px solid #3a3a3a',
-                    }}
-                />
-            ))}
-        </Panel>
-
-        {/* ⭐ 装备对比 Tooltip - 浮动在仓库右侧上层 */}
-        {hoveredItem !== null && hoveredItemData && (
-            <Panel 
-                style={{
-                    width: '400px',
-                    maxHeight: '500px',
-                    backgroundColor: '#1a1a1aee',
-                    border: '4px solid #ffd700',
-                    padding: '20px',
-                    // ⭐ 绝对定位：浮动在右侧
-                    position: 'absolute',
-                    x: '750px',  // 仓库宽度 740px + 10px 间距
-                    y: '10px',
-                    zIndex: 200,
-                    flowChildren: 'down',
-                    overflow: 'squish scroll',
-                }}
-                onmouseover={keepComparePanel}
-                onmouseout={handleMouseOut}
-            >
-                <Label 
-                    text="📊 装备对比"
-                    style={{
-                        fontSize: '24px',
-                        color: '#ffd700',
-                        textAlign: 'center',
-                        marginBottom: '15px',
-                        fontWeight: 'bold',
-                    }}
-                />
-
-                {/* 待装备物品 */}
-                <Panel style={{
-                    width: '100%',
-                    backgroundColor: '#0a0a0a',
-                    border: `3px solid ${getQualityColor(hoveredItemData)}`,
-                    padding: '15px',
-                    marginBottom: '15px',
-                    flowChildren: 'down',
-                }}>
-                    <Label 
-                        text="【待装备】"
-                        style={{ fontSize: '14px', color: '#00ff00', marginBottom: '8px' }}
-                    />
-                    <Panel style={{ width: '100%', flowChildren: 'right', marginBottom: '10px' }}>
-                        <Panel style={{
-                            width: '60px',
-                            height: '60px',
-                            backgroundImage: `url("${hoveredItemData.icon}")`,
-                            backgroundSize: 'cover',
-                            marginRight: '10px',
-                        }} />
-                        <Panel style={{ flowChildren: 'down', width: '100%' }}>
+                        <Panel  hittest={false}
+                            style={{
+                                width: '350px',
+                                maxHeight: '480px',
+                                backgroundColor: '#1a1a1aee',
+                                border: '3px solid #ffd700',
+                                padding: '15px',
+                                marginLeft: hoverPos.marginLeft,
+                                marginTop: hoverPos. marginTop,
+                                flowChildren: 'down',
+                                overflow: 'squish scroll',
+                            }}
+                            onmouseover={keepHoverPanel}
+                            onmouseout={handleMouseOut}
+                        >
                             <Label 
-                                text={hoveredItemData.name}
+                                text="📊 装备对比"
                                 style={{
-                                    fontSize: '18px',
-                                    color: getQualityColor(hoveredItemData),
+                                    fontSize: '20px',
+                                    color: '#ffd700',
+                                    textAlign: 'center',
+                                    marginBottom: '10px',
                                     fontWeight: 'bold',
-                                    marginBottom: '5px',
                                 }}
                             />
-                            <Label 
-                                text={hoveredItemData.type}
-                                style={{ fontSize: '14px', color: '#ffd700', marginBottom: '8px' }}
-                            />
-                            
-                            {hoveredItemData.stats. map((stat, index) => (
+
+                            {/* 待装备物品 */}
+                            <Panel style={{
+                                width: '100%',
+                                backgroundColor: '#0a0a0a',
+                                border: `2px solid ${getQualityColor(hoveredItemData)}`,
+                                padding: '10px',
+                                marginBottom: '10px',
+                                flowChildren: 'down',
+                            }}>
                                 <Label 
-                                    key={index}
-                                    text={`+${stat. value} ${stat. attribute}`}
-                                    style={{ 
-                                        fontSize: '15px', 
-                                        color: '#00ff00', 
-                                        fontWeight: 'bold',
-                                        marginBottom: '3px'
-                                    }}
+                                    text="【待装备】"
+                                    style={{ fontSize: '12px', color: '#00ff00', marginBottom: '5px' }}
                                 />
-                            ))}
-                        </Panel>
-                    </Panel>
-                </Panel>
+                                <Panel style={{ width: '100%', flowChildren: 'right', marginBottom: '5px' }}>
+                                    <Panel style={{
+                                        width: '50px',
+                                        height: '50px',
+                                        backgroundImage: `url("${hoveredItemData.icon}")`,
+                                        backgroundSize: 'cover',
+                                        marginRight: '10px',
+                                    }} />
+                                    <Panel style={{ flowChildren: 'down' }}>
+                                        <Label 
+                                            text={hoveredItemData.name}
+                                            style={{
+                                                fontSize: '16px',
+                                                color: getQualityColor(hoveredItemData),
+                                                fontWeight: 'bold',
+                                                marginBottom: '3px',
+                                            }}
+                                        />
+                                        <Label 
+                                            text={hoveredItemData.type}
+                                            style={{ fontSize: '12px', color: '#ffd700', marginBottom: '5px' }}
+                                        />
+                                        {hoveredItemData.stats.map((stat, idx) => (
+                                            <Label 
+                                                key={idx}
+                                                text={`+${stat.value} ${stat.attribute}`}
+                                                style={{ 
+                                                    fontSize: '14px', 
+                                                    color: '#00ff00', 
+                                                    fontWeight: 'bold',
+                                                }}
+                                            />
+                                        ))}
+                                    </Panel>
+                                </Panel>
+                            </Panel>
 
-                <Panel style={{
-                    width: '100%',
-                    height: '2px',
-                    backgroundColor: '#555555',
-                    marginBottom: '15px',
-                }} />
+                            {/* 分隔线 */}
+                            <Panel style={{
+                                width: '100%',
+                                height: '2px',
+                                backgroundColor: '#555555',
+                                marginBottom: '10px',
+                            }} />
 
-                {compareEquipment ?  (
-                    <>
-                        <Panel style={{
-                            width: '100%',
-                            backgroundColor: '#0a0a0a',
-                            border: `3px solid ${getQualityColor(compareEquipment)}`,
-                            padding: '15px',
-                            marginBottom: '15px',
-                            flowChildren: 'down',
-                        }}>
-                            <Label 
-                                text="【当前装备】"
-                                style={{ fontSize: '14px', color: '#888888', marginBottom: '8px' }}
-                            />
-                            <Panel style={{ width: '100%', flowChildren: 'right', marginBottom: '10px' }}>
+                            {/* 当前已装备 */}
+                            {compareEquipment ?  (
+                                <>
+                                    <Panel style={{
+                                        width: '100%',
+                                        backgroundColor: '#0a0a0a',
+                                        border: `2px solid ${getQualityColor(compareEquipment)}`,
+                                        padding: '10px',
+                                        marginBottom: '10px',
+                                        flowChildren: 'down',
+                                    }}>
+                                        <Label 
+                                            text="【当前装备】"
+                                            style={{ fontSize: '12px', color: '#888888', marginBottom: '5px' }}
+                                        />
+                                        <Panel style={{ width: '100%', flowChildren: 'right', marginBottom: '5px' }}>
+                                            <Panel style={{
+                                                width: '50px',
+                                                height: '50px',
+                                                backgroundImage: `url("${compareEquipment.icon}")`,
+                                                backgroundSize: 'cover',
+                                                marginRight: '10px',
+                                            }} />
+                                            <Panel style={{ flowChildren: 'down' }}>
+                                                <Label 
+                                                    text={compareEquipment.name}
+                                                    style={{
+                                                        fontSize: '16px',
+                                                        color: getQualityColor(compareEquipment),
+                                                        fontWeight: 'bold',
+                                                        marginBottom: '3px',
+                                                    }}
+                                                />
+                                                <Label 
+                                                    text={compareEquipment. type}
+                                                    style={{ fontSize: '12px', color: '#ffd700', marginBottom: '5px' }}
+                                                />
+                                                {compareEquipment.stats.map((stat, idx) => (
+                                                    <Label 
+                                                        key={idx}
+                                                        text={`+${stat.value} ${stat.attribute}`}
+                                                        style={{ 
+                                                            fontSize: '14px', 
+                                                            color: '#00ff00', 
+                                                            fontWeight: 'bold',
+                                                        }}
+                                                    />
+                                                ))}
+                                            </Panel>
+                                        </Panel>
+                                    </Panel>
+
+                                    {/* 属性变化 */}
+                                    <Panel style={{
+                                        width: '100%',
+                                        backgroundColor: '#2a2a2a',
+                                        padding: '10px',
+                                        flowChildren: 'down',
+                                    }}>
+                                        <Label 
+                                            text="📈 属性变化"
+                                            style={{
+                                                fontSize: '14px',
+                                                color: '#ffd700',
+                                                marginBottom: '8px',
+                                                fontWeight: 'bold',
+                                            }}
+                                        />
+                                        
+                                        {(() => {
+                                            const allAttributes = new Set<string>();
+                                            hoveredItemData.stats.forEach(stat => allAttributes.add(stat.attribute));
+                                            compareEquipment.stats.forEach(stat => allAttributes.add(stat.attribute));
+                                            
+                                            const attributeDiffs: Array<{ attr: string; oldVal: number; newVal: number; diff: number }> = [];
+                                            
+                                            allAttributes.forEach(attr => {
+                                                const oldStat = compareEquipment.stats.find(s => s.attribute === attr);
+                                                const newStat = hoveredItemData.stats. find(s => s.attribute === attr);
+                                                
+                                                const oldVal = oldStat ? oldStat.value : 0;
+                                                const newVal = newStat ? newStat.value : 0;
+                                                const diff = newVal - oldVal;
+                                                
+                                                if (diff !== 0) {
+                                                    attributeDiffs.push({ attr, oldVal, newVal, diff });
+                                                }
+                                            });
+                                            
+                                            return attributeDiffs.map((item, idx) => {
+                                                const isUpgrade = item.diff > 0;
+                                                const diffColor = isUpgrade ? '#00ff00' : '#ff0000';
+                                                const diffSymbol = isUpgrade ? '↑' : '↓';
+                                                
+                                                return (
+                                                    <Panel key={idx} style={{ 
+                                                        width: '100%', 
+                                                        marginBottom: '5px',
+                                                        flowChildren: 'right'
+                                                    }}>
+                                                        <Label 
+                                                            text={`${item.attr}: `}
+                                                            style={{
+                                                                fontSize: '14px',
+                                                                color: '#cccccc',
+                                                            }}
+                                                        />
+                                                        <Label 
+                                                            text={`${diffSymbol} ${Math.abs(item.diff)}`}
+                                                            style={{
+                                                                fontSize: '14px',
+                                                                color: diffColor,
+                                                                fontWeight: 'bold',
+                                                            }}
+                                                        />
+                                                        <Label 
+                                                            text={` (${item.oldVal} → ${item.newVal})`}
+                                                            style={{
+                                                                fontSize: '12px',
+                                                                color: '#888888',
+                                                            }}
+                                                        />
+                                                    </Panel>
+                                                );
+                                            });
+                                        })()}
+                                    </Panel>
+                                </>
+                            ) : (
                                 <Panel style={{
-                                    width: '60px',
-                                    height: '60px',
-                                    backgroundImage: `url("${compareEquipment.icon}")`,
-                                    backgroundSize: 'cover',
-                                    marginRight: '10px',
-                                }} />
-                                <Panel style={{ flowChildren: 'down', width: '100%' }}>
+                                    width: '100%',
+                                    backgroundColor: '#2a2a2a',
+                                    padding: '15px',
+                                    flowChildren: 'down',
+                                }}>
                                     <Label 
-                                        text={compareEquipment.name}
+                                        text="✨ 当前未装备同类型装备"
                                         style={{
-                                            fontSize: '18px',
-                                            color: getQualityColor(compareEquipment),
-                                            fontWeight: 'bold',
-                                            marginBottom: '5px',
+                                            fontSize: '14px',
+                                            color: '#888888',
+                                            textAlign: 'center',
                                         }}
                                     />
                                     <Label 
-                                        text={compareEquipment.type}
-                                        style={{ fontSize: '14px', color: '#ffd700', marginBottom: '8px' }}
+                                        text="装备后将获得："
+                                        style={{
+                                            fontSize: '12px',
+                                            color: '#ffd700',
+                                            textAlign: 'center',
+                                            marginTop: '8px',
+                                            marginBottom: '5px',
+                                        }}
                                     />
-                                    
-                                    {compareEquipment.stats.map((stat, index) => (
+                                    {hoveredItemData.stats.map((stat, idx) => (
                                         <Label 
-                                            key={index}
-                                            text={`+${stat. value} ${stat. attribute}`}
-                                            style={{ 
-                                                fontSize: '15px', 
-                                                color: '#00ff00', 
+                                            key={idx}
+                                            text={`+${stat.value} ${stat.attribute}`}
+                                            style={{
+                                                fontSize: '14px',
+                                                color: '#00ff00',
+                                                textAlign: 'center',
                                                 fontWeight: 'bold',
-                                                marginBottom: '3px'
                                             }}
                                         />
                                     ))}
                                 </Panel>
-                            </Panel>
+                            )}
                         </Panel>
+                    </Panel>
+                );
+            })()}
 
-                        <Panel style={{
-                            width: '100%',
-                            backgroundColor: '#2a2a2a',
-                            padding: '15px',
-                            flowChildren: 'down',
-                        }}>
+            {/* ⭐ 装备确认面板 */}
+            {selectedItem !== null && vaultItems[selectedItem] && selectedPosition && (() => {
+                const item = vaultItems[selectedItem];
+                const qualityColor = getQualityColor(item);
+                const popupPos = getPopupPosition(selectedPosition, 320);
+                
+                return (
+                    <Panel 
+                        style={{
+                            width: '740px',
+                            height: '520px',
+                            backgroundColor: '#00000055',
+                            marginTop: '-520px',
+                        }}
+                        onactivate={() => setSelectedItem(null)}
+                    >
+                        <Panel 
+                            style={{
+                                width: '320px',
+                                backgroundColor: '#1a1a1acc',
+                                border: '3px solid #ffd700',
+                                padding: '15px',
+                                marginLeft: popupPos.marginLeft,
+                                marginTop: popupPos.marginTop,
+                                flowChildren: 'down',
+                            }}
+                            onactivate={() => {}}
+                        >
                             <Label 
-                                text="📈 属性变化"
+                                text="装备这件物品？"
                                 style={{
-                                    fontSize: '18px',
+                                    fontSize: '20px',
                                     color: '#ffd700',
+                                    textAlign: 'center',
                                     marginBottom: '10px',
                                     fontWeight: 'bold',
                                 }}
                             />
                             
-                            {(() => {
-                                const allAttributes = new Set<string>();
-                                hoveredItemData.stats.forEach(stat => allAttributes.add(stat.attribute));
-                                compareEquipment.stats.forEach(stat => allAttributes.add(stat.attribute));
-                                
-                                const attributeDiffs: Array<{ attr: string, oldVal: number, newVal: number, diff: number }> = [];
-                                
-                                allAttributes.forEach(attr => {
-                                    const oldStat = compareEquipment.stats.find(s => s.attribute === attr);
-                                    const newStat = hoveredItemData. stats.find(s => s.attribute === attr);
-                                    
-                                    const oldVal = oldStat ?  oldStat.value : 0;
-                                    const newVal = newStat ? newStat. value : 0;
-                                    const diff = newVal - oldVal;
-                                    
-                                    if (diff !== 0) {
-                                        attributeDiffs. push({ attr, oldVal, newVal, diff });
-                                    }
-                                });
-                                
-                                return attributeDiffs.map((item, index) => {
-                                    const isUpgrade = item.diff > 0;
-                                    const diffColor = isUpgrade ? '#00ff00' : '#ff0000';
-                                    const diffSymbol = isUpgrade ? '↑' : '↓';
-                                    
-                                    return (
-                                        <Panel key={index} style={{ 
-                                            width: '100%', 
-                                            marginBottom: '8px',
-                                            flowChildren: 'down'
-                                        }}>
-                                            <Label 
-                                                text={`${item.attr}: ${diffSymbol} ${Math.abs(item. diff)}`}
-                                                style={{
-                                                    fontSize: '17px',
-                                                    color: diffColor,
-                                                    fontWeight: 'bold',
-                                                }}
-                                            />
-                                            <Label 
-                                                text={`${item.oldVal} → ${item.newVal}`}
-                                                style={{
-                                                    fontSize: '13px',
-                                                    color: '#cccccc',
-                                                    marginTop: '2px',
-                                                }}
-                                            />
-                                        </Panel>
-                                    );
-                                });
-                            })()}
-                        </Panel>
-                    </>
-                ) : (
-                    <Panel style={{
-                        width: '100%',
-                        backgroundColor: '#2a2a2a',
-                        padding: '20px',
-                        flowChildren: 'down',
-                    }}>
-                        <Label 
-                            text="✨ 当前未装备同类型装备"
-                            style={{
-                                fontSize: '16px',
-                                color: '#888888',
-                                textAlign: 'center',
-                            }}
-                        />
-                        <Label 
-                            text="装备后将获得以下属性："
-                            style={{
-                                fontSize: '14px',
-                                color: '#ffd700',
-                                textAlign: 'center',
-                                marginTop: '10px',
+                            {/* 装备信息 */}
+                            <Panel style={{
+                                width: '100%',
+                                backgroundColor: '#0a0a0a',
+                                border: `2px solid ${qualityColor}`,
+                                padding: '10px',
                                 marginBottom: '10px',
-                            }}
-                        />
-                        {hoveredItemData. stats.map((stat, index) => (
-                            <Label 
-                                key={index}
-                                text={`+${stat.value} ${stat.attribute}`}
-                                style={{
-                                    fontSize: '16px',
-                                    color: '#00ff00',
-                                    textAlign: 'center',
-                                    fontWeight: 'bold',
-                                    marginBottom: '5px',
-                                }}
-                            />
-                        ))}
-                    </Panel>
-                )}
-            </Panel>
-        )}
-
-        {/* ⭐ 装备确认面板 - 浮动在仓库中央上层 */}
-        {selectedItem !== null && vaultItems[selectedItem] && (() => {
-            const item = vaultItems[selectedItem];
-            const qualityColor = getQualityColor(item);
-            
-            return (
-                <Panel style={{
-                    width: '500px',
-                    backgroundColor: '#1a1a1aee',
-                    border: '4px solid #ffd700',
-                    padding: '30px',
-                    // ⭐ 绝对定位：浮动在中央
-                    position: 'absolute',
-                    horizontalAlign: 'center',
-                    verticalAlign: 'center',
-                    zIndex: 300,
-                    flowChildren: 'down',
-                }}>
-                    <Label 
-                        text="装备这件物品？"
-                        style={{
-                            fontSize: '32px',
-                            color: '#ffd700',
-                            textAlign: 'center',
-                            marginBottom: '30px',
-                            fontWeight: 'bold',
-                        }}
-                    />
-                    
-                    <Panel style={{
-                        width: '100%',
-                        backgroundColor: '#0a0a0a',
-                        border: `3px solid ${qualityColor}`,
-                        padding: '25px',
-                        marginBottom: '35px',
-                        flowChildren: 'down',
-                    }}>
-                        <Panel style={{
-                            width: '100%',
-                            horizontalAlign: 'center',
-                            marginBottom: '20px',
-                        }}>
-                            <Image 
-                                src={item.icon}
-                                style={{
-                                    width: '80px',
-                                    height: '80px',
-                                }}
-                            />
+                                flowChildren: 'right',
+                            }}>
+                                <Image 
+                                    src={item. icon}
+                                    style={{
+                                        width: '50px',
+                                        height: '50px',
+                                        marginRight: '10px',
+                                    }}
+                                />
+                                <Panel style={{ flowChildren: 'down' }}>
+                                    <Label 
+                                        text={item.name}
+                                        style={{
+                                            fontSize: '16px',
+                                            color: qualityColor,
+                                            fontWeight: 'bold',
+                                            marginBottom: '3px',
+                                        }}
+                                    />
+                                    <Label 
+                                        text={item.type}
+                                        style={{
+                                            fontSize: '12px',
+                                            color: '#ffd700',
+                                            marginBottom: '5px',
+                                        }}
+                                    />
+                                    {item.stats.map((stat, idx) => (
+                                        <Label 
+                                            key={idx}
+                                            text={`+${stat.value} ${stat.attribute}`}
+                                            style={{
+                                                fontSize: '14px',
+                                                color: '#00ff00',
+                                                fontWeight: 'bold',
+                                            }}
+                                        />
+                                    ))}
+                                </Panel>
+                            </Panel>
+                            
+                            {/* 按钮区域 */}
+                            <Panel style={{
+                                width: '100%',
+                                flowChildren: 'right',
+                            }}>
+                                <Button 
+                                    onactivate={() => onEquipItem(selectedItem)}
+                                    style={{
+                                        width: '140px',
+                                        height: '40px',
+                                        backgroundColor: isEquipping ? '#888888' : '#4caf50',
+                                        marginRight: '10px',
+                                    }}
+                                    onmouseover={(panel) => {
+                                        if (! isEquipping) {
+                                            panel.style.backgroundColor = '#66bb6a';
+                                        }
+                                    }}
+                                    onmouseout={(panel) => {
+                                        if (!isEquipping) {
+                                            panel.style.backgroundColor = '#4caf50';
+                                        }
+                                    }}
+                                >
+                                    <Label 
+                                        text={isEquipping ? "装备中..." : "✔ 确认"}
+                                        style={{ fontSize: '16px', color: 'white', textAlign: 'center', fontWeight: 'bold' }} 
+                                    />
+                                </Button>
+                                
+                                <Button 
+                                    onactivate={() => setSelectedItem(null)}
+                                    style={{
+                                        width: '140px',
+                                        height: '40px',
+                                        backgroundColor: '#888888',
+                                    }}
+                                    onmouseover={(panel) => {
+                                        panel.style.backgroundColor = '#aaaaaa';
+                                    }}
+                                    onmouseout={(panel) => {
+                                        panel.style.backgroundColor = '#888888';
+                                    }}
+                                >
+                                    <Label text="✕ 取消" style={{ fontSize: '16px', color: 'white', textAlign: 'center', fontWeight: 'bold' }} />
+                                </Button>
+                            </Panel>
                         </Panel>
-                        
-                        <Label 
-                            text={item.name}
-                            style={{
-                                fontSize: '28px',
-                                color: qualityColor,
-                                textAlign: 'center',
-                                fontWeight: 'bold',
-                                marginBottom: '12px',
-                            }}
-                        />
-                        
-                        <Label 
-                            text={item.type}
-                            style={{
-                                fontSize: '22px',
-                                color: '#ffd700',
-                                textAlign: 'center',
-                                marginBottom: '20px',
-                            }}
-                        />
-                        
-                        <Panel style={{
-                            width: '100%',
-                            height: '2px',
-                            backgroundColor: '#555555',
-                            marginBottom: '20px',
-                        }} />
-                        
-                        {item.stats.map((stat, index) => (
-                            <Label 
-                                key={index}
-                                text={`+${stat. value} ${stat. attribute}`}
-                                style={{
-                                    fontSize: '24px',
-                                    color: '#00ff00',
-                                    textAlign: 'center',
-                                    fontWeight: 'bold',
-                                    marginBottom: '8px',
-                                }}
-                            />
-                        ))}
                     </Panel>
-                    
-                    <Panel style={{
-                        width: '100%',
-                        flowChildren: 'down',
-                    }}>
-                        <Button 
-                            onactivate={() => onEquipItem(selectedItem)}
-                            style={{
-                                width: '100%',
-                                height: '60px',
-                                backgroundColor: isEquipping ? '#888888' : '#4caf50',
-                                marginBottom: '15px',
-                                opacity: isEquipping ?  '0.5' : '1',
-                            }}
-                            onmouseover={(panel) => {
-                                if (! isEquipping) {
-                                    panel.style.backgroundColor = '#66bb6a';
-                                }
-                            }}
-                            onmouseout={(panel) => {
-                                if (!isEquipping) {
-                                    panel.style.backgroundColor = '#4caf50';
-                                }
-                            }}
-                        >
-                            <Label 
-                                text={isEquipping ? "⏳ 装备中..." : "✔ 确认装备"}
-                                style={{ fontSize: '26px', color: 'white', textAlign: 'center', fontWeight: 'bold' }} 
-                            />
-                        </Button>
-                        
-                        <Button 
-                            onactivate={() => setSelectedItem(null)}
-                            style={{
-                                width: '100%',
-                                height: '60px',
-                                backgroundColor: '#888888',
-                            }}
-                            onmouseover={(panel) => {
-                                panel.style. backgroundColor = '#aaaaaa';
-                            }}
-                            onmouseout={(panel) => {
-                                panel.style. backgroundColor = '#888888';
-                            }}
-                        >
-                            <Label text="✕ 取消" style={{ fontSize: '26px', color: 'white', textAlign: 'center', fontWeight: 'bold' }} />
-                        </Button>
-                    </Panel>
-                </Panel>
-            );
-        })()}
-    </Panel>
-);  }   
+                );
+            })()}
+        </Panel>
+    );
+};
