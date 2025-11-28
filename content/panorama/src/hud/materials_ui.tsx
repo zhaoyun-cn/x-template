@@ -17,40 +17,59 @@ interface MaterialsUIProps {
 export const MaterialsUI: React.FC<MaterialsUIProps> = ({ visible, onClose }) => {
     const [materials, setMaterials] = useState<MaterialItem[]>([]);
 
-    // ==================== 数据加载逻辑 ====================
-    useEffect(() => {
-        if (! visible) return;
+// ==================== 从网表获取数据 ====================
+useEffect(() => {
+    if (!visible) return;
 
-        $. Msg('[MaterialsUI] 界面打开，请求材料数据');
+    $. Msg('[MaterialsUI] 界面打开，从网表获取材料数据');
 
-        // 请求材料数据
-        (GameEvents.SendCustomGameEventToServer as any)('request_materials_data', {
-            PlayerID: Players.GetLocalPlayer()
-        });
-
-        // 监听材料数据更新
-        const materialsListener = GameEvents.Subscribe('update_materials_ui', (data: any) => {
-            $. Msg('[MaterialsUI] 收到材料数据:', data);
-
-            const items: MaterialItem[] = [];
-            if (data.materials) {
-                if (Array.isArray(data.materials)) {
-                    items.push(...data.materials);
-                } else if (typeof data.materials === 'object') {
-                    for (const key in data.materials) {
-                        items.push(data.materials[key]);
-                    }
-                }
+    const playerId = Players.GetLocalPlayer();
+    
+    // ⭐ 将网表对象转换为数组
+    const convertToArray = (data: any): MaterialItem[] => {
+        if (!data || ! data.items) return [];
+        
+        const items = data.items;
+        
+        // 如果已经是数组，直接返回
+        if (Array.isArray(items)) {
+            return items;
+        }
+        
+        // 如果是对象，转换为数组
+        const result: MaterialItem[] = [];
+        for (const key in items) {
+            if (items[key]) {
+                result.push(items[key]);
             }
-
+        }
+        return result;
+    };
+    
+    // 从网表读取初始数据
+    const loadMaterials = () => {
+        const data = CustomNetTables.GetTableValue('player_materials', playerId.toString());
+        const items = convertToArray(data);
+        setMaterials(items);
+        $. Msg(`[MaterialsUI] 从网表加载 ${items.length} 种材料`);
+    };
+    
+    // 初始加载
+    loadMaterials();
+    
+    // 监听网表变化
+    const listener = CustomNetTables. SubscribeNetTableListener('player_materials', (_, key, value) => {
+        if (key === playerId.toString() && value) {
+            $.Msg('[MaterialsUI] 网表数据更新');
+            const items = convertToArray(value);
             setMaterials(items);
-            $. Msg(`[MaterialsUI] 显示 ${items.length} 种材料`);
-        });
+        }
+    });
 
-        return () => {
-            GameEvents.Unsubscribe(materialsListener);
-        };
-    }, [visible]);
+    return () => {
+        CustomNetTables.UnsubscribeNetTableListener(listener);
+    };
+}, [visible]);
 
     if (!visible) return null;
 
@@ -67,9 +86,9 @@ export const MaterialsUI: React.FC<MaterialsUIProps> = ({ visible, onClose }) =>
                 backgroundColor: '#1c1410',
                 border: '4px solid #8b7355',
                 flowChildren: 'down',
-                  horizontalAlign: 'right',
-            verticalAlign: 'center',
-            marginRight: '20px',
+                horizontalAlign: 'right',
+                verticalAlign: 'center',
+                marginRight: '20px',
             }}
         >
             {/* 标题栏 */}
@@ -103,10 +122,10 @@ export const MaterialsUI: React.FC<MaterialsUIProps> = ({ visible, onClose }) =>
                         border: '2px solid #ff0000',
                     }}
                     onmouseover={(panel) => {
-                        panel.style.backgroundColor = '#b22222';
+                        panel. style.backgroundColor = '#b22222';
                     }}
                     onmouseout={(panel) => {
-                        panel. style.backgroundColor = '#8b0000';
+                        panel.style.backgroundColor = '#8b0000';
                     }}
                 >
                     <Label text="✕" style={{ fontSize: '24px', color: 'white', textAlign: 'center' }} />
@@ -120,10 +139,10 @@ export const MaterialsUI: React.FC<MaterialsUIProps> = ({ visible, onClose }) =>
                     height: '460px',
                     padding: '10px',
                     flowChildren: 'down',
-                    overflow: 'squish scroll', // 支持滚动
+                    overflow: 'squish scroll',
                 }}
             >
-                {materials.length === 0 ? (
+                {materials.length === 0 ?  (
                     <Label
                         text="暂无材料"
                         style={{

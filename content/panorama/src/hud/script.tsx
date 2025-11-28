@@ -467,21 +467,20 @@ const Root: FC = () => {
           
                 }}
             >
-                {/* 装备仓库弹窗 - 居中显示 */}
-        {vaultVisible && (
-            <Panel
-                style={{
-                  
-                    horizontalAlign: 'center',
-                    verticalAlign: 'center',
-                }}
-            >
-                <VaultUI 
-                    visible={vaultVisible} 
-                    onClose={() => setVaultVisible(false)} 
-                />
-            </Panel>
-        )}
+       {/* 装备仓库弹窗 - 居中显示 */}
+{vaultVisible && (
+    <Panel
+        style={{
+            horizontalAlign: 'center',
+            verticalAlign: 'center',
+        }}
+    >
+        <VaultUI 
+            visible={vaultVisible} 
+            onClose={() => setVaultVisible(false)} 
+        />
+    </Panel>
+)}
                 
                 {/* 材料仓库弹窗 */}
                 {materialsVisible && (

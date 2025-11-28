@@ -1,6 +1,6 @@
 declare interface CustomNetTableDeclarations {
 
-     game_timer: {
+    game_timer: {
         game_timer: {
             current_time: number;
             current_state: 1 | 2 | 3 | 4 | 5;
@@ -18,7 +18,7 @@ declare interface CustomNetTableDeclarations {
         key_1: number;
         key_2: string;
     };
-    // ⭐ 新增：玩家装备仓库网络表
+    // ⭐ 玩家装备仓库网络表
     player_vaults: {
         [playerId: string]: {
             items: Array<{
@@ -27,6 +27,19 @@ declare interface CustomNetTableDeclarations {
                 icon: string;
                 attribute: string;
                 value: number;
+            }>;
+            timestamp: number;
+        };
+    };
+    // ⭐ 新增：玩家材料仓库网络表
+    player_materials: {
+        [playerId: string]: {
+            items: Array<{
+                type: string;
+                name: string;
+                icon: string;
+                color: string;
+                count: number;
             }>;
             timestamp: number;
         };

@@ -250,6 +250,7 @@ export class ZoneLootSystem {
             inventory. items.set(drop.type, currentCount + drop.count);
             
             print(`[ZoneLoot] 玩家${playerId} 获得 ${LOOT_ITEMS[drop.type]. name} x${drop.count}`);
+                this.SyncMaterialsToNetTable(playerId);
         }
     }
     
@@ -300,6 +301,7 @@ export class ZoneLootSystem {
         }
         
         inventory.items.set(itemType, currentCount - count);
+        this. SyncMaterialsToNetTable(playerId);
         return true;
     }
     
@@ -310,5 +312,45 @@ export class ZoneLootSystem {
         const inventory = GetOrCreateInventory(playerId);
         const currentCount = inventory. items.get(itemType) || 0;
         inventory.items.set(itemType, currentCount + count);
+        this. SyncMaterialsToNetTable(playerId);
     }
+    
+/**
+ * 同步材料数据到网表
+ */
+public static SyncMaterialsToNetTable(playerId: PlayerID): void {
+    const inventory = this.GetInventory(playerId);
+    
+    // 转换为网表格式
+    const items: Array<{
+        type: string;
+        name: string;
+        icon: string;
+        color: string;
+        count: number;
+    }> = [];
+    
+    inventory.forEach((count, itemType) => {
+        if (count > 0) {
+            const config = LOOT_ITEMS[itemType];
+            if (config) {
+                items.push({
+                    type: itemType,
+                    name: config.name,
+                    icon: `s2r://panorama/images/items/${config.icon}_png. vtex`,
+                    color: config.color,
+                    count: count
+                });
+            }
+        }
+    });
+    
+    // 写入网表
+    CustomNetTables.SetTableValue('player_materials', playerId. toString(), {
+        items: items,
+        timestamp: GameRules.GetGameTime()
+    });
+    
+    print(`[ZoneLoot] 同步玩家 ${playerId} 的材料数据到网表，共 ${items.length} 种材料`);
+}
 }
