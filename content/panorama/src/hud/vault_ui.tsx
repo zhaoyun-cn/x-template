@@ -38,7 +38,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     useEffect(() => {
         if (! visible) return;
 
-        $. Msg('[VaultUI] 界面打开，请求仓库数据');
+        $.Msg('[VaultUI] 界面打开，请求仓库数据');
         
         (GameEvents.SendCustomGameEventToServer as any)('request_vault_data', {
             PlayerID: Players.GetLocalPlayer()
@@ -49,13 +49,13 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
         });
 
         const vaultListener = GameEvents.Subscribe('update_vault_ui', (data: any) => {
-            $. Msg('[VaultUI] 收到仓库数据:', data);
+            $.Msg('[VaultUI] 收到仓库数据:', data);
             
             const items: ExternalRewardItem[] = [];
             if (data.items) {
                 if (Array.isArray(data.items)) {
-                    items.push(...data.items. map((item: { stats: any; }) => ({
-                        ... item,
+                    items.push(...data.items.map((item: { stats: any; }) => ({
+                        ...item,
                         stats: Array.isArray(item.stats) ? item.stats : Object.values(item.stats || {})
                     })));
                 } else if (typeof data.items === 'object') {
@@ -73,11 +73,11 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
             }
             
             setVaultItems(items);
-            $. Msg(`[VaultUI] 显示 ${items.length} 件装备`);
+            $.Msg(`[VaultUI] 显示 ${items.length} 件装备`);
         });
 
         const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
-            $. Msg('[VaultUI] 收到装备数据:', data);
+            $.Msg('[VaultUI] 收到装备数据:', data);
             
             const processedEquipment: Record<string, ExternalRewardItem | null> = {};
             
@@ -90,7 +90,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                         : Object.values(item.stats || {});
                     
                     processedEquipment[slot] = {
-                        ... item,
+                        ...item,
                         stats: statsArray
                     };
                 } else {
@@ -110,11 +110,11 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     // ==================== 装备物品逻辑 ====================
     const onEquipItem = (index: number) => {
         if (isEquipping) {
-            $. Msg('[VaultUI] ⚠️ 正在装备中，请稍候...');
+            $.Msg('[VaultUI] ⚠️ 正在装备中，请稍候...');
             return;
         }
         
-        $. Msg(`[VaultUI] 装备索引 ${index} 的装备`);
+        $.Msg(`[VaultUI] 装备索引 ${index} 的装备`);
         
         setIsEquipping(true);
         
@@ -139,7 +139,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     const findEquippedItemByType = (itemType: string): ExternalRewardItem | null => {
         for (const slot in equippedItems) {
             const equipped = equippedItems[slot];
-            if (equipped && equipped. type === itemType) {
+            if (equipped && equipped.type === itemType) {
                 return equipped;
             }
         }
@@ -165,7 +165,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     };
 
     const keepHoverPanel = () => {
-        if (hoverTimeoutRef. current) {
+        if (hoverTimeoutRef.current) {
             clearTimeout(hoverTimeoutRef.current);
             hoverTimeoutRef.current = null;
         }
@@ -173,7 +173,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
 
     // ==================== 获取物品品质颜色 ====================
     const getQualityColor = (item: ExternalRewardItem): string => {
-        const totalValue = item. stats. reduce((sum, stat) => sum + stat.value, 0);
+        const totalValue = item.stats.reduce((sum, stat) => sum + stat.value, 0);
         
         if (totalValue >= 50) return '#ff8000';
         if (totalValue >= 35) return '#a335ee';
@@ -274,10 +274,10 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                         border: '2px solid #ff0000',
                     }}
                     onmouseover={(panel) => {
-                        panel. style.backgroundColor = '#b22222';
+                        panel.style.backgroundColor = '#b22222';
                     }}
                     onmouseout={(panel) => {
-                        panel. style.backgroundColor = '#8b0000';
+                        panel.style.backgroundColor = '#8b0000';
                     }}
                 >
                     <Label text="✕" style={{ fontSize: '28px', color: 'white', textAlign: 'center' }} />
@@ -372,7 +372,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                 border: '3px solid #ffd700',
                                 padding: '15px',
                                 marginLeft: hoverPos.marginLeft,
-                                marginTop: hoverPos. marginTop,
+                                marginTop: hoverPos.marginTop,
                                 flowChildren: 'down',
                                 overflow: 'squish scroll',
                             }}
@@ -482,7 +482,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                                     }}
                                                 />
                                                 <Label 
-                                                    text={compareEquipment. type}
+                                                    text={compareEquipment.type}
                                                     style={{ fontSize: '12px', color: '#ffd700', marginBottom: '5px' }}
                                                 />
                                                 {compareEquipment.stats.map((stat, idx) => (
@@ -526,7 +526,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                             
                                             allAttributes.forEach(attr => {
                                                 const oldStat = compareEquipment.stats.find(s => s.attribute === attr);
-                                                const newStat = hoveredItemData.stats. find(s => s.attribute === attr);
+                                                const newStat = hoveredItemData.stats.find(s => s.attribute === attr);
                                                 
                                                 const oldVal = oldStat ? oldStat.value : 0;
                                                 const newVal = newStat ? newStat.value : 0;
@@ -669,7 +669,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                 flowChildren: 'right',
                             }}>
                                 <Image 
-                                    src={item. icon}
+                                    src={item.icon}
                                     style={{
                                         width: '50px',
                                         height: '50px',

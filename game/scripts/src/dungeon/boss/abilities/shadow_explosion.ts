@@ -25,11 +25,11 @@ export class shadow_explosion extends BaseAbility {
         // 播放音效
         caster.EmitSound("Hero_Nevermore.Shadowraze");
         
-        // 1. 5秒后显示预警
+        // 1.5秒后显示预警
         Timers.CreateTimer(1.5, () => {
             this.ShowWarnings(origin, projectileCount);
             
-            // 再过1. 5秒发射弹道
+            // 再过1.5秒发射弹道
             Timers.CreateTimer(1.5, () => {
                 this.LaunchProjectiles(caster, origin, projectileCount);
                 return undefined;
@@ -59,7 +59,7 @@ export class shadow_explosion extends BaseAbility {
                 
                 const particle = ParticleManager.CreateParticle(
                     "particles/units/heroes/hero_leshrac/leshrac_split_earth.vpcf",
-                    ParticleAttachment. WORLDORIGIN,
+                    ParticleAttachment.WORLDORIGIN,
                     undefined
                 );
                 ParticleManager.SetParticleControl(particle, 0, pos);
@@ -67,7 +67,7 @@ export class shadow_explosion extends BaseAbility {
                 
                 Timers.CreateTimer(1.5, () => {
                     ParticleManager.DestroyParticle(particle, false);
-                    ParticleManager. ReleaseParticleIndex(particle);
+                    ParticleManager.ReleaseParticleIndex(particle);
                     return undefined;
                 });
             }
@@ -79,14 +79,14 @@ export class shadow_explosion extends BaseAbility {
         
         const speed = this.GetSpecialValueFor("projectile_speed") || 800;
         const phase = this.GetLevel();
-        const damage = PhaseConfig[phase]?. baseDamage || 200;
+        const damage = PhaseConfig[phase]?.baseDamage || 200;
         
         caster.EmitSound("Hero_Nevermore.Shadowraze");
         
         const angleStep = 360 / count;
         
         for (let i = 0; i < count; i++) {
-            const angle = (i * angleStep * Math. PI) / 180;
+            const angle = (i * angleStep * Math.PI) / 180;
             const velX = Math.cos(angle) * speed;
             const velY = Math.sin(angle) * speed;
             const velocity = Vector(velX, velY, 0);
@@ -101,8 +101,8 @@ export class shadow_explosion extends BaseAbility {
                 Source: caster,
                 bHasFrontalCone: false,
                 iUnitTargetTeam: UnitTargetTeam.ENEMY,
-                iUnitTargetFlags: UnitTargetFlags. NONE,
-                iUnitTargetType: UnitTargetType. HERO + UnitTargetType.BASIC,
+                iUnitTargetFlags: UnitTargetFlags.NONE,
+                iUnitTargetType: UnitTargetType.HERO + UnitTargetType.BASIC,
                 fExpireTime: GameRules.GetGameTime() + 2.0,
                
                 vVelocity: velocity,
@@ -139,7 +139,7 @@ export class shadow_explosion extends BaseAbility {
         // 击中特效
         const particle = ParticleManager.CreateParticle(
             "particles/units/heroes/hero_nevermore/nevermore_shadowraze_a.vpcf",
-            ParticleAttachment. ABSORIGIN,
+            ParticleAttachment.ABSORIGIN,
             target
         );
         ParticleManager.ReleaseParticleIndex(particle);
@@ -162,13 +162,13 @@ export class modifier_shadow_casting extends BaseModifier {
     }
     
     GetEffectAttachType(): ParticleAttachment {
-        return ParticleAttachment. ABSORIGIN_FOLLOW;
+        return ParticleAttachment.ABSORIGIN_FOLLOW;
     }
     
     CheckState(): Partial<Record<ModifierState, boolean>> {
         return {
-            [ModifierState. DISARMED]: true,
-            [ModifierState. ROOTED]: true,
+            [ModifierState.DISARMED]: true,
+            [ModifierState.ROOTED]: true,
         };
     }
     
@@ -179,6 +179,6 @@ export class modifier_shadow_casting extends BaseModifier {
     
     OnDestroy(): void {
         if (!IsServer()) return;
-        this. GetParent().FadeGesture(GameActivity.DOTA_CAST_ABILITY_4);
+        this.GetParent().FadeGesture(GameActivity.DOTA_CAST_ABILITY_4);
     }
 }

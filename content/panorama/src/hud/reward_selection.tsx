@@ -10,7 +10,7 @@ const formatStats = (stats: any): string => {
     if (statsArray.length === 0) return "无属性";
     
     return statsArray
-        .map((s: any) => `${s?. attribute || '未知'} +${s?.value || 0}`)
+        .map((s: any) => `${s?.attribute || '未知'} +${s?.value || 0}`)
         .join(", ");
 };
 export const RewardSelection: FC<{ visible: boolean; onSelect: (reward: ExternalRewardItem) => void }> = ({ visible, onSelect }) => {
@@ -21,7 +21,7 @@ const formatStats = (stats: any): string => {
     try {
         const statsArray = Array.isArray(stats) ? stats : Object.values(stats);
         return statsArray
-            . filter((s: any) => s && s.attribute)
+            .filter((s: any) => s && s.attribute)
             .map((s: any) => `${s.attribute} +${s.value}`)
             .join(", ") || "无属性";
     } catch (e) {
@@ -121,12 +121,12 @@ const formatStats = (stats: any): string => {
                                 panel.style.border = "3px solid #ffd700";
                             }}
                             onmouseout={(panel) => {
-                                panel. style.backgroundColor = "#2a2a2a";
+                                panel.style.backgroundColor = "#2a2a2a";
                                 panel.style.border = "2px solid #ffaa00";
                             }}
                         >
                             <Label 
-                                text={`${index + 1}. `}
+                                text={`${index + 1}.`}
                                 style={{ 
                                     fontSize: "32px", 
                                     color: "#ffd700",

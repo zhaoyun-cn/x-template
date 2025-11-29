@@ -9,7 +9,7 @@ interface ISequenceAction {
      */
     start(): void;
     /**
-     * Called per frame. First call will be on the same frame as `start()` is called;
+     * Called per frame.First call will be on the same frame as `start()` is called;
      * Return false when this action is complete.
      */
     update(): boolean;
@@ -120,7 +120,7 @@ function RunParallelActions(actions: ISequenceAction[]): void {
 }
 
 /**
- * Action to run multiple actions all at once. The action is complete once all sub actions are done.
+ * Action to run multiple actions all at once.The action is complete once all sub actions are done.
  */
 class ParallelActions implements ISequenceAction {
     actions: ISequenceAction[];
@@ -412,7 +412,7 @@ class DispatchEventAction<E extends PanoramaEvents.PanoramaEventName> extends Fu
     }
 }
 
-/** Action that waits for a specific event type to be fired on the given panel. */
+/** Action that waits for a specific event type to be fired on the given panel.*/
 class WaitForEventAction extends BaseAction {
     panel: Panel;
     eventName: PanoramaEvents.PanoramaEventName;
@@ -637,7 +637,7 @@ class PlaySoundUntilFinishedAction extends SequentialActions {
     }
 }
 
-/** Base class that you can override an `applyProgress` to do a simple Lerp over X seconds. */
+/** Base class that you can override an `applyProgress` to do a simple Lerp over X seconds.*/
 class LerpAction implements ISequenceAction {
     startTimestamp = 0;
     endTimestamp = 0;
@@ -812,7 +812,7 @@ class AnimateEntityInputAction implements ISequenceAction {
     }
 }
 
-/** Starts ducking all UI music. Quack */
+/** Starts ducking all UI music.Quack */
 class StartDuckingUIMusicAction extends FunctionAction {
     constructor(panel: Panel) {
         super(() => {
@@ -821,7 +821,7 @@ class StartDuckingUIMusicAction extends FunctionAction {
     }
 }
 
-/** Stops ducking all UI music. Quack */
+/** Stops ducking all UI music.Quack */
 class StopDuckingUIMusicAction extends FunctionAction {
     constructor(panel: Panel) {
         super(() => {
@@ -832,7 +832,7 @@ class StopDuckingUIMusicAction extends FunctionAction {
 
 const g_trackedSoundEvents: number[] = [];
 /** Helper action that keeps track of any sounds that are playing.
- *  Call `StopAllTrackedSounds` when the page is closing to stop them. */
+ *  Call `StopAllTrackedSounds` when the page is closing to stop them.*/
 class PlayAndTrackSoundAction extends FunctionAction {
     constructor(soundName: string) {
         super(() => g_trackedSoundEvents.push(PlayUISoundScript(soundName)));

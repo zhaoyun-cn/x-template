@@ -270,7 +270,7 @@ end
 -- generate key schedule for aes decryption
 --
 -- uses key schedule for aes encryption and transforms each
--- key by inverse mix column. 
+-- key by inverse mix column.
 --
 function public.expandDecryptionKey(key)
     local keySchedule = public.expandEncryptionKey(key);

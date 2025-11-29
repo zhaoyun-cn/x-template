@@ -23,13 +23,13 @@ export class LootSystem {
         
         if (!hero) return;
         
-        // 1. 必掉物品
+        // 1.必掉物品
         for (const itemName of lootConfig.guaranteedItems) {
             this.CreateItemDrop(itemName, bossPos);
             print(`[LootSystem] Dropped guaranteed: ${itemName}`);
         }
         
-        // 2.  随机掉落
+        // 2. 随机掉落
         for (const itemDrop of lootConfig.randomItems) {
             if (RandomFloat(0, 1) <= itemDrop.dropChance) {
                 const count = RandomInt(itemDrop.minCount, itemDrop.maxCount);
@@ -40,9 +40,9 @@ export class LootSystem {
             }
         }
         
-        // 3. 掉落金币
-        const goldAmount = RandomInt(lootConfig. gold.min, lootConfig.gold.max);
-        hero.ModifyGold(goldAmount, true, ModifyGoldReason. UNSPECIFIED);
+        // 3.掉落金币
+        const goldAmount = RandomInt(lootConfig.gold.min, lootConfig.gold.max);
+        hero.ModifyGold(goldAmount, true, ModifyGoldReason.UNSPECIFIED);
         
         GameRules.SendCustomMessage(
             `<font color='#FFD700'>💰 Boss掉落：+${goldAmount}金币</font>`,
@@ -62,13 +62,13 @@ export class LootSystem {
         
         if (!hero) return;
         
-        // 1. 金币
-        hero.ModifyGold(reward. gold, true, ModifyGoldReason.UNSPECIFIED);
+        // 1.金币
+        hero.ModifyGold(reward.gold, true, ModifyGoldReason.UNSPECIFIED);
         
-        // 2.  经验
+        // 2. 经验
         hero.AddExperience(reward.experience, ModifyXpReason.UNSPECIFIED, false, true);
         
-        // 3. 奖励物品直接放入背包
+        // 3.奖励物品直接放入背包
         for (const itemName of reward.items) {
             // ⭐ 修复：使用 null 而不是 hero
             const item = CreateItem(itemName, null, null);
@@ -88,7 +88,7 @@ export class LootSystem {
             difficultyText = "困难";
         }
         
-        GameRules. SendCustomMessage(
+        GameRules.SendCustomMessage(
             `<font color='#00FF00'>🎉 ${difficultyText}难度通关奖励：+${reward.gold}金币 +${reward.experience}经验</font>`,
             playerId,
             0
@@ -125,7 +125,7 @@ export class LootSystem {
                 undefined
             );
             ParticleManager.SetParticleControl(particle, 0, dropPos);
-            ParticleManager. ReleaseParticleIndex(particle);
+            ParticleManager.ReleaseParticleIndex(particle);
         }
     }
     

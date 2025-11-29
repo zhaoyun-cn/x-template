@@ -71,7 +71,7 @@ function private.bytesToHex(bytes)
     local hexBytes = "";
     
     for i,byte in ipairs(bytes) do 
-        hexBytes = hexBytes .. string.format("%02x ", byte);
+        hexBytes = hexBytes ..string.format("%02x ", byte);
     end
 
     return hexBytes;
@@ -110,15 +110,15 @@ function public.padByteString(data)
                                public.getByte(dataLength, 1),
                                public.getByte(dataLength, 0));
 
-    data = prefix .. data;
+    data = prefix ..data;
 
     local paddingLength = math.ceil(#data/16)*16 - #data;
     local padding = "";
     for i=1,paddingLength do
-        padding = padding .. string.char(math.random(0,255));
+        padding = padding ..string.char(math.random(0,255));
     end 
 
-    return data .. padding;
+    return data ..padding;
 end
 
 function private.properlyDecrypted(data)

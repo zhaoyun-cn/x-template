@@ -53,14 +53,14 @@ export const MaterialsUI: React.FC<MaterialsUIProps> = ({ visible, onClose }) =>
         };
         
         const loadMaterials = () => {
-            const data = CustomNetTables.GetTableValue('player_materials', playerId. toString());
+            const data = CustomNetTables.GetTableValue('player_materials', playerId.toString());
             const items = convertToArray(data);
             setMaterials(items);
         };
         
         loadMaterials();
         
-        const listener = CustomNetTables. SubscribeNetTableListener('player_materials', (_, key, value) => {
+        const listener = CustomNetTables.SubscribeNetTableListener('player_materials', (_, key, value) => {
             if (key === playerId.toString()) {
                 const items = convertToArray(value);
                 setMaterials(items);
@@ -70,7 +70,7 @@ export const MaterialsUI: React.FC<MaterialsUIProps> = ({ visible, onClose }) =>
         // 监听材料使用结果
         const useListener = GameEvents.Subscribe('material_used', (data: any) => {
             setIsUsing(false);
-            if (data. success) {
+            if (data.success) {
                 Game.EmitSound('ui.crafting_gem_create');
             }
         });
@@ -92,10 +92,10 @@ export const MaterialsUI: React.FC<MaterialsUIProps> = ({ visible, onClose }) =>
         // ⭐ 防抖检查: 距离上次使用是否超过 0.2秒
         const now = Date.now();
         if (now - lastUseTimeRef.current < USE_DEBOUNCE_MS) {
-            $. Msg('[MaterialsUI] 操作过快，请稍候');
+            $.Msg('[MaterialsUI] 操作过快，请稍候');
             return;
         }
-        lastUseTimeRef. current = now;
+        lastUseTimeRef.current = now;
         
         setIsUsing(true);
         
@@ -343,7 +343,7 @@ export const MaterialsUI: React.FC<MaterialsUIProps> = ({ visible, onClose }) =>
                 
                 {/* 数量 */}
                 <Label
-                    text={"数量: " + hoveredItem. count}
+                    text={"数量: " + hoveredItem.count}
                     style={{
                         fontSize: "14px",
                         color: "#888888",

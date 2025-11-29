@@ -735,11 +735,11 @@ function checkSubjectAndTargetRecursively(subject: any, target: any, path: strin
  * @param easing 缓动函数
  */
 function checkNewParams(duration: number, subject: any, target: any, easing: any) {
-    assert(type(duration) == 'number' && duration > 0, 'duration must be a positive number. Was ' + tostring(duration));
+    assert(type(duration) == 'number' && duration > 0, 'duration must be a positive number.Was ' + tostring(duration));
     const tsubject = type(subject);
-    assert(tsubject == 'table' || tsubject == 'userdata', 'subject must be a table or userdata. Was ' + tostring(subject));
-    assert(type(target) == 'table', 'target must be a table. Was ' + tostring(target));
-    assert(type(easing) == 'function', 'easing must be a function. Was ' + tostring(easing));
+    assert(tsubject == 'table' || tsubject == 'userdata', 'subject must be a table or userdata.Was ' + tostring(subject));
+    assert(type(target) == 'table', 'target must be a table.Was ' + tostring(target));
+    assert(type(easing) == 'function', 'easing must be a function.Was ' + tostring(easing));
     checkSubjectAndTargetRecursively(subject, target);
 }
 

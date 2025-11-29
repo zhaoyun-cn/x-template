@@ -39,7 +39,7 @@ export const DIFFICULTY_CONFIG: Record<DungeonDifficulty, DifficultyModifier> = 
         displayName: "普通",
         color: "#FFA500"
     },
-    [DungeonDifficulty. HARD]: {
+    [DungeonDifficulty.HARD]: {
         healthMultiplier: 1.5,
         damageMultiplier: 1.3,
         goldReward: 2000,

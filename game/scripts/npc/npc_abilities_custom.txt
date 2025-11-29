@@ -241,7 +241,7 @@
             "projectile_speed"      "800"
             "projectile_radius"     "150"
             "damage"                "200 300 400"
-            "stun_duration"         "1. 5"
+            "stun_duration"         "1.5"
             "warning_duration"      "1.5"
         }
     }

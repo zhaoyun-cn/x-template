@@ -9,7 +9,8 @@ export enum EquipmentAttribute {
     ATTACK_DAMAGE = "攻击力",
     ATTACK_SPEED = "攻击速度",
     MOVE_SPEED = "移动速度",
-    MAGIC_RESISTANCE = "魔抗"
+    MAGIC_RESISTANCE = "魔抗",
+    STATUS_RESISTANCE = "STATUS_RESISTANCE"
 }
 
 // 局外装备类型枚举
@@ -58,7 +59,7 @@ export const EXTERNAL_REWARD_POOL: ExternalRewardItem[] = [
         icon: "file://{images}/items/claymore.png", 
         stats: [
             { attribute: EquipmentAttribute.STRENGTH, value: 8 },
-            { attribute: EquipmentAttribute. ATTACK_DAMAGE, value: 18 }
+            { attribute: EquipmentAttribute.ATTACK_DAMAGE, value: 18 }
         ]
     },
     
@@ -68,7 +69,7 @@ export const EXTERNAL_REWARD_POOL: ExternalRewardItem[] = [
         type: ExternalItemType.ARMOR, 
         icon: "file://{images}/items/ring_of_protection.png", 
         stats: [
-            { attribute: EquipmentAttribute. ARMOR, value: 3 },
+            { attribute: EquipmentAttribute.ARMOR, value: 3 },
             { attribute: EquipmentAttribute.HEALTH, value: 100 }
         ]
     },
@@ -118,7 +119,7 @@ export const EXTERNAL_REWARD_POOL: ExternalRewardItem[] = [
     { 
         name: "敏捷戒指", 
         type: ExternalItemType.RING, 
-        icon: "file://{images}/items/ring_of_aquila. png", 
+        icon: "file://{images}/items/ring_of_aquila.png", 
         stats: [
             { attribute: EquipmentAttribute.AGILITY, value: 7 },
             { attribute: EquipmentAttribute.ARMOR, value: 2 }

@@ -2,7 +2,7 @@
 export const ShadowFiendCosmetics = {
     // 基础模型
     base: [
-        "models/heroes/shadow_fiend/shadow_fiend. vmdl",
+        "models/heroes/shadow_fiend/shadow_fiend.vmdl",
         "models/heroes/shadow_fiend/shadow_fiend_head.vmdl",
         "models/heroes/shadow_fiend/shadow_fiend_shoulders.vmdl",
         "models/heroes/shadow_fiend/shadow_fiend_arms.vmdl",
@@ -13,7 +13,7 @@ export const ShadowFiendCosmetics = {
     
     // 粒子特效
     particles: [
-        "particles/units/heroes/hero_nevermore/nevermore_shadowraze. vpcf",
+        "particles/units/heroes/hero_nevermore/nevermore_shadowraze.vpcf",
         "particles/units/heroes/hero_nevermore/nevermore_shadowraze_a.vpcf",
         "particles/units/heroes/hero_nevermore/nevermore_necro_souls.vpcf",
         "particles/units/heroes/hero_leshrac/leshrac_split_earth.vpcf",
@@ -22,14 +22,14 @@ export const ShadowFiendCosmetics = {
         
         // ✅ 阶段特效
         "particles/units/heroes/hero_shadow_demon/shadow_demon_soul_catcher.vpcf",
-        "particles/econ/items/doom/doom_f2p_death_effect/doom_bringer_f2p_death. vpcf",
+        "particles/econ/items/doom/doom_f2p_death_effect/doom_bringer_f2p_death.vpcf",
         "particles/units/heroes/hero_necrolyte/necrolyte_pulse_enemy.vpcf",
         "particles/units/heroes/hero_doom_bringer/doom_bringer_scorched_earth.vpcf",
     ],
     
     // 音效
     sounds: [
-        "soundevents/game_sounds_heroes/game_sounds_nevermore. vsndevts",
+        "soundevents/game_sounds_heroes/game_sounds_nevermore.vsndevts",
         "soundevents/game_sounds_heroes/game_sounds_phoenix.vsndevts",
         "soundevents/game_sounds_heroes/game_sounds_ursa.vsndevts",
     ],
@@ -37,7 +37,7 @@ export const ShadowFiendCosmetics = {
 
 // 获取所有需要预加载的模型
 export function GetAllModels(): string[] {
-    return [... ShadowFiendCosmetics.base];
+    return [...ShadowFiendCosmetics.base];
 }
 
 // ✅ 阶段配置 - 不使用装备，只用视觉效果

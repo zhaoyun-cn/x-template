@@ -50,7 +50,7 @@ dota_tooltip_ability_warrior_execute_execute_threshold,,斩杀阈值：
 dota_tooltip_ability_warrior_execute_damage_multiplier,,伤害倍率：
 ,,
 dota_tooltip_ability_shadow_explosion,,暗影爆发
-dota_tooltip_ability_shadow_explosion_Description,,Boss吟唱1. 5秒后，向周围发射多个方向的暗影弹道（阶段1:4个 | 阶段2:8个 | 阶段3:16个），造成魔法伤害并眩晕。
+dota_tooltip_ability_shadow_explosion_Description,,Boss吟唱1.5秒后，向周围发射多个方向的暗影弹道（阶段1:4个 | 阶段2:8个 | 阶段3:16个），造成魔法伤害并眩晕。
 dota_tooltip_ability_shadow_explosion_projectile_speed,,弹道速度：
 dota_tooltip_ability_shadow_explosion_stun_duration,,眩晕时间：
 dota_tooltip_ability_shadow_explosion_projectile_count,,弹道数量：

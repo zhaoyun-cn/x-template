@@ -34,28 +34,28 @@ export class modifier_equipment_system extends BaseModifier {
         print("[modifier_equipment_system] ✓ Modifier created");
         
         if (IsServer()) {
-            const playerId = params. playerId;
-            const globalStats = _G. EquipmentStats?.[playerId];
+            const playerId = params.playerId;
+            const globalStats = _G.EquipmentStats?.[playerId];
             
             if (globalStats) {
                 this.stats = {
                     strength: globalStats.strength || 0,
                     agility: globalStats.agility || 0,
                     intelligence: globalStats.intelligence || 0,
-                    armor: globalStats. armor || 0,
+                    armor: globalStats.armor || 0,
                     health: globalStats.health || 0,
                     mana: globalStats.mana || 0,
                     attack_damage: globalStats.attack_damage || 0,
-                    attack_speed: globalStats. attack_speed || 0,
+                    attack_speed: globalStats.attack_speed || 0,
                     move_speed: globalStats.move_speed || 0,
                     magic_resistance: globalStats.magic_resistance || 0,
                 };
                 
                 print(`[modifier_equipment_system] 接收装备属性:`);
-                print(`  攻击速度: +${this.stats. attack_speed}`);
+                print(`  攻击速度: +${this.stats.attack_speed}`);
                 
                 // ⭐ 关键：用 SetStackCount 同步攻击速度到客户端
-                this.SetStackCount(this.stats. attack_speed);
+                this.SetStackCount(this.stats.attack_speed);
                 
                 const parent = this.GetParent() as CDOTA_BaseNPC_Hero;
                 if (parent && parent.IsHero()) {
@@ -67,9 +67,9 @@ export class modifier_equipment_system extends BaseModifier {
 
     DeclareFunctions(): ModifierFunction[] {
         return [
-            ModifierFunction. STATS_STRENGTH_BONUS,
-            ModifierFunction. STATS_AGILITY_BONUS,
-            ModifierFunction. STATS_INTELLECT_BONUS,
+            ModifierFunction.STATS_STRENGTH_BONUS,
+            ModifierFunction.STATS_AGILITY_BONUS,
+            ModifierFunction.STATS_INTELLECT_BONUS,
             ModifierFunction.PHYSICAL_ARMOR_BONUS,
             ModifierFunction.HEALTH_BONUS,
             ModifierFunction.MANA_BONUS,
@@ -77,12 +77,12 @@ export class modifier_equipment_system extends BaseModifier {
             ModifierFunction.BASEATTACK_BONUSDAMAGE,
             ModifierFunction.ATTACKSPEED_BONUS_CONSTANT,
             ModifierFunction.MOVESPEED_BONUS_CONSTANT,
-            ModifierFunction. MAGICAL_RESISTANCE_BONUS,
+            ModifierFunction.MAGICAL_RESISTANCE_BONUS,
         ];
     }
 
     GetModifierBonusStats_Strength(): number {
-        return this. stats.strength || 0;
+        return this.stats.strength || 0;
     }
 
     GetModifierBonusStats_Agility(): number {
@@ -90,7 +90,7 @@ export class modifier_equipment_system extends BaseModifier {
     }
 
     GetModifierBonusStats_Intellect(): number {
-        return this.stats. intelligence || 0;
+        return this.stats.intelligence || 0;
     }
 
     GetModifierPhysicalArmorBonus(): number {
@@ -98,11 +98,11 @@ export class modifier_equipment_system extends BaseModifier {
     }
 
     GetModifierHealthBonus(): number {
-        return this.stats. health || 0;
+        return this.stats.health || 0;
     }
 
     GetModifierManaBonus(): number {
-        return this. stats.mana || 0;
+        return this.stats.mana || 0;
     }
 
     GetModifierPreAttack_BonusDamage(): number {

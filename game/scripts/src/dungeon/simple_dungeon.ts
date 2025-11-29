@@ -18,13 +18,13 @@ export class SimpleDungeon {
     private currentRoom: number = 0;
     private playerId: PlayerID | undefined;
     private bossManager: ShadowFiendBoss | undefined;
-    private currentDifficulty: DungeonDifficulty = DungeonDifficulty. NORMAL_1;
+    private currentDifficulty: DungeonDifficulty = DungeonDifficulty.NORMAL_1;
     private currentRewards: ExternalRewardItem[] = [];
     
     constructor() {
-        print("=".  repeat(50));
-        print("[SimpleDungeon] Constructor called!");
         print("=". repeat(50));
+        print("[SimpleDungeon] Constructor called!");
+        print("=".repeat(50));
         
         this.RegisterCommand();
         this.ListenToEvents();
@@ -36,20 +36,20 @@ export class SimpleDungeon {
 
     private ListenToChatCommand(): void {
         ListenToGameEvent("player_chat", (event) => {
-            const text = event.text. trim();
+            const text = event.text.trim();
             const playerId = event.playerid as PlayerID;
             
             print(`[SimpleDungeon] Received chat: "${text}"`);
             
             if (text === "-start" || text === "start") {
                 print(`[SimpleDungeon] Start command triggered by player ${playerId}`);
-                this. StartDungeon(playerId);
+                this.StartDungeon(playerId);
             }
             
             if (text === "-vault" || text === "vault" || text === "-v" || text === "v") {
                 const player = PlayerResource.GetPlayer(playerId);
                 if (player) {
-                    (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'show_vault_ui', {});
+                    (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'show_vault_ui', {});
                     
                     const vault = EquipmentVaultSystem.GetVault(playerId);
                     (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
@@ -71,11 +71,11 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
         // ⭐ 序列化为数组，保持 stats 为数组
         const serializedItems: any[] = [];
         vault.forEach((item) => {
-            serializedItems. push({
-                name: item. name,
-                type: item. type,
-                icon: item. icon,
-                stats: item. stats  // ✅ 直接使用数组
+            serializedItems.push({
+                name: item.name,
+                type: item.type,
+                icon: item.icon,
+                stats: item.stats  // ✅ 直接使用数组
             });
         });
         
@@ -87,13 +87,13 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
     }
 });
         
-CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event: any) => {
+CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event: any) => {
     const playerId = event.PlayerID as PlayerID;
     const index = event.index as number;
     
     print(`[SimpleDungeon] 玩家${playerId}从 UI 装备索引${index}的物品`);
     
-    if (EquipmentVaultSystem. EquipItem(playerId, index)) {
+    if (EquipmentVaultSystem.EquipItem(playerId, index)) {
         const player = PlayerResource.GetPlayer(playerId);
         if (player) {
             // ⭐ 序列化仓库数据
@@ -115,7 +115,7 @@ CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event
                 const item = equipment[slot];
                 if (item) {
                     serializedEquipment[slot] = {
-                        name: item. name,
+                        name: item.name,
                         type: item.type,
                         icon: item.icon,
                         stats: item.stats
@@ -182,14 +182,14 @@ CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event
         
         const difficultyMap: Record<string, DungeonDifficulty> = {
             "easy_1": DungeonDifficulty.EASY_1,
-            "easy_2": DungeonDifficulty.  EASY_2,
+            "easy_2": DungeonDifficulty. EASY_2,
             "easy_3": DungeonDifficulty.EASY_3,
             "normal_1": DungeonDifficulty.NORMAL_1,
-            "normal_2": DungeonDifficulty.  NORMAL_2,
+            "normal_2": DungeonDifficulty. NORMAL_2,
             "normal_3": DungeonDifficulty.NORMAL_3,
-            "hard_1": DungeonDifficulty.  HARD_1,
+            "hard_1": DungeonDifficulty. HARD_1,
             "hard_2": DungeonDifficulty.HARD_2,
-            "hard_3": DungeonDifficulty.  HARD_3
+            "hard_3": DungeonDifficulty. HARD_3
         };
         
         this.currentDifficulty = difficultyMap[diff] || DungeonDifficulty.NORMAL_1;
@@ -294,7 +294,7 @@ CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event
         if (boss.IsHero()) {
             const heroBoss = boss as CDOTA_BaseNPC_Hero;
             
-            heroBoss.SetTeam(DotaTeam. BADGUYS);
+            heroBoss.SetTeam(DotaTeam.BADGUYS);
             heroBoss.SetAbilityPoints(0);
             
             for (let i = 1; i <= 10; i++) {
@@ -416,7 +416,7 @@ CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event
             ParticleAttachment.ABSORIGIN_FOLLOW,
             boss
         );
-        ParticleManager.SetParticleControl(particle, 0, boss. GetAbsOrigin());
+        ParticleManager.SetParticleControl(particle, 0, boss.GetAbsOrigin());
         
         print(`[SimpleDungeon] Boss enhanced!  HP: ${boss.GetMaxHealth()}`);
     }
@@ -429,7 +429,7 @@ CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event
         if (!playerId) return;
 
         this.currentRewards = this.GenerateRewards();
-        print(`[SimpleDungeon] Generated rewards: ${this.currentRewards. map(r => r.name).join(", ")}`);
+        print(`[SimpleDungeon] Generated rewards: ${this.currentRewards.map(r => r.name).join(", ")}`);
 
         const player = PlayerResource.GetPlayer(playerId);
         if (player) {
@@ -448,12 +448,12 @@ CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event
 
     private GenerateRewards(): ExternalRewardItem[] {
         const rewards: ExternalRewardItem[] = [];
-        const pool = [... EXTERNAL_REWARD_POOL];
+        const pool = [...EXTERNAL_REWARD_POOL];
 
         for (let i = 0; i < 3; i++) {
             if (pool.length === 0) break;
 
-            const randomIndex = Math.floor(Math. random() * pool.length);
+            const randomIndex = Math.floor(Math.random() * pool.length);
             rewards.push(pool[randomIndex]);
             pool.splice(randomIndex, 1);
         }
@@ -478,7 +478,7 @@ CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event
                 
                 // ⭐ 修复：使用 stats 数组
                 const statsText = selectedReward.stats.map(s => `${s.attribute} +${s.value}`).join(", ");
-                GameRules. SendCustomMessage(
+                GameRules.SendCustomMessage(
                     `<font color='#FF6EC7'>💾 已保存装备：${selectedReward.name} (${statsText})</font>`,
                     playerId,
                     0
@@ -497,14 +497,14 @@ CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event
 
         const index = this.monsters.indexOf(killedUnit as CDOTA_BaseNPC);
         if (index !== -1) {
-            this.monsters. splice(index, 1);
+            this.monsters.splice(index, 1);
             print(`[SimpleDungeon] Monster killed!  Remaining: ${this.monsters.length}`);
 
             if (this.monsters.length === 0) {
                 print(`[SimpleDungeon] 所有怪物已被击杀，房间 ${this.currentRoom} 清空`);
                 
                 if (this.currentRoom === 3 && this.playerId !== undefined) {
-                    LootSystem. DropBossLoot(
+                    LootSystem.DropBossLoot(
                         killedUnit as CDOTA_BaseNPC, 
                         this.currentDifficulty, 
                         this.playerId
@@ -525,7 +525,7 @@ CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event
 
         if (this.currentRoom === 1) {
             GameRules.SendCustomMessage(
-                "<font color='#00FF00'>✓ 房间1清空！3秒后传送到房间2... </font>", 
+                "<font color='#00FF00'>✓ 房间1清空！3秒后传送到房间2...</font>", 
                 this.playerId, 
                 0
             );
@@ -581,7 +581,7 @@ CustomGameEventManager. RegisterListener("equip_item_from_vault", (userId, event
     }
 
     private OnComplete(): void {
-        print("=". repeat(50));
+        print("=".repeat(50));
         print("[SimpleDungeon] 🎉 DUNGEON COMPLETE! 🎉");
         print("=".repeat(50));
         

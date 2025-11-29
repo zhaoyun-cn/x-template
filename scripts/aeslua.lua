@@ -27,9 +27,9 @@ function private.pwToKey(password, keyLength)
     if (padLength > #password) then
         local postfix = "";
         for i = 1,padLength - #password do
-            postfix = postfix .. string.char(0);
+            postfix = postfix ..string.char(0);
         end
-        password = password .. postfix;
+        password = password ..postfix;
     else
         password = string.sub(password, 1, padLength);
     end

@@ -341,7 +341,7 @@ local md5 = {
   
   local function md5_update(self, s)
     self.pos = self.pos + #s
-    s = self.buf .. s
+    s = self.buf ..s
     for ii = 1, #s - 63, 64 do
       local X = cut_le_str(sub(s,ii,ii+63),4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4)
       assert(#X == 16)
@@ -360,11 +360,11 @@ local md5 = {
   
     if padLen == 0 then padLen = 64 end
   
-    local s = char(128) .. rep(char(0),padLen-1) .. lei2str(bit_and(8*msgLen, 0xFFFFFFFF)) .. lei2str(math.floor(msgLen/0x20000000))
+    local s = char(128) ..rep(char(0),padLen-1) ..lei2str(bit_and(8*msgLen, 0xFFFFFFFF)) ..lei2str(math.floor(msgLen/0x20000000))
     md5_update(self, s)
   
     assert(self.pos % 64 == 0)
-    return lei2str(self.a) .. lei2str(self.b) .. lei2str(self.c) .. lei2str(self.d)
+    return lei2str(self.a) ..lei2str(self.b) ..lei2str(self.c) ..lei2str(self.d)
   end
   
   ----------------------------------------------------------------

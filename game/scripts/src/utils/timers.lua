@@ -5,20 +5,20 @@ TIMERS_VERSION = "1.08"
 	DO NOT MODIFY A REALTIME TIMER TO USE GAMETIME OR VICE VERSA MIDWAY WITHOUT FIRST REMOVING AND RE-ADDING THE TIMER
 	-- A timer running every second that starts immediately on the next frame, respects pauses
 	Timers:CreateTimer(function()
-			print ("Hello. I'm running immediately and then every second thereafter.")
+			print ("Hello.I'm running immediately and then every second thereafter.")
 			return 1.0
 		end
 	)
 	-- The same timer as above with a shorthand call
 	Timers(function()
-		print ("Hello. I'm running immediately and then every second thereafter.")
+		print ("Hello.I'm running immediately and then every second thereafter.")
 		return 1.0
 	end)
 	-- A timer which calls a function with a table context
 	Timers:CreateTimer(GameMode.someFunction, GameMode)
 	-- A timer running every second that starts 5 seconds in the future, respects pauses
 	Timers:CreateTimer(5, function()
-			print ("Hello. I'm running 5 seconds after you called me and then every second thereafter.")
+			print ("Hello.I'm running 5 seconds after you called me and then every second thereafter.")
 			return 1.0
 		end
 	)
@@ -26,7 +26,7 @@ TIMERS_VERSION = "1.08"
 	Timers:CreateTimer({
 		endTime = 10, -- when this timer should first execute, you can omit this if you want it to run first on the next frame
 		callback = function()
-			print ("Hello. I'm running 10 seconds after when I was started.")
+			print ("Hello.I'm running 10 seconds after when I was started.")
 		end
 	})
 	-- 10 second delayed, run once regardless of pauses
@@ -34,7 +34,7 @@ TIMERS_VERSION = "1.08"
 		useGameTime = false,
 		endTime = 10, -- when this timer should first execute, you can omit this if you want it to run first on the next frame
 		callback = function()
-			print ("Hello. I'm running 10 seconds after I was started even if someone paused the game.")
+			print ("Hello.I'm running 10 seconds after I was started even if someone paused the game.")
 		end
 	})
 	-- A timer running every second that starts after 2 minutes regardless of pauses
@@ -42,7 +42,7 @@ TIMERS_VERSION = "1.08"
 		useGameTime = false,
 		endTime = 120,
 		callback = function()
-			print ("Hello. I'm running after 2 minutes and then every second thereafter.")
+			print ("Hello.I'm running after 2 minutes and then every second thereafter.")
 			return 1
 		end
 	})
@@ -51,7 +51,7 @@ TIMERS_VERSION = "1.08"
 -- Binary Heap implementation copy-pasted from https://gist.github.com/starwing/1757443a1bd295653c39
 -- BinaryHeap[1] always points to the element with the lowest "key" variable
 -- API
--- BinaryHeap(key) - Creates a new BinaryHeap with key. The key is the name of the integer variable used to sort objects.
+-- BinaryHeap(key) - Creates a new BinaryHeap with key.The key is the name of the integer variable used to sort objects.
 -- BinaryHeap:Insert - Inserts an object into BinaryHeap
 -- BinaryHeap:Remove - Removes an object from BinaryHeap
 
@@ -176,7 +176,7 @@ function Timers:ExecuteTimers(timerList, now)
 	--Empty timer, ignore
 	if not timerList[1] then return end
 
-	--Timers are alr. sorted by end time upon insertion
+	--Timers are alr.sorted by end time upon insertion
 	local currentTimer = timerList[1]
 
 	currentTimer.endTime = currentTimer.endTime or now
@@ -247,7 +247,7 @@ function Timers:CreateTimer(arg1, arg2, context)
 	-- CreateTimer<T>(delay: number, callback: (this: T) => void | number, context: T): string;
 	elseif type(arg1) == "number" then
 		if arg1 ~= arg1 or arg1 == math.huge or arg1 == -math.huge then
-			error("Invalid timer duration: " .. arg1)
+			error("Invalid timer duration: " ..arg1)
 			return
 		end
 		timer = {endTime = arg1, callback = arg2}

@@ -12,7 +12,7 @@
 --
 -- It can be used for any purpose so long as the copyright notice above,
 -- the web-page links above, and the 'AUTHOR_NOTE' string below are
--- maintained. Enjoy.
+-- maintained.Enjoy.
 --
 local VERSION = 20141223.14 -- version history at end of file
 local AUTHOR_NOTE = "-[ JSON.lua package by Jeffrey Friedl (http://regex.info/blog/lua/json) version 20141223.14 ]-"
@@ -63,7 +63,7 @@ local function unicode_codepoint_as_utf8(codepoint)
       lowpart  = 0x80 + lowpart
 
       --
-      -- Check for an invalid character (thanks Andy R. at Adobe).
+      -- Check for an invalid character (thanks Andy R.at Adobe).
       -- See table 3.7, page 93, in http://www.unicode.org/versions/Unicode5.2.0/ch03.pdf#G28070
       --
       if ( highpart == 0xE0 and midpart < 0xA0 ) or
@@ -106,7 +106,7 @@ function JSON:onDecodeError(message, text, location, etc)
    end
 
    if etc ~= nil then
-      message = message .. " (" .. JSON:encode(etc) .. ")"
+      message = message .." (" ..JSON:encode(etc) ..")"
    end
 
    if self.assert then
@@ -121,7 +121,7 @@ JSON.onDecodeOfHTMLError = JSON.onDecodeError
 
 function JSON:onEncodeError(message, etc)
    if etc ~= nil then
-      message = message .. " (" .. JSON:encode(etc) .. ")"
+      message = message .." (" ..JSON:encode(etc) ..")"
    end
 
    if self.assert then
@@ -158,7 +158,7 @@ local function grok_number(self, text, start, etc)
 
    i = i + exponent_part:len()
 
-   local full_number_text = integer_part .. decimal_part .. exponent_part
+   local full_number_text = integer_part ..decimal_part ..exponent_part
    local as_number = tonumber(full_number_text)
 
    if not as_number then
@@ -184,33 +184,33 @@ local function grok_string(self, text, start, etc)
          return VALUE, i + 1
       end
       if c ~= '\\' then
-         VALUE = VALUE .. c
+         VALUE = VALUE ..c
          i = i + 1
       elseif text:match('^\\b', i) then
-         VALUE = VALUE .. "\b"
+         VALUE = VALUE .."\b"
          i = i + 2
       elseif text:match('^\\f', i) then
-         VALUE = VALUE .. "\f"
+         VALUE = VALUE .."\f"
          i = i + 2
       elseif text:match('^\\n', i) then
-         VALUE = VALUE .. "\n"
+         VALUE = VALUE .."\n"
          i = i + 2
       elseif text:match('^\\r', i) then
-         VALUE = VALUE .. "\r"
+         VALUE = VALUE .."\r"
          i = i + 2
       elseif text:match('^\\t', i) then
-         VALUE = VALUE .. "\t"
+         VALUE = VALUE .."\t"
          i = i + 2
       else
          local hex = text:match('^\\u([0123456789aAbBcCdDeEfF][0123456789aAbBcCdDeEfF][0123456789aAbBcCdDeEfF][0123456789aAbBcCdDeEfF])', i)
          if hex then
             i = i + 6 -- bypass what we just read
 
-            -- We have a Unicode codepoint. It could be standalone, or if in the proper range and
+            -- We have a Unicode codepoint.It could be standalone, or if in the proper range and
             -- followed by another in a specific range, it'll be a two-code surrogate pair.
             local codepoint = tonumber(hex, 16)
             if codepoint >= 0xD800 and codepoint <= 0xDBFF then
-               -- it's a hi surrogate... see whether we have a following low
+               -- it's a hi surrogate...see whether we have a following low
                local lo_surrogate = text:match('^\\u([dD][cdefCDEF][0123456789aAbBcCdDeEfF][0123456789aAbBcCdDeEfF])', i)
                if lo_surrogate then
                   i = i + 6 -- bypass the low surrogate we just read
@@ -219,12 +219,12 @@ local function grok_string(self, text, start, etc)
                   -- not a proper low, so we'll just leave the first codepoint as is and spit it out.
                end
             end
-            VALUE = VALUE .. unicode_codepoint_as_utf8(codepoint)
+            VALUE = VALUE ..unicode_codepoint_as_utf8(codepoint)
 
          else
 
             -- just pass through what's escaped
-            VALUE = VALUE .. text:match('^\\(.)', i)
+            VALUE = VALUE ..text:match('^\\(.)', i)
             i = i + 2
          end
       end
@@ -383,7 +383,7 @@ function JSON:decode(text, etc)
    end
 
    if text:match('^%s*<') then
-      -- Can't be JSON... we'll assume it's HTML
+      -- Can't be JSON...we'll assume it's HTML
       self:onDecodeOfHTMLError(string.format("html passed to JSON:decode()"), text, nil, etc)
    end
 
@@ -434,21 +434,21 @@ end
 
 local chars_to_be_escaped_in_JSON_string
    = '['
-   ..    '"'    -- class sub-pattern to match a double quote
-   ..    '%\\'  -- class sub-pattern to match a backslash
-   ..    '%z'   -- class sub-pattern to match a null
-   ..    '\001' .. '-' .. '\031' -- class sub-pattern to match control characters
-   .. ']'
+   ..   '"'    -- class sub-pattern to match a double quote
+   ..   '%\\'  -- class sub-pattern to match a backslash
+   ..   '%z'   -- class sub-pattern to match a null
+   ..   '\001' ..'-' ..'\031' -- class sub-pattern to match control characters
+   ..']'
 
 local function json_string_literal(value)
    local newval = value:gsub(chars_to_be_escaped_in_JSON_string, backslash_replacement_function)
-   return '"' .. newval .. '"'
+   return '"' ..newval ..'"'
 end
 
 local function object_or_array(self, T, etc)
    --
-   -- We need to inspect all the keys... if there are any strings, we'll convert to a JSON
-   -- object. If there are only numbers, it's a JSON array.
+   -- We need to inspect all the keys...if there are any strings, we'll convert to a JSON
+   -- object.If there are only numbers, it's a JSON array.
    --
    -- If we'll be converting to a JSON object, we'll want to sort the keys so that the
    -- end result is deterministic.
@@ -469,7 +469,7 @@ local function object_or_array(self, T, etc)
             maximum_number_key = key
          end
       else
-         self:onEncodeError("can't encode table with a key of type " .. type(key), etc)
+         self:onEncodeError("can't encode table with a key of type " ..type(key), etc)
       end
    end
 
@@ -521,7 +521,7 @@ local function object_or_array(self, T, etc)
             table.insert(string_keys , string_key)
             map[string_key] = T[number_key]
          else
-            self:onEncodeError("conflict converting table with mixed-type keys into a JSON object: key " .. number_key .. " exists both as a string and a number.", etc)
+            self:onEncodeError("conflict converting table with mixed-type keys into a JSON object: key " ..number_key .." exists both as a string and a number.", etc)
          end
       end
    end
@@ -550,22 +550,22 @@ function encode_value(self, value, parents, etc, options, indent)
       if value ~= value then
          --
          -- NaN (Not a Number).
-         -- JSON has no NaN, so we have to fudge the best we can. This should really be a package option.
+         -- JSON has no NaN, so we have to fudge the best we can.This should really be a package option.
          --
          return "null"
       elseif value >= math.huge then
          --
-         -- Positive infinity. JSON has no INF, so we have to fudge the best we can. This should
-         -- really be a package option. Note: at least with some implementations, positive infinity
+         -- Positive infinity.JSON has no INF, so we have to fudge the best we can.This should
+         -- really be a package option.Note: at least with some implementations, positive infinity
          -- is both ">= math.huge" and "<= -math.huge", which makes no sense but that's how it is.
-         -- Negative infinity is properly "<= -math.huge". So, we must be sure to check the ">="
+         -- Negative infinity is properly "<= -math.huge".So, we must be sure to check the ">="
          -- case first.
          --
          return "1e+9999"
       elseif value <= -math.huge then
          --
          -- Negative infinity.
-         -- JSON has no INF, so we have to fudge the best we can. This should really be a package option.
+         -- JSON has no INF, so we have to fudge the best we can.This should really be a package option.
          --
          return "-1e+9999"
       else
@@ -576,7 +576,7 @@ function encode_value(self, value, parents, etc, options, indent)
       return tostring(value)
 
    elseif type(value) ~= 'table' then
-      self:onEncodeError("can't convert " .. type(value) .. " to JSON", etc)
+      self:onEncodeError("can't convert " ..type(value) .." to JSON", etc)
 
    else
       --
@@ -592,7 +592,7 @@ function encode_value(self, value, parents, etc, options, indent)
       end
 
       if parents[T] then
-         self:onEncodeError("table " .. tostring(T) .. " is a child of itself", etc)
+         self:onEncodeError("table " ..tostring(T) .." is a child of itself", etc)
       else
          parents[T] = true
       end
@@ -610,9 +610,9 @@ function encode_value(self, value, parents, etc, options, indent)
          end
 
          if options.pretty then
-            result_value = "[ " .. table.concat(ITEMS, ", ") .. " ]"
+            result_value = "[ " ..table.concat(ITEMS, ", ") .." ]"
          else
-            result_value = "["  .. table.concat(ITEMS, ",")  .. "]"
+            result_value = "["  ..table.concat(ITEMS, ",")  .."]"
          end
 
       elseif object_keys then
@@ -632,16 +632,16 @@ function encode_value(self, value, parents, etc, options, indent)
                end
                table.insert(KEYS, encoded)
             end
-            local key_indent = indent .. tostring(options.indent or "")
-            local subtable_indent = key_indent .. string.rep(" ", max_key_length) .. (options.align_keys and "  " or "")
-            local FORMAT = "%s%" .. string.format("%d", max_key_length) .. "s: %s"
+            local key_indent = indent ..tostring(options.indent or "")
+            local subtable_indent = key_indent ..string.rep(" ", max_key_length) ..(options.align_keys and "  " or "")
+            local FORMAT = "%s%" ..string.format("%d", max_key_length) .."s: %s"
 
             local COMBINED_PARTS = { }
             for i, key in ipairs(object_keys) do
                local encoded_val = encode_value(self, TT[key], parents, etc, options, subtable_indent)
                table.insert(COMBINED_PARTS, string.format(FORMAT, key_indent, KEYS[i], encoded_val))
             end
-            result_value = "{\n" .. table.concat(COMBINED_PARTS, ",\n") .. "\n" .. indent .. "}"
+            result_value = "{\n" ..table.concat(COMBINED_PARTS, ",\n") .."\n" ..indent .."}"
 
          else
 
@@ -651,12 +651,12 @@ function encode_value(self, value, parents, etc, options, indent)
                local encoded_key = encode_value(self, tostring(key), parents, etc, options, indent)
                table.insert(PARTS, string.format("%s:%s", encoded_key, encoded_val))
             end
-            result_value = "{" .. table.concat(PARTS, ",") .. "}"
+            result_value = "{" ..table.concat(PARTS, ",") .."}"
 
          end
       else
          --
-         -- An empty array/object... we'll treat it as an array, though it should really be an option
+         -- An empty array/object...we'll treat it as an array, though it should really be an option
          --
          result_value = "[]"
       end

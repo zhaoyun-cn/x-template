@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-// 导出的预载入方法，用来给addon_game_mode. ts调用
+// 导出的预载入方法，用来给addon_game_mode.ts调用
 export default function Precache(context: CScriptPrecacheContext) {
     // 需要预载的所有资源
     precacheResource(
@@ -82,7 +82,7 @@ export default function Precache(context: CScriptPrecacheContext) {
 
 // === 冥魂大帝 - 粒子特效 ===
 'particles/units/heroes/hero_skeletonking/skeletonking_ambient.vpcf',
-//'particles/units/heroes/hero_skeletonking/skeletonking_sword_ambient.vpcf',
+'particles/units/heroes/hero_skeletonking/skeletonking_sword_ambient.vpcf',
 //'particles/units/heroes/hero_skeletonking/wraith_king_hellfire_eruption.vpcf',
 // === 冥魂大帝 - 音效 ===
 'soundevents/game_sounds_heroes/game_sounds_skeletonking.vsndevts',
@@ -186,7 +186,7 @@ function precacheResource(resourceList: string[], context: CScriptPrecacheContex
 function precacheResString(res: string, context: CScriptPrecacheContext) {
     if (res.endsWith('.vpcf')) {
         PrecacheResource('particle', res, context);
-    } else if (res. endsWith('.vsndevts')) {
+    } else if (res.endsWith('.vsndevts')) {
         PrecacheResource('soundfile', res, context);
     } else if (res.endsWith('.vmdl')) {
         PrecacheResource('model', res, context);

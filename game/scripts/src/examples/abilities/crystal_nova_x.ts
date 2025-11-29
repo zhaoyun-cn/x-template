@@ -119,8 +119,8 @@ export class modifier_crystal_nova_x_debuff extends BaseModifier {
     /**
      * modifier的效果需要先声明注册才能生效
      * 这里声明了两个效果：
-     * 1. 攻击速度降低
-     * 2. 移动速度降低
+     * 1.攻击速度降低
+     * 2.移动速度降低
      */
     override DeclareFunctions(): ModifierFunction[] {
         return [ModifierFunction.ATTACKSPEED_BONUS_CONSTANT, ModifierFunction.MOVESPEED_BONUS_PERCENTAGE];

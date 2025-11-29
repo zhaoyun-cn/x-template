@@ -70,17 +70,17 @@ assert(Lua_has_int64 or Lua_has_int32 or not Lua_has_integers, "Lua integers mus
 -- Q:
 --    Does it mean that almost all non-standard configurations are not supported?
 -- A:
---    Yes.  Sorry, too many problems to support all possible Lua numbers configurations.
+--    Yes. Sorry, too many problems to support all possible Lua numbers configurations.
 --       Lua 5.1/5.2    with "int32"               will not work.
 --       Lua 5.1/5.2    with "int64"               will not work.
 --       Lua 5.1/5.2    with "int128"              will not work.
 --       Lua 5.1/5.2    with "float"               will not work.
---       Lua 5.1/5.2    with "double"              is OK.          (default config for Lua 5.1, Lua 5.2, LuaJIT)
+--       Lua 5.1/5.2    with "double"              is OK.         (default config for Lua 5.1, Lua 5.2, LuaJIT)
 --       Lua 5.3/5.4    with "int32"  + "float"    will not work.
 --       Lua 5.3/5.4    with "int64"  + "float"    will not work.
 --       Lua 5.3/5.4    with "int128" + "float"    will not work.
---       Lua 5.3/5.4    with "int32"  + "double"   is OK.          (config used by Fengari)
---       Lua 5.3/5.4    with "int64"  + "double"   is OK.          (default config for Lua 5.3, Lua 5.4)
+--       Lua 5.3/5.4    with "int32"  + "double"   is OK.         (config used by Fengari)
+--       Lua 5.3/5.4    with "int64"  + "double"   is OK.         (default config for Lua 5.3, Lua 5.4)
 --       Lua 5.3/5.4    with "int128" + "double"   will not work.
 --   Using floating point numbers better than "double" instead of "double" is OK (non-IEEE-754 floating point implementation are allowed).
 --   Using "int128" instead of "int64" is not OK: "int128" would require different branch of implementation for optimized SHA512.
@@ -111,11 +111,11 @@ if print_debug_messages then
       "   Lua version:               " ..
          (is_LuaJIT and
             "LuaJIT " ..
-               (is_LuaJIT_21 and "2.1 " or "2.0 ") .. (LuaJIT_arch or "") .. (ffi and " with FFI" or " without FFI") or
+               (is_LuaJIT_21 and "2.1 " or "2.0 ") ..(LuaJIT_arch or "") ..(ffi and " with FFI" or " without FFI") or
             _VERSION)
    )
-   print("   Integer bitwise operators: " .. (Lua_has_int64 and "int64" or Lua_has_int32 and "int32" or "no"))
-   print("   32-bit bitwise library:    " .. (library_name or "not found"))
+   print("   Integer bitwise operators: " ..(Lua_has_int64 and "int64" or Lua_has_int32 and "int32" or "no"))
+   print("   32-bit bitwise library:    " ..(library_name or "not found"))
 end
 
 -- Selecting the most suitable implementation for given set of abilities
@@ -133,7 +133,7 @@ elseif Lua_has_int32 then
    method = "Using native int32 bitwise operators"
    branch = "INT32"
 elseif library_name then -- when bitwise library is available (Lua 5.2 with native library "bit32" or Lua 5.1 with external library "bit")
-   method = "Using '" .. library_name .. "' library"
+   method = "Using '" ..library_name .."' library"
    branch = "LIB32"
 else
    method = "Emulating bitwise operators using look-up table"
@@ -143,7 +143,7 @@ end
 if print_debug_messages then
    -- Printing the implementation selected to be used on your system
    print("Implementation selected:")
-   print("   " .. method)
+   print("   " ..method)
 end
 
 --------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ if branch == "FFI" or branch == "LJ" or branch == "LIB32" then
    NOT = b.bnot -- only for LuaJIT
    NORM = b.tobit -- only for LuaJIT
    HEX = b.tohex -- returns string of 8 lowercase hexadecimal digits
-   assert(AND and OR and XOR and SHL and SHR and ROL and ROR and NOT, "Library '" .. library_name .. "' is incomplete")
+   assert(AND and OR and XOR and SHL and SHR and ROL and ROR and NOT, "Library '" ..library_name .."' is incomplete")
    XOR_BYTE = XOR -- XOR of two bytes (0..255)
 elseif branch == "EMUL" then
    -- Emulating 32-bit bitwise operations using 53-bit floating point arithmetic
@@ -322,7 +322,7 @@ local K_lo_modulo, hi_factor, hi_factor_keccak = 4294967296, 0, 0
 local function build_keccak_format(elem)
    local keccak_format = {}
    for _, size in ipairs {1, 9, 13, 17, 18, 21} do
-      keccak_format[size] = "<" .. string_rep(elem, size)
+      keccak_format[size] = "<" ..string_rep(elem, size)
    end
    return keccak_format
 end
@@ -701,7 +701,7 @@ if branch == "FFI" then
 
       function HEX64(long)
          U[0].i64 = long
-         return HEX(U[0].i32.hi) .. HEX(U[0].i32.lo)
+         return HEX(U[0].i32.hi) ..HEX(U[0].i32.lo)
       end
 
       function sha512_feed_128(H, _, str, offs, size)
@@ -1119,7 +1119,7 @@ if branch == "LJ" then
 
       function sha512_feed_128(H_lo, H_hi, str, offs, size)
          -- offs >= 0, size >= 0, size is multiple of 128
-         -- W1_hi, W1_lo, W2_hi, W2_lo, ...   Wk_hi = W[2*k-1], Wk_lo = W[2*k]
+         -- W1_hi, W1_lo, W2_hi, W2_lo, ...  Wk_hi = W[2*k-1], Wk_lo = W[2*k]
          local W, K_lo, K_hi = common_W, sha2_K_lo, sha2_K_hi
          for pos = offs, offs + size - 1, 128 do
             for j = 1, 16 * 2 do
@@ -1221,7 +1221,7 @@ if branch == "LJ" then
 
       function sha512_feed_128(H_lo, H_hi, str, offs, size)
          -- offs >= 0, size >= 0, size is multiple of 128
-         -- W1_hi, W1_lo, W2_hi, W2_lo, ...   Wk_hi = W[2*k-1], Wk_lo = W[2*k]
+         -- W1_hi, W1_lo, W2_hi, W2_lo, ...  Wk_hi = W[2*k-1], Wk_lo = W[2*k]
          local W, K_lo, K_hi = common_W, sha2_K_lo, sha2_K_hi
          for pos = offs, offs + size - 1, 128 do
             for j = 1, 16 * 2 do
@@ -1815,7 +1815,7 @@ if branch == "INT32" then
       end
       local function sha512_feed_128(H_lo, H_hi, str, offs, size)
          -- offs >= 0, size >= 0, size is multiple of 128
-         -- W1_hi, W1_lo, W2_hi, W2_lo, ...   Wk_hi = W[2*k-1], Wk_lo = W[2*k]
+         -- W1_hi, W1_lo, W2_hi, W2_lo, ...  Wk_hi = W[2*k-1], Wk_lo = W[2*k]
          local floor, W, K_lo, K_hi = floor, common_W, sha2_K_lo, sha2_K_hi
          local h1_lo, h2_lo, h3_lo, h4_lo, h5_lo, h6_lo, h7_lo, h8_lo = H_lo[1], H_lo[2], H_lo[3], H_lo[4], H_lo[5], H_lo[6], H_lo[7], H_lo[8]
          local h1_hi, h2_hi, h3_hi, h4_hi, h5_hi, h6_hi, h7_hi, h8_hi = H_hi[1], H_hi[2], H_hi[3], H_hi[4], H_hi[5], H_hi[6], H_hi[7], H_hi[8]
@@ -2246,7 +2246,7 @@ if branch == "LIB32" or branch == "EMUL" then
 
    function sha512_feed_128(H_lo, H_hi, str, offs, size)
       -- offs >= 0, size >= 0, size is multiple of 128
-      -- W1_hi, W1_lo, W2_hi, W2_lo, ...   Wk_hi = W[2*k-1], Wk_lo = W[2*k]
+      -- W1_hi, W1_lo, W2_hi, W2_lo, ...  Wk_hi = W[2*k-1], Wk_lo = W[2*k]
       local W, K_lo, K_hi = common_W, sha2_K_lo, sha2_K_hi
       local h1_lo, h2_lo, h3_lo, h4_lo, h5_lo, h6_lo, h7_lo, h8_lo =
          H_lo[1],
@@ -2916,7 +2916,7 @@ for width = 224, 256, 32 do
          H_hi[j] = XOR32A5(sha2_H_hi[j])
       end
    end
-   sha512_feed_128(H_lo, H_hi, "SHA-512/" .. tostring(width) .. "\128" .. string_rep("\0", 115) .. "\88", 0, 128)
+   sha512_feed_128(H_lo, H_hi, "SHA-512/" ..tostring(width) .."\128" ..string_rep("\0", 115) .."\88", 0, 128)
    sha2_H_ext512_lo[width] = H_lo
    sha2_H_ext512_hi[width] = H_hi
 end
@@ -2965,13 +2965,13 @@ local function sha256ext(width, message)
             local offs = 0
             if tail ~= "" and #tail + #message_part >= 64 then
                offs = 64 - #tail
-               sha256_feed_64(H, tail .. sub(message_part, 1, offs), 0, 64)
+               sha256_feed_64(H, tail ..sub(message_part, 1, offs), 0, 64)
                tail = ""
             end
             local size = #message_part - offs
             local size_tail = size % 64
             sha256_feed_64(H, message_part, offs, size - size_tail)
-            tail = tail .. sub(message_part, #message_part + 1 - size_tail)
+            tail = tail ..sub(message_part, #message_part + 1 - size_tail)
             return partial
          else
             error("Adding more chunks is not allowed after receiving the result", 2)
@@ -3025,13 +3025,13 @@ local function sha512ext(width, message)
             local offs = 0
             if tail ~= "" and #tail + #message_part >= 128 then
                offs = 128 - #tail
-               sha512_feed_128(H_lo, H_hi, tail .. sub(message_part, 1, offs), 0, 128)
+               sha512_feed_128(H_lo, H_hi, tail ..sub(message_part, 1, offs), 0, 128)
                tail = ""
             end
             local size = #message_part - offs
             local size_tail = size % 128
             sha512_feed_128(H_lo, H_hi, message_part, offs, size - size_tail)
-            tail = tail .. sub(message_part, #message_part + 1 - size_tail)
+            tail = tail ..sub(message_part, #message_part + 1 - size_tail)
             return partial
          else
             error("Adding more chunks is not allowed after receiving the result", 2)
@@ -3056,7 +3056,7 @@ local function sha512ext(width, message)
                end
             else
                for j = 1, max_reg do
-                  H_lo[j] = HEX(H_hi[j]) .. HEX(H_lo[j])
+                  H_lo[j] = HEX(H_hi[j]) ..HEX(H_lo[j])
                end
                H_hi = nil
             end
@@ -3087,13 +3087,13 @@ local function md5(message)
             local offs = 0
             if tail ~= "" and #tail + #message_part >= 64 then
                offs = 64 - #tail
-               md5_feed_64(H, tail .. sub(message_part, 1, offs), 0, 64)
+               md5_feed_64(H, tail ..sub(message_part, 1, offs), 0, 64)
                tail = ""
             end
             local size = #message_part - offs
             local size_tail = size % 64
             md5_feed_64(H, message_part, offs, size - size_tail)
-            tail = tail .. sub(message_part, #message_part + 1 - size_tail)
+            tail = tail ..sub(message_part, #message_part + 1 - size_tail)
             return partial
          else
             error("Adding more chunks is not allowed after receiving the result", 2)
@@ -3140,13 +3140,13 @@ local function sha1(message)
             local offs = 0
             if tail ~= "" and #tail + #message_part >= 64 then
                offs = 64 - #tail
-               sha1_feed_64(H, tail .. sub(message_part, 1, offs), 0, 64)
+               sha1_feed_64(H, tail ..sub(message_part, 1, offs), 0, 64)
                tail = ""
             end
             local size = #message_part - offs
             local size_tail = size % 64
             sha1_feed_64(H, message_part, offs, size - size_tail)
-            tail = tail .. sub(message_part, #message_part + 1 - size_tail)
+            tail = tail ..sub(message_part, #message_part + 1 - size_tail)
             return partial
          else
             error("Adding more chunks is not allowed after receiving the result", 2)
@@ -3219,7 +3219,7 @@ local function keccak(block_size_in_bytes, digest_size_in_bytes, is_SHAKE, messa
                keccak_feed(
                   lanes_lo,
                   lanes_hi,
-                  tail .. sub(message_part, 1, offs),
+                  tail ..sub(message_part, 1, offs),
                   0,
                   block_size_in_bytes,
                   block_size_in_bytes
@@ -3229,7 +3229,7 @@ local function keccak(block_size_in_bytes, digest_size_in_bytes, is_SHAKE, messa
             local size = #message_part - offs
             local size_tail = size % block_size_in_bytes
             keccak_feed(lanes_lo, lanes_hi, message_part, offs, size - size_tail, block_size_in_bytes)
-            tail = tail .. sub(message_part, #message_part + 1 - size_tail)
+            tail = tail ..sub(message_part, #message_part + 1 - size_tail)
             return partial
          else
             error("Adding more chunks is not allowed after receiving the result", 2)
@@ -3241,7 +3241,7 @@ local function keccak(block_size_in_bytes, digest_size_in_bytes, is_SHAKE, messa
             tail =
                tail ..
                (#tail + 1 == block_size_in_bytes and char(gap_start + 128) or
-                  char(gap_start) .. string_rep("\0", (-2 - #tail) % block_size_in_bytes) .. "\128")
+                  char(gap_start) ..string_rep("\0", (-2 - #tail) % block_size_in_bytes) .."\128")
             keccak_feed(lanes_lo, lanes_hi, tail, 0, #tail, block_size_in_bytes)
             tail = nil
 
@@ -3264,7 +3264,7 @@ local function keccak(block_size_in_bytes, digest_size_in_bytes, is_SHAKE, messa
                   end
                else
                   for j = 1, qwords_qty do
-                     qwords[j] = HEX(lanes_hi[lanes_used + j]) .. HEX(lanes_lo[lanes_used + j])
+                     qwords[j] = HEX(lanes_hi[lanes_used + j]) ..HEX(lanes_lo[lanes_used + j])
                   end
                end
                lanes_used = lanes_used + qwords_qty
@@ -3367,11 +3367,11 @@ do
    function bin2base64(binary_string)
       local result = {}
       for pos = 1, #binary_string, 3 do
-         local c1, c2, c3, c4 = byte(sub(binary_string, pos, pos + 2) .. "\0", 1, -1)
+         local c1, c2, c3, c4 = byte(sub(binary_string, pos, pos + 2) .."\0", 1, -1)
          result[#result + 1] =
             base64_symbols[floor(c1 / 4)] ..
             base64_symbols[c1 % 4 * 16 + floor(c2 / 16)] ..
-               base64_symbols[c3 and c2 % 16 * 4 + floor(c3 / 64) or -1] .. base64_symbols[c4 and c3 % 64 or -1]
+               base64_symbols[c3 and c2 % 16 * 4 + floor(c3 / 64) or -1] ..base64_symbols[c4 and c3 % 64 or -1]
       end
       return table_concat(result)
    end
@@ -3407,7 +3407,7 @@ local function pad_and_xor(str, result_length, byte_for_xor)
       function(c)
          return char(XOR_BYTE(byte(c), byte_for_xor))
       end
-   ) .. string_rep(char(byte_for_xor), result_length - #str)
+   ) ..string_rep(char(byte_for_xor), result_length - #str)
 end
 
 local function hmac(hash_func, key, message)
@@ -3424,7 +3424,7 @@ local function hmac(hash_func, key, message)
 
    local function partial(message_part)
       if not message_part then
-         result = result or hash_func(pad_and_xor(key, block_size, 0x5C) .. hex2bin(append()))
+         result = result or hash_func(pad_and_xor(key, block_size, 0x5C) ..hex2bin(append()))
          return result
       elseif result then
          error("Adding more chunks is not allowed after receiving the result", 2)

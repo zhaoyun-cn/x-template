@@ -7,7 +7,7 @@ export class BaseItem {}
 export interface BaseModifier extends CDOTA_Modifier_Lua {}
 
 /** apply方法的参数需要保持和modifier的OnCreated方法的参数一致 */
-/** the parameters of the apply method need to be consistent with the parameters of the OnCreated method of the modifier. */
+/** the parameters of the apply method need to be consistent with the parameters of the OnCreated method of the modifier.*/
 type InstanceTypeOnCreatedParameters<T extends typeof BaseModifier> = T extends abstract new (...args: any) => infer R
     ? R extends { OnCreated: (arg: infer P) => any }
         ? P

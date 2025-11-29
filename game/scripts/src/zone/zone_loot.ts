@@ -69,8 +69,8 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         description: "基础兑换材料，可在商店兑换物品",
         usable: false
     },
-    [LootType. MATERIAL_FINE]: {
-        type: LootType. MATERIAL_FINE,
+    [LootType.MATERIAL_FINE]: {
+        type: LootType.MATERIAL_FINE,
         name: "精良材料",
         icon: "item_magic_stick",
         color: "#00FF00",
@@ -79,8 +79,8 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         description: "精良兑换材料，可兑换更好的物品",
         usable: false
     },
-    [LootType. MATERIAL_RARE]: {
-        type: LootType. MATERIAL_RARE,
+    [LootType.MATERIAL_RARE]: {
+        type: LootType.MATERIAL_RARE,
         name: "稀有材料",
         icon: "item_ultimate_orb",
         color: "#0088FF",
@@ -95,14 +95,14 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         icon: "item_reaver",
         color: "#FF8800",
         stackable: true,
-        category: MaterialCategory. EXCHANGE,
+        category: MaterialCategory.EXCHANGE,
         description: "传说兑换材料，可兑换传说物品",
         usable: false
     },
     
     // 打造材料
     [LootType.CRAFT_ADD_AFFIX]: {
-        type: LootType. CRAFT_ADD_AFFIX,
+        type: LootType.CRAFT_ADD_AFFIX,
         name: "词条石",
         icon: "item_recipe",
         color: "#FF00FF",
@@ -111,8 +111,8 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         description: "为装备添加一条随机词条",
         usable: false
     },
-    [LootType. CRAFT_REROLL_AFFIX]: {
-        type: LootType. CRAFT_REROLL_AFFIX,
+    [LootType.CRAFT_REROLL_AFFIX]: {
+        type: LootType.CRAFT_REROLL_AFFIX,
         name: "洗词石",
         icon: "item_recipe",
         color: "#AA00FF",
@@ -127,14 +127,14 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         icon: "item_recipe",
         color: "#FF00AA",
         stackable: true,
-        category: MaterialCategory. CRAFT,
+        category: MaterialCategory.CRAFT,
         description: "重新随机装备词条的数值",
         usable: false
     },
     
     // 门票
     [LootType.TICKET_A]: {
-        type: LootType. TICKET_A,
+        type: LootType.TICKET_A,
         name: "挑战票",
         icon: "item_tome_of_knowledge",
         color: "#FFD700",
@@ -143,8 +143,8 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         description: "使用后提升刷怪区域难度，获得更好的奖励",
         usable: true
     },
-    [LootType. TICKET_B]: {
-        type: LootType. TICKET_B,
+    [LootType.TICKET_B]: {
+        type: LootType.TICKET_B,
         name: "副本票",
         icon: "item_refresher_shard",
         color: "#00FFFF",
@@ -218,7 +218,7 @@ function GetOrCreateInventory(playerId: PlayerID): PlayerInventory {
     let inventory = playerInventories.get(playerId);
     if (! inventory) {
         inventory = { items: new Map() };
-        playerInventories. set(playerId, inventory);
+        playerInventories.set(playerId, inventory);
     }
     return inventory;
 }
@@ -262,7 +262,7 @@ export class ZoneLootSystem {
             
             if (RandomFloat(0, 1) <= adjustedChance) {
                 const count = RandomInt(entry.minCount, entry.maxCount);
-                drops.push({ type: entry. type, count });
+                drops.push({ type: entry.type, count });
             }
         }
         
@@ -273,10 +273,10 @@ export class ZoneLootSystem {
         const inventory = GetOrCreateInventory(playerId);
         
         for (const drop of drops) {
-            const currentCount = inventory.items.get(drop. type) || 0;
-            inventory. items.set(drop.type, currentCount + drop.count);
+            const currentCount = inventory.items.get(drop.type) || 0;
+            inventory.items.set(drop.type, currentCount + drop.count);
             
-            print(`[ZoneLoot] 玩家${playerId} 获得 ${LOOT_ITEMS[drop.type]. name} x${drop.count}`);
+            print(`[ZoneLoot] 玩家${playerId} 获得 ${LOOT_ITEMS[drop.type].name} x${drop.count}`);
             this.SyncMaterialsToNetTable(playerId);
         }
     }
@@ -287,7 +287,7 @@ export class ZoneLootSystem {
         monsterType: string
     ): void {
         const dropTexts = drops.map(drop => {
-            const config = LOOT_ITEMS[drop. type];
+            const config = LOOT_ITEMS[drop.type];
             return `<font color='${config.color}'>${config.name} x${drop.count}</font>`;
         });
         
@@ -308,7 +308,7 @@ export class ZoneLootSystem {
     
     public static ConsumeItem(playerId: PlayerID, itemType: LootType, count: number): boolean {
         const inventory = GetOrCreateInventory(playerId);
-        const currentCount = inventory.items. get(itemType) || 0;
+        const currentCount = inventory.items.get(itemType) || 0;
         
         if (currentCount < count) {
             return false;
@@ -321,7 +321,7 @@ export class ZoneLootSystem {
     
     public static AddItem(playerId: PlayerID, itemType: LootType, count: number): void {
         const inventory = GetOrCreateInventory(playerId);
-        const currentCount = inventory. items.get(itemType) || 0;
+        const currentCount = inventory.items.get(itemType) || 0;
         inventory.items.set(itemType, currentCount + count);
         this.SyncMaterialsToNetTable(playerId);
     }
@@ -347,7 +347,7 @@ export class ZoneLootSystem {
                     items.push({
                         type: itemType,
                         name: config.name,
-                        icon: `s2r://panorama/images/items/${config.icon}_png. vtex`,
+                        icon: `s2r://panorama/images/items/${config.icon}_png.vtex`,
                         color: config.color,
                         count: count,
                         category: config.category,
@@ -358,7 +358,7 @@ export class ZoneLootSystem {
             }
         });
         
-        CustomNetTables.SetTableValue('player_materials', playerId. toString(), {
+        CustomNetTables.SetTableValue('player_materials', playerId.toString(), {
             items: items,
             timestamp: GameRules.GetGameTime()
         });
@@ -403,7 +403,7 @@ export class MaterialUseSystem {
         }
         
         switch (materialType) {
-            case LootType. CHEST:
+            case LootType.CHEST:
                 this.OpenChest(playerId);
                 break;
             case LootType.TICKET_A:
@@ -419,7 +419,7 @@ export class MaterialUseSystem {
         print(`[MaterialUseSystem] 玩家 ${playerId} 打开宝箱`);
         
         const rewards = [
-            { type: LootType. MATERIAL_RARE, min: 2, max: 5 },
+            { type: LootType.MATERIAL_RARE, min: 2, max: 5 },
             { type: LootType.MATERIAL_LEGENDARY, min: 1, max: 2 },
             { type: LootType.CRAFT_ADD_AFFIX, min: 1, max: 3 },
             { type: LootType.CRAFT_REROLL_AFFIX, min: 1, max: 2 },
@@ -432,13 +432,13 @@ export class MaterialUseSystem {
         for (let i = 0; i < numRewards; i++) {
             const reward = rewards[RandomInt(0, rewards.length - 1)];
             const count = RandomInt(reward.min, reward.max);
-            ZoneLootSystem. AddItem(playerId, reward.type, count);
+            ZoneLootSystem.AddItem(playerId, reward.type, count);
             
             const config = LOOT_ITEMS[reward.type];
             selectedRewards.push(`<font color='${config.color}'>${config.name} x${count}</font>`);
         }
         
-        const message = `🎁 打开宝箱获得: ${selectedRewards. join(", ")}`;
+        const message = `🎁 打开宝箱获得: ${selectedRewards.join(", ")}`;
         GameRules.SendCustomMessage(message, playerId, 0);
         
         this.SendUseResult(playerId, LootType.CHEST, true, message);
@@ -450,16 +450,16 @@ export class MaterialUseSystem {
         const message = "🎫 挑战票使用成功！刷怪区域难度提升！";
         GameRules.SendCustomMessage(message, playerId, 0);
         
-        this. SendUseResult(playerId, LootType.TICKET_A, true, message);
+        this.SendUseResult(playerId, LootType.TICKET_A, true, message);
     }
     
     private static UseTicketB(playerId: PlayerID): void {
         print(`[MaterialUseSystem] 玩家 ${playerId} 使用副本票`);
         
         const message = "🎫 副本票使用成功！传送门已开启！";
-        GameRules. SendCustomMessage(message, playerId, 0);
+        GameRules.SendCustomMessage(message, playerId, 0);
         
-        this.SendUseResult(playerId, LootType. TICKET_B, true, message);
+        this.SendUseResult(playerId, LootType.TICKET_B, true, message);
     }
     
     private static SendUseResult(playerId: PlayerID, materialType: LootType, success: boolean, message: string): void {

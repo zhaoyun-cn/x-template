@@ -34,8 +34,8 @@ namespace qrcodegen {
 
         // Returns a QR Code representing the given Unicode text string at the given error correction level.
         // As a conservative upper bound, this function is guaranteed to succeed for strings that have 738 or fewer
-        // Unicode code points (not UTF-16 code units) if the low error correction level is used. The smallest possible
-        // QR Code version is automatically chosen for the output. The ECC level of the result may be higher than the
+        // Unicode code points (not UTF-16 code units) if the low error correction level is used.The smallest possible
+        // QR Code version is automatically chosen for the output.The ECC level of the result may be higher than the
         // ecl argument if it can be done without increasing the version.
         public static encodeText(text: string, ecl: QrCode.Ecc): QrCode {
             const segs: Array<QrSegment> = qrcodegen.QrSegment.makeSegments(text);
@@ -43,8 +43,8 @@ namespace qrcodegen {
         }
 
         // Returns a QR Code representing the given binary data at the given error correction level.
-        // This function always encodes using the binary segment mode, not any text mode. The maximum number of
-        // bytes allowed is 2953. The smallest possible QR Code version is automatically chosen for the output.
+        // This function always encodes using the binary segment mode, not any text mode.The maximum number of
+        // bytes allowed is 2953.The smallest possible QR Code version is automatically chosen for the output.
         // The ECC level of the result may be higher than the ecl argument if it can be done without increasing the version.
         public static encodeBinary(data: Readonly<Array<byte>>, ecl: QrCode.Ecc): QrCode {
             const seg: QrSegment = qrcodegen.QrSegment.makeBytes(data);
@@ -55,9 +55,9 @@ namespace qrcodegen {
 
         // Returns a QR Code representing the given segments with the given encoding parameters.
         // The smallest possible QR Code version within the given range is automatically
-        // chosen for the output. Iff boostEcl is true, then the ECC level of the result
+        // chosen for the output.Iff boostEcl is true, then the ECC level of the result
         // may be higher than the ecl argument if it can be done without increasing the
-        // version. The mask number is either between 0 to 7 (inclusive) to force that
+        // version.The mask number is either between 0 to 7 (inclusive) to force that
         // mask, or -1 to automatically choose an appropriate mask (which may be slow).
         // This function allows the user to create a custom sequence of segments that switches
         // between modes (such as alphanumeric and byte) to encode text in less space.
@@ -125,7 +125,7 @@ namespace qrcodegen {
         /*-- Fields --*/
 
         // The width and height of this QR Code, measured in modules, between
-        // 21 and 177 (inclusive). This is equal to version * 4 + 17.
+        // 21 and 177 (inclusive).This is equal to version * 4 + 17.
         public readonly size: int;
 
         // The index of the mask pattern used in this QR Code, which is between 0 and 7 (inclusive).
@@ -134,10 +134,10 @@ namespace qrcodegen {
         public readonly mask: int;
 
         // The modules of this QR Code (false = light, true = dark).
-        // Immutable after constructor finishes. Accessed through getModule().
+        // Immutable after constructor finishes.Accessed through getModule().
         private readonly modules: Array<Array<boolean>> = [];
 
-        // Indicates function modules that are not subjected to masking. Discarded when constructor finishes.
+        // Indicates function modules that are not subjected to masking.Discarded when constructor finishes.
         private readonly isFunction: Array<Array<boolean>> = [];
 
         /*-- Constructor (low level) and fields --*/
@@ -202,7 +202,7 @@ namespace qrcodegen {
         /*-- Accessor methods --*/
 
         // Returns the color of the module (pixel) at the given coordinates, which is false
-        // for light or true for dark. The top left corner has the coordinates (x=0, y=0).
+        // for light or true for dark.The top left corner has the coordinates (x=0, y=0).
         // If the given coordinates are out of bounds, then false (light) is returned.
         public getModule(x: int, y: int): boolean {
             return 0 <= x && x < this.size && 0 <= y && y < this.size && this.modules[y][x];
@@ -289,7 +289,7 @@ namespace qrcodegen {
         }
 
         // Draws a 9*9 finder pattern including the border separator,
-        // with the center module at (x, y). Modules can be out of bounds.
+        // with the center module at (x, y).Modules can be out of bounds.
         private drawFinderPattern(x: int, y: int): void {
             for (let dy = -4; dy <= 4; dy++) {
                 for (let dx = -4; dx <= 4; dx++) {
@@ -302,7 +302,7 @@ namespace qrcodegen {
         }
 
         // Draws a 5*5 alignment pattern, with the center module
-        // at (x, y). All modules must be in bounds.
+        // at (x, y).All modules must be in bounds.
         private drawAlignmentPattern(x: int, y: int): void {
             for (let dy = -2; dy <= 2; dy++) {
                 for (let dx = -2; dx <= 2; dx++) this.setFunctionModule(x + dx, y + dy, Math.max(Math.abs(dx), Math.abs(dy)) != 1);
@@ -310,7 +310,7 @@ namespace qrcodegen {
         }
 
         // Sets the color of a module and marks it as a function module.
-        // Only used by the constructor. Coordinates must be in bounds.
+        // Only used by the constructor.Coordinates must be in bounds.
         private setFunctionModule(x: int, y: int, isDark: boolean): void {
             this.modules[y][x] = isDark;
             this.isFunction[y][x] = true;
@@ -356,7 +356,7 @@ namespace qrcodegen {
         }
 
         // Draws the given sequence of 8-bit codewords (data and error correction) onto the entire
-        // data area of this QR Code. Function modules need to be marked off before this is called.
+        // data area of this QR Code.Function modules need to be marked off before this is called.
         private drawCodewords(data: Readonly<Array<byte>>): void {
             if (data.length != Math.floor(QrCode.getNumRawDataModules(this.version) / 8)) throw new RangeError('Invalid argument');
             let i: int = 0; // Bit index into the data
@@ -384,8 +384,8 @@ namespace qrcodegen {
 
         // XORs the codeword modules in this QR Code with the given mask pattern.
         // The function modules must be marked and the codeword bits must be drawn
-        // before masking. Due to the arithmetic of XOR, calling applyMask() with
-        // the same mask value a second time will undo the mask. A final well-formed
+        // before masking.Due to the arithmetic of XOR, calling applyMask() with
+        // the same mask value a second time will undo the mask.A final well-formed
         // QR Code needs exactly one (not zero, two, etc.) mask applied.
         private applyMask(mask: int): void {
             if (mask < 0 || mask > 7) throw new RangeError('Mask value out of range');
@@ -507,8 +507,8 @@ namespace qrcodegen {
         }
 
         // Returns the number of data bits that can be stored in a QR Code of the given version number, after
-        // all function modules are excluded. This includes remainder bits, so it might not be a multiple of 8.
-        // The result is in the range [208, 29648]. This could be implemented as a 40-entry lookup table.
+        // all function modules are excluded.This includes remainder bits, so it might not be a multiple of 8.
+        // The result is in the range [208, 29648].This could be implemented as a 40-entry lookup table.
         private static getNumRawDataModules(ver: int): int {
             if (ver < QrCode.MIN_VERSION || ver > QrCode.MAX_VERSION) throw new RangeError('Version number out of range');
             let result: int = (16 * ver + 128) * ver + 64;
@@ -521,7 +521,7 @@ namespace qrcodegen {
             return result;
         }
 
-        // Returns the number of 8-bit data (i.e. not error correction) codewords contained in any
+        // Returns the number of 8-bit data (i.e.not error correction) codewords contained in any
         // QR Code of the given version number and error correction level, with remainder bits discarded.
         // This stateless pure function could be implemented as a (40*4)-cell lookup table.
         private static getNumDataCodewords(ver: int, ecl: QrCode.Ecc): int {
@@ -531,7 +531,7 @@ namespace qrcodegen {
             );
         }
 
-        // Returns a Reed-Solomon ECC generator polynomial for the given degree. This could be
+        // Returns a Reed-Solomon ECC generator polynomial for the given degree.This could be
         // implemented as a lookup table over all possible parameter values, instead of as an algorithm.
         private static reedSolomonComputeDivisor(degree: int): Array<byte> {
             if (degree < 1 || degree > 255) throw new RangeError('Degree out of range');
@@ -541,7 +541,7 @@ namespace qrcodegen {
             for (let i = 0; i < degree - 1; i++) result.push(0);
             result.push(1); // Start off with the monomial x^0
 
-            // Compute the product polynomial (x - r^0) * (x - r^1) * (x - r^2) * ... * (x - r^{degree-1}),
+            // Compute the product polynomial (x - r^0) * (x - r^1) * (x - r^2) * ...* (x - r^{degree-1}),
             // and drop the highest monomial term which is always 1x^degree.
             // Note that r = 0x02, which is a generator element of this field GF(2^8/0x11D).
             let root = 1;
@@ -568,8 +568,8 @@ namespace qrcodegen {
             return result;
         }
 
-        // Returns the product of the two given field elements modulo GF(2^8/0x11D). The arguments and result
-        // are unsigned 8-bit integers. This could be implemented as a lookup table of 256*256 entries of uint8.
+        // Returns the product of the two given field elements modulo GF(2^8/0x11D).The arguments and result
+        // are unsigned 8-bit integers.This could be implemented as a lookup table of 256*256 entries of uint8.
         private static reedSolomonMultiply(x: byte, y: byte): byte {
             if (x >>> 8 != 0 || y >>> 8 != 0) throw new RangeError('Byte out of range');
             // Russian peasant multiplication
@@ -583,7 +583,7 @@ namespace qrcodegen {
         }
 
         // Can only be called immediately after a light run is added, and
-        // returns either 0, 1, or 2. A helper function for getPenaltyScore().
+        // returns either 0, 1, or 2.A helper function for getPenaltyScore().
         private finderPenaltyCountPatterns(runHistory: Readonly<Array<int>>): int {
             const n: int = runHistory[1];
             assert(n <= this.size * 3);
@@ -591,7 +591,7 @@ namespace qrcodegen {
             return (core && runHistory[0] >= n * 4 && runHistory[6] >= n ? 1 : 0) + (core && runHistory[6] >= n * 4 && runHistory[0] >= n ? 1 : 0);
         }
 
-        // Must be called at the end of a line (row or column) of modules. A helper function for getPenaltyScore().
+        // Must be called at the end of a line (row or column) of modules.A helper function for getPenaltyScore().
         private finderPenaltyTerminateAndCount(currentRunColor: boolean, currentRunLength: int, runHistory: Array<int>): int {
             if (currentRunColor) {
                 // Terminate dark run
@@ -603,7 +603,7 @@ namespace qrcodegen {
             return this.finderPenaltyCountPatterns(runHistory);
         }
 
-        // Pushes the given value to the front and drops the last value. A helper function for getPenaltyScore().
+        // Pushes the given value to the front and drops the last value.A helper function for getPenaltyScore().
         private finderPenaltyAddHistory(currentRunLength: int, runHistory: Array<int>): void {
             if (runHistory[0] == 0) currentRunLength += this.size; // Add light border to initial run
             runHistory.pop();
@@ -667,7 +667,7 @@ namespace qrcodegen {
     }
 
     // Appends the given number of low-order bits of the given value
-    // to the given buffer. Requires 0 <= len <= 31 and 0 <= val < 2^len.
+    // to the given buffer.Requires 0 <= len <= 31 and 0 <= val < 2^len.
     function appendBits(val: int, len: int, bb: Array<bit>): void {
         if (len < 0 || len > 31 || val >>> len != 0) throw new RangeError('Value out of range');
         for (
@@ -705,7 +705,7 @@ namespace qrcodegen {
         /*-- Static factory functions (mid level) --*/
 
         // Returns a segment representing the given binary data encoded in
-        // byte mode. All input byte arrays are acceptable. Any text string
+        // byte mode.All input byte arrays are acceptable.Any text string
         // can be converted to UTF-8 bytes and encoded as a byte mode segment.
         public static makeBytes(data: Readonly<Array<byte>>): QrSegment {
             const bb: Array<bit> = [];
@@ -788,17 +788,17 @@ namespace qrcodegen {
 
         // Creates a new QR Code segment with the given attributes and data.
         // The character count (numChars) must agree with the mode and the bit buffer length,
-        // but the constraint isn't checked. The given bit buffer is cloned and stored.
+        // but the constraint isn't checked.The given bit buffer is cloned and stored.
         public constructor(
             // The mode indicator of this segment.
             public readonly mode: QrSegment.Mode,
 
-            // The length of this segment's unencoded data. Measured in characters for
+            // The length of this segment's unencoded data.Measured in characters for
             // numeric/alphanumeric/kanji mode, bytes for byte mode, and 0 for ECI mode.
-            // Always zero or positive. Not the same as the data's bit length.
+            // Always zero or positive.Not the same as the data's bit length.
             public readonly numChars: int,
 
-            // The data bits of this segment. Accessed through getData().
+            // The data bits of this segment.Accessed through getData().
             private readonly bitData: Array<bit>
         ) {
             if (numChars < 0) throw new RangeError('Invalid argument');
@@ -813,7 +813,7 @@ namespace qrcodegen {
         }
 
         // (Package-private) Calculates and returns the number of bits needed to encode the given segments at
-        // the given version. The result is infinity if a segment has too many characters to fit its length field.
+        // the given version.The result is infinity if a segment has too many characters to fit its length field.
         public static getTotalBits(segs: Readonly<Array<QrSegment>>, version: int): number {
             let result: number = 0;
             for (const seg of segs) {
@@ -858,7 +858,7 @@ namespace qrcodegen.QrCode {
     type int = number;
 
     /*
-     * The error correction level in a QR Code symbol. Immutable.
+     * The error correction level in a QR Code symbol.Immutable.
      */
     export class Ecc {
         /*-- Constants --*/
@@ -885,7 +885,7 @@ namespace qrcodegen.QrSegment {
     type int = number;
 
     /*
-     * Describes how a segment's data bits are interpreted. Immutable.
+     * Describes how a segment's data bits are interpreted.Immutable.
      */
     export class Mode {
         /*-- Constants --*/
@@ -908,7 +908,7 @@ namespace qrcodegen.QrSegment {
         /*-- Method --*/
 
         // (Package-private) Returns the bit width of the character count field for a segment in
-        // this mode in a QR Code at the given version number. The result is in the range [0, 16].
+        // this mode in a QR Code at the given version number.The result is in the range [0, 16].
         public numCharCountBits(ver: int): int {
             return this.numBitsCharCount[Math.floor((ver + 7) / 17)];
         }

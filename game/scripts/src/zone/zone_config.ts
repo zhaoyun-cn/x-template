@@ -59,7 +59,7 @@ export const ZONE_AREA = {
 
 // 计算区域边界
 export const ZONE_BOUNDS = {
-    minX: ZONE_AREA.center. x - ZONE_AREA.halfSize,  // -16384
+    minX: ZONE_AREA.center.x - ZONE_AREA.halfSize,  // -16384
     maxX: ZONE_AREA.center.x + ZONE_AREA.halfSize,  // -10048
     minY: ZONE_AREA.center.y - ZONE_AREA.halfSize,  // 4608
     maxY: ZONE_AREA.center.y + ZONE_AREA.halfSize,  // 10944
@@ -73,11 +73,11 @@ export const SPAWN_POINTS: Vector[] = [
     Vector(ZONE_BOUNDS.maxX - 1000, ZONE_BOUNDS.minY + 1000, ZONE_AREA.z),
     // 第二排
     Vector(ZONE_BOUNDS.minX + 1000, ZONE_AREA.center.y, ZONE_AREA.z),
-    Vector(ZONE_AREA.center. x, ZONE_AREA.center.y, ZONE_AREA.z),
+    Vector(ZONE_AREA.center.x, ZONE_AREA.center.y, ZONE_AREA.z),
     Vector(ZONE_BOUNDS.maxX - 1000, ZONE_AREA.center.y, ZONE_AREA.z),
     // 第三排
-    Vector(ZONE_BOUNDS. minX + 1000, ZONE_BOUNDS.maxY - 1000, ZONE_AREA.z),
-    Vector(ZONE_AREA.center. x, ZONE_BOUNDS.maxY - 1000, ZONE_AREA.z),
+    Vector(ZONE_BOUNDS.minX + 1000, ZONE_BOUNDS.maxY - 1000, ZONE_AREA.z),
+    Vector(ZONE_AREA.center.x, ZONE_BOUNDS.maxY - 1000, ZONE_AREA.z),
     Vector(ZONE_BOUNDS.maxX - 1000, ZONE_BOUNDS.maxY - 1000, ZONE_AREA.z),
 ];
 

@@ -50,20 +50,20 @@ export const EquipmentUI: React.FC<EquipmentUIProps> = ({ visible, onClose }) =>
     useEffect(() => {
         if (! visible) return;
 
-        $. Msg('[EquipmentUI] 请求装备数据');
+        $.Msg('[EquipmentUI] 请求装备数据');
         
-        (GameEvents. SendCustomGameEventToServer as any)('request_equipment_data', {
+        (GameEvents.SendCustomGameEventToServer as any)('request_equipment_data', {
             PlayerID: Players.GetLocalPlayer(),
         });
 
 const listener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
-    $. Msg('[EquipmentUI] 收到装备数据:', data);
+    $.Msg('[EquipmentUI] 收到装备数据:', data);
 
     // ⭐ 转换装备数据，确保 stats 是数组
     const processedEquipment: Record<string, EquippedItem | null> = {};
     
     for (const slot in data.equipment) {
-        const item = data. equipment[slot];
+        const item = data.equipment[slot];
         
         if (item) {
             // 将 stats 对象转为数组
@@ -83,7 +83,7 @@ const listener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
     // 合并默认槽位和处理后的装备数据
     const updatedEquipment: Record<string, EquippedItem | null> = {
         ...initialSlots,
-        ... processedEquipment,
+        ...processedEquipment,
     };
     
     setEquippedItems(updatedEquipment);
@@ -96,14 +96,14 @@ const listener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
 
     // 卸下装备
     const unequipItem = (slot: string) => {
-        $. Msg(`[EquipmentUI] 卸下装备槽位: ${slot}`);
+        $.Msg(`[EquipmentUI] 卸下装备槽位: ${slot}`);
         
         (GameEvents.SendCustomGameEventToServer as any)('unequip_item', {
             PlayerID: Players.GetLocalPlayer(),
             slot: slot
         });
 
-        Game.EmitSound('ui. crafting_gem_create');
+        Game.EmitSound('ui.crafting_gem_create');
     };
 
     if (!visible) return null;
@@ -111,7 +111,7 @@ const listener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
     // 获取品质颜色
     const getQualityColor = (item: EquippedItem): string => {
         // 根据属性总和计算品质
-        const totalValue = item.stats.reduce((sum, stat) => sum + stat. value, 0);
+        const totalValue = item.stats.reduce((sum, stat) => sum + stat.value, 0);
         
         if (totalValue >= 50) return '#ff8000';  // 橙色 - 传说
         if (totalValue >= 35) return '#a335ee';  // 紫色 - 史诗

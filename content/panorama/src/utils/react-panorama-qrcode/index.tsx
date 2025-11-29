@@ -183,7 +183,7 @@ export const PanoramaQRCode = React.forwardRef<Panel, PanelAttributes & QRProps>
     });
 
     React.useEffect(() => {
-        // Always update the canvas. It's cheap enough and we want to be correct
+        // Always update the canvas.It's cheap enough and we want to be correct
         // with the current state.
         if (_canvas.current != null) {
             const canvas = _canvas.current;

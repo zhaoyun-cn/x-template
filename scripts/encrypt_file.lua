@@ -1,4 +1,4 @@
-package.path = package.path .. ";scripts/?.lua"
+package.path = package.path ..";scripts/?.lua"
 if table.unpack == nil then
     table.unpack = unpack
 end
@@ -32,13 +32,13 @@ end
 
 print("encrypt to ", source_path, target_path)
 local file = io.open(source_path)
-local text = '-- ' .. string.sub(source_path, -40, -1) .. '\n' .. file:read("*all")
+local text = '-- ' ..string.sub(source_path, -40, -1) ..'\n' ..file:read("*all")
 local cipher = aeslua.encrypt(key, text, aeslua.AES128, aeslua.CBCMODE)
 local hexstring = string.tohex(cipher)
 local wf = io.open(target_path, "w")
-wf:write('return (GameRules.XDecrypt("' .. hexstring .. '", ...))')
+wf:write('return (GameRules.XDecrypt("' ..hexstring ..'", ...))')
 file:close()
 wf:flush()
 wf:close()
 
-print('[scripts/encrypt_file.lua] finished encypt file: ' .. source_path .. ' => ' .. target_path)
+print('[scripts/encrypt_file.lua] finished encypt file: ' ..source_path ..' => ' ..target_path)

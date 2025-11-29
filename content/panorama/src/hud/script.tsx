@@ -28,10 +28,10 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
     const [selectedDungeon, setSelectedDungeon] = useState<string | null>(null);
 
     const selectDungeon = (dungeonType: string) => {
-        $. Msg(`[DungeonMenu] 点击了副本: ${dungeonType}`);
+        $.Msg(`[DungeonMenu] 点击了副本: ${dungeonType}`);
         
         if (dungeonType === "A") {
-            $. Msg('[DungeonMenu] 设置状态为 A');
+            $.Msg('[DungeonMenu] 设置状态为 A');
             setSelectedDungeon("A");
         } else {
             // @ts-ignore
@@ -49,7 +49,7 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
         
         // @ts-ignore
         GameEvents.SendCustomGameEventToServer('select_dungeon', {
-            PlayerID: Players. GetLocalPlayer(),
+            PlayerID: Players.GetLocalPlayer(),
             dungeon_type: selectedDungeon,
             difficulty: difficulty
         });
@@ -65,11 +65,11 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
 
     if (!visible) return null;
 
-    $. Msg(`[DungeonMenu] 渲染，selectedDungeon = ${selectedDungeon}`);
+    $.Msg(`[DungeonMenu] 渲染，selectedDungeon = ${selectedDungeon}`);
 
     // 难度选择界面
     if (selectedDungeon === "A") {
-        $. Msg('[DungeonMenu] 渲染难度选择界面');
+        $.Msg('[DungeonMenu] 渲染难度选择界面');
         
         return (
             <Panel style={{
@@ -293,7 +293,7 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
     }
 
     // 副本选择界面
-    $. Msg('[DungeonMenu] 渲染副本选择界面');
+    $.Msg('[DungeonMenu] 渲染副本选择界面');
     
     return (
         <Panel style={{
@@ -381,7 +381,7 @@ const Root: FC = () => {
     const [classSelected, setClassSelected] = useState(false);
 
     const onSelectReward = (reward: ExternalRewardItem) => {
-        $.Msg(`[Root] Selected reward: ${reward. name}`);
+        $.Msg(`[Root] Selected reward: ${reward.name}`);
         setRewardVisible(false);
     };
 
@@ -397,7 +397,7 @@ const Root: FC = () => {
         const wait = new WaitAction(0.5);
         const showTextTooltip = new DispatchEventAction(`DOTAShowTextTooltip`, $(`#QRCode`), `正在打开链接`);
         const hideTextTooltip = new DispatchEventAction(`DOTAHideTextTooltip`, $(`#QRCode`));
-        const playSound = new FunctionAction(() => PlayUISoundScript('DotaSOS. TestBeep'));
+        const playSound = new FunctionAction(() => PlayUISoundScript('DotaSOS.TestBeep'));
         const gotoUrl = new DispatchEventAction(`ExternalBrowserGoToURL`, url);
         RunSequentialActions([showTextTooltip, wait, hideTextTooltip, wait, playSound, gotoUrl]);
     }, [url]);
@@ -409,7 +409,7 @@ const Root: FC = () => {
     // B 键打开仓库
     useEffect(() => {
         if (bPressed && classSelected) {  // ⭐ 只有选择职业后才能打开
-            $. Msg('[Root] B 键按下，打开仓库');
+            $.Msg('[Root] B 键按下，打开仓库');
             setVaultVisible(true);
             setMaterialsVisible(true);
         }
@@ -425,14 +425,14 @@ const Root: FC = () => {
 
     // 事件监听
     useEffect(() => {
-        $. Msg('[Root] 注册事件监听器');
+        $.Msg('[Root] 注册事件监听器');
         
         const listenerMenu = GameEvents.Subscribe('show_dungeon_menu', () => {
-            $. Msg('[Root] 收到 show_dungeon_menu 事件');
+            $.Msg('[Root] 收到 show_dungeon_menu 事件');
             setMenuVisible(true);
         });
 
-        const listenerReward = GameEvents. Subscribe("show_reward_selection", () => {
+        const listenerReward = GameEvents.Subscribe("show_reward_selection", () => {
             $.Msg('[Root] 收到 show_reward_selection 事件');
             setRewardVisible(true);
         });
@@ -443,7 +443,7 @@ const Root: FC = () => {
         });
 
         const listenerEquipment = GameEvents.Subscribe('show_equipment_ui', () => {
-            $. Msg('[Root] 收到 show_equipment_ui 事件');
+            $.Msg('[Root] 收到 show_equipment_ui 事件');
             setEquipmentVisible(true);
         });
 
@@ -458,7 +458,7 @@ const Root: FC = () => {
             GameEvents.Unsubscribe(listenerMenu);
             GameEvents.Unsubscribe(listenerReward);
             GameEvents.Unsubscribe(listenerVault);
-            GameEvents. Unsubscribe(listenerEquipment);
+            GameEvents.Unsubscribe(listenerEquipment);
              GameEvents.Unsubscribe(listenerClassConfirmed);
         };
     }, []);
@@ -478,7 +478,7 @@ const Root: FC = () => {
 
                 {/* 副本菜单弹窗 */}
                 <DungeonMenu visible={menuVisible} onClose={() => {
-                    $. Msg('[Root] 关闭副本菜单');
+                    $.Msg('[Root] 关闭副本菜单');
                     setMenuVisible(false);
                 }} />
 
@@ -536,8 +536,8 @@ const Root: FC = () => {
                     {/* 装备按钮 */}
                     <Button
                         onactivate={() => {
-                            $. Msg('[Root] 点击装备按钮');
-                            Game.EmitSound('ui. button_click');
+                            $.Msg('[Root] 点击装备按钮');
+                            Game.EmitSound('ui.button_click');
                             setEquipmentVisible(true);
                         }}
                         style={{
@@ -609,7 +609,7 @@ const Root: FC = () => {
                             border: '3px solid #ffd700',
                         }}
                         onmouseover={(panel) => {
-                            panel.style. backgroundColor = '#a0522d';
+                            panel.style.backgroundColor = '#a0522d';
                             panel.style.border = '4px solid #ffd700';
                             Game.EmitSound('ui.button_over');
                         }}
@@ -677,6 +677,6 @@ const Root: FC = () => {
     );
 }
 
-$. Msg('[HUD] 开始渲染 Root 组件');
-render(<Root />, $. GetContextPanel());
-$. Msg('[HUD] Root 组件渲染完成');
+$.Msg('[HUD] 开始渲染 Root 组件');
+render(<Root />, $.GetContextPanel());
+$.Msg('[HUD] Root 组件渲染完成');

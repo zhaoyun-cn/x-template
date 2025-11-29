@@ -50,7 +50,7 @@ export interface AffixConfig {
 // 词条配置表
 export const AFFIX_CONFIG: Record<AffixType, AffixConfig> = {
     // ===== 基础属性词条 =====
-    [AffixType. TOUGH]: {
+    [AffixType.TOUGH]: {
         name: "坚韧",
         description: "+50%生命值",
         color: "#00FF00",
@@ -58,7 +58,7 @@ export const AFFIX_CONFIG: Record<AffixType, AffixConfig> = {
         forBoss: true,
         healthMult: 1.5,
     },
-    [AffixType. MIGHTY]: {
+    [AffixType.MIGHTY]: {
         name: "强壮",
         description: "+100%生命值",
         color: "#00AA00",
@@ -66,7 +66,7 @@ export const AFFIX_CONFIG: Record<AffixType, AffixConfig> = {
         forBoss: true,
         healthMult: 2.0,
     },
-    [AffixType. FURIOUS]: {
+    [AffixType.FURIOUS]: {
         name: "狂暴",
         description: "+30%攻击力",
         color: "#FF6600",
@@ -151,7 +151,7 @@ export const AFFIX_CONFIG: Record<AffixType, AffixConfig> = {
         forBoss: true,
         hasSpecialEffect: true,
     },
-    [AffixType. ENRAGED]: {
+    [AffixType.ENRAGED]: {
         name: "狂暴化",
         description: "生命低于30%时攻击翻倍",
         color: "#FF3300",
@@ -167,7 +167,7 @@ export const AFFIX_CONFIG: Record<AffixType, AffixConfig> = {
         forBoss: true,
         hasSpecialEffect: true,
     },
-    [AffixType. BURNING_AURA]: {
+    [AffixType.BURNING_AURA]: {
         name: "燃烧光环",
         description: "每秒对周围玩家造成伤害",
         color: "#FF6600",
@@ -202,7 +202,7 @@ export class AffixSystem {
         
         // 获取可用词条池
         const availableAffixes = Object.entries(AFFIX_CONFIG)
-            . filter(([_, config]) => {
+            .filter(([_, config]) => {
                 if (monsterType === "elite") return config.forElite;
                 if (monsterType === "boss") return config.forBoss;
                 return false;
@@ -226,7 +226,7 @@ export class AffixSystem {
  */
 public static ApplyAffixes(monster: CDOTA_BaseNPC, affixes: AffixType[]): void {
     const entityIndex = monster.GetEntityIndex();
-    this.monsterAffixes. set(entityIndex, affixes);
+    this.monsterAffixes.set(entityIndex, affixes);
     this.monsterTimers.set(entityIndex, []);
     
     // 计算词条总倍率
@@ -238,8 +238,8 @@ public static ApplyAffixes(monster: CDOTA_BaseNPC, affixes: AffixType[]): void {
     for (const affix of affixes) {
         const config = AFFIX_CONFIG[affix];
         
-        if (config. healthMult) healthMult *= config. healthMult;
-        if (config. damageMult) damageMult *= config.damageMult;
+        if (config.healthMult) healthMult *= config.healthMult;
+        if (config.damageMult) damageMult *= config.damageMult;
         if (config.speedMult) speedMult *= config.speedMult;
         if (config.scaleMult) extraScale *= config.scaleMult;
     }
@@ -248,7 +248,7 @@ public static ApplyAffixes(monster: CDOTA_BaseNPC, affixes: AffixType[]): void {
     Timers.CreateTimer(0.2, () => {
         if (!IsValidEntity(monster)) return undefined;
         
-        const isHero = monster. IsHero();
+        const isHero = monster.IsHero();
         
         // === 生命值 ===
         if (isHero) {
@@ -276,7 +276,7 @@ public static ApplyAffixes(monster: CDOTA_BaseNPC, affixes: AffixType[]): void {
             const currentMaxHealth = monster.GetMaxHealth();
             const newHealth = Math.floor(currentMaxHealth * healthMult);
             monster.SetBaseMaxHealth(newHealth);
-            monster. SetMaxHealth(newHealth);
+            monster.SetMaxHealth(newHealth);
             monster.SetHealth(newHealth);
         }
         
@@ -295,7 +295,7 @@ public static ApplyAffixes(monster: CDOTA_BaseNPC, affixes: AffixType[]): void {
         } else {
             const baseDamageMin = monster.GetBaseDamageMin();
             const baseDamageMax = monster.GetBaseDamageMax();
-            monster.SetBaseDamageMin(Math. floor(baseDamageMin * damageMult));
+            monster.SetBaseDamageMin(Math.floor(baseDamageMin * damageMult));
             monster.SetBaseDamageMax(Math.floor(baseDamageMax * damageMult));
         }
         
@@ -312,7 +312,7 @@ public static ApplyAffixes(monster: CDOTA_BaseNPC, affixes: AffixType[]): void {
         // 🔧 打印最终属性验证
         Timers.CreateTimer(0.2, () => {
             if (IsValidEntity(monster)) {
-                print(`[AffixSystem] ✅ 最终验证: 生命=${monster. GetHealth()}/${monster.GetMaxHealth()}, 移速=${monster.GetBaseMoveSpeed()}, 体型=${monster.GetModelScale(). toFixed(2)}`);
+                print(`[AffixSystem] ✅ 最终验证: 生命=${monster.GetHealth()}/${monster.GetMaxHealth()}, 移速=${monster.GetBaseMoveSpeed()}, 体型=${monster.GetModelScale().toFixed(2)}`);
             }
             return undefined;
         });
@@ -326,7 +326,7 @@ public static ApplyAffixes(monster: CDOTA_BaseNPC, affixes: AffixType[]): void {
     // 添加视觉效果
     this.ApplyVisualEffects(monster, affixes);
     
-    print(`[AffixSystem] 应用词条: ${this.GetAffixNames(affixes). join(", ")} (生命x${healthMult}, 攻击x${damageMult}, 移速x${speedMult})`);
+    print(`[AffixSystem] 应用词条: ${this.GetAffixNames(affixes).join(", ")} (生命x${healthMult}, 攻击x${damageMult}, 移速x${speedMult})`);
 }
     
 /**
@@ -338,10 +338,10 @@ private static ApplySpecialEffects(monster: CDOTA_BaseNPC, affixes: AffixType[])
     
     for (const affix of affixes) {
         switch (affix) {
-            case AffixType. SHIELDED:
+            case AffixType.SHIELDED:
                 // 护盾：每10秒获得临时生命
                 const shieldTimer = Timers.CreateTimer(0, () => {
-                    if (! IsValidEntity(monster) || !monster. IsAlive()) return undefined;
+                    if (! IsValidEntity(monster) || !monster.IsAlive()) return undefined;
                     
                     // 🔧 简单实现：直接回复生命
                     const shieldAmount = Math.floor(monster.GetMaxHealth() * 0.2);
@@ -350,7 +350,7 @@ private static ApplySpecialEffects(monster: CDOTA_BaseNPC, affixes: AffixType[])
                     // 护盾特效
                     const particle = ParticleManager.CreateParticle(
                         "particles/items_fx/black_king_bar_avatar.vpcf",
-                        ParticleAttachment. ABSORIGIN_FOLLOW,
+                        ParticleAttachment.ABSORIGIN_FOLLOW,
                         monster
                     );
                     
@@ -389,15 +389,15 @@ private static ApplySpecialEffects(monster: CDOTA_BaseNPC, affixes: AffixType[])
                         if (minion) {
                             minion.SetBaseMaxHealth(Math.floor(minion.GetMaxHealth() * 0.5));
                             minion.SetHealth(minion.GetMaxHealth());
-                            (minion as any). isSummonedMinion = true;
-                            (minion as any). zoneMonsterType = "normal";
+                            (minion as any).isSummonedMinion = true;
+                            (minion as any).zoneMonsterType = "normal";
                         }
                     }
                     
                     // 召唤特效
-                    const particle = ParticleManager. CreateParticle(
+                    const particle = ParticleManager.CreateParticle(
                         "particles/units/heroes/hero_enigma/enigma_demonic_conversion.vpcf",
-                        ParticleAttachment. ABSORIGIN,
+                        ParticleAttachment.ABSORIGIN,
                         monster
                     );
                     ParticleManager.SetParticleControl(particle, 0, pos);
@@ -406,10 +406,10 @@ private static ApplySpecialEffects(monster: CDOTA_BaseNPC, affixes: AffixType[])
                     print(`[AffixSystem] 召唤触发！生成2只小怪`);
                     return 15.0;  // 每15秒
                 });
-                timers. push(summonTimer);
+                timers.push(summonTimer);
                 break;
                 
-            case AffixType. FROZEN_AURA:
+            case AffixType.FROZEN_AURA:
     // 冰霜光环：减速周围玩家
     const frozenTimer = Timers.CreateTimer(0, () => {
         if (! IsValidEntity(monster) || ! monster.IsAlive()) return undefined;
@@ -421,7 +421,7 @@ private static ApplySpecialEffects(monster: CDOTA_BaseNPC, affixes: AffixType[])
             undefined,
             600,  // 🔧 范围从500增加到600
             UnitTargetTeam.ENEMY,
-            UnitTargetType. HERO,
+            UnitTargetType.HERO,
             UnitTargetFlags.NONE,
             FindOrder.ANY,
             false
@@ -430,7 +430,7 @@ private static ApplySpecialEffects(monster: CDOTA_BaseNPC, affixes: AffixType[])
         for (const enemy of enemies) {
             // 🔧 直接修改移速
             if (!(enemy as any).isFrozenSlowed) {
-                (enemy as any). isFrozenSlowed = true;
+                (enemy as any).isFrozenSlowed = true;
                 const originalSpeed = enemy.GetBaseMoveSpeed();
                 const slowedSpeed = Math.floor(originalSpeed * 0.6);  // 🔧 减速40%（原来20%）
                 enemy.SetBaseMoveSpeed(slowedSpeed);
@@ -438,7 +438,7 @@ private static ApplySpecialEffects(monster: CDOTA_BaseNPC, affixes: AffixType[])
                 // 🔧 添加冰冻特效到玩家身上
                 const frostEffect = ParticleManager.CreateParticle(
                     "particles/generic_gameplay/generic_slowed_cold.vpcf",
-                    ParticleAttachment. ABSORIGIN_FOLLOW,
+                    ParticleAttachment.ABSORIGIN_FOLLOW,
                     enemy
                 );
                 
@@ -481,8 +481,8 @@ case AffixType.BURNING_AURA:
             pos,
             undefined,
             500,  // 🔧 范围500
-            UnitTargetTeam. ENEMY,
-            UnitTargetType. HERO,
+            UnitTargetTeam.ENEMY,
+            UnitTargetType.HERO,
             UnitTargetFlags.NONE,
             FindOrder.ANY,
             false
@@ -499,9 +499,9 @@ case AffixType.BURNING_AURA:
             });
             
             // 🔧 添加燃烧特效
-            const burnEffect = ParticleManager. CreateParticle(
+            const burnEffect = ParticleManager.CreateParticle(
                 "particles/units/heroes/hero_huskar/huskar_burning_spear_debuff.vpcf",
-                ParticleAttachment. ABSORIGIN_FOLLOW,
+                ParticleAttachment.ABSORIGIN_FOLLOW,
                 enemy
             );
             
@@ -511,7 +511,7 @@ case AffixType.BURNING_AURA:
                 return undefined;
             });
             
-            print(`[AffixSystem] 🔥 燃烧光环: ${enemy. GetUnitName()} 受到 ${damage} 点伤害`);
+            print(`[AffixSystem] 🔥 燃烧光环: ${enemy.GetUnitName()} 受到 ${damage} 点伤害`);
         }
         
         return 1.0;
@@ -521,17 +521,17 @@ case AffixType.BURNING_AURA:
     // 添加燃烧光环特效到怪物身上
     const burnParticle = ParticleManager.CreateParticle(
         "particles/units/heroes/hero_ember_spirit/ember_spirit_flameguard.vpcf",
-        ParticleAttachment. ABSORIGIN_FOLLOW,
+        ParticleAttachment.ABSORIGIN_FOLLOW,
         monster
     );
     (monster as any).burnAuraParticle = burnParticle;
     print(`[AffixSystem] 🔥 燃烧光环已激活`);
     break;
                 
-            case AffixType. ENRAGED:
+            case AffixType.ENRAGED:
                 // 狂暴化：低血量攻击翻倍
                 const enrageTimer = Timers.CreateTimer(0, () => {
-                    if (! IsValidEntity(monster) || !monster. IsAlive()) return undefined;
+                    if (! IsValidEntity(monster) || !monster.IsAlive()) return undefined;
                     
                     const healthPct = monster.GetHealth() / monster.GetMaxHealth();
                     const isEnraged = (monster as any).isEnraged;
@@ -546,7 +546,7 @@ case AffixType.BURNING_AURA:
                         // 狂暴特效
                         const particle = ParticleManager.CreateParticle(
                             "particles/units/heroes/hero_huskar/huskar_berserkers_blood.vpcf",
-                            ParticleAttachment. ABSORIGIN_FOLLOW,
+                            ParticleAttachment.ABSORIGIN_FOLLOW,
                             monster
                         );
                         (monster as any).enrageParticle = particle;
@@ -593,10 +593,10 @@ case AffixType.BURNING_AURA:
     
     const particle = ParticleManager.CreateParticle(
         particlePath,
-        ParticleAttachment. ABSORIGIN_FOLLOW,
+        ParticleAttachment.ABSORIGIN_FOLLOW,
         monster
     );
-    ParticleManager.SetParticleControl(particle, 0, monster. GetAbsOrigin());
+    ParticleManager.SetParticleControl(particle, 0, monster.GetAbsOrigin());
     
     // 🔧 保存特效索引
     (monster as any).affixParticle = particle;
@@ -607,7 +607,7 @@ case AffixType.BURNING_AURA:
  */
 public static OnMonsterDeath(monster: CDOTA_BaseNPC): AffixType[] | undefined {
     const entityIndex = monster.GetEntityIndex();
-    const affixes = this.monsterAffixes. get(entityIndex);
+    const affixes = this.monsterAffixes.get(entityIndex);
     
     if (!affixes) return undefined;
     
@@ -637,7 +637,7 @@ public static OnMonsterDeath(monster: CDOTA_BaseNPC): AffixType[] | undefined {
     }
     
     // 处理分裂词条
-    if (affixes.includes(AffixType. SPLITTING)) {
+    if (affixes.includes(AffixType.SPLITTING)) {
         this.HandleSplitting(monster);
     }
     
@@ -652,8 +652,8 @@ public static OnMonsterDeath(monster: CDOTA_BaseNPC): AffixType[] | undefined {
     }
     
     // 清理数据
-    this. monsterAffixes.delete(entityIndex);
-    this. monsterTimers. delete(entityIndex);
+    this.monsterAffixes.delete(entityIndex);
+    this.monsterTimers.delete(entityIndex);
     this.undyingTriggered.delete(entityIndex);
     
     return affixes;
@@ -666,15 +666,15 @@ public static OnMonsterDeath(monster: CDOTA_BaseNPC): AffixType[] | undefined {
         const entityIndex = monster.GetEntityIndex();
         const affixes = this.monsterAffixes.get(entityIndex);
         
-        if (!affixes || !affixes.includes(AffixType. UNDYING)) return false;
+        if (!affixes || !affixes.includes(AffixType.UNDYING)) return false;
         if (this.undyingTriggered.has(entityIndex)) return false;
         
         // 检查是否会致死
         if (monster.GetHealth() - damage <= 0) {
-            this. undyingTriggered.add(entityIndex);
+            this.undyingTriggered.add(entityIndex);
             
             // 回复50%生命
-            const healAmount = Math.floor(monster. GetMaxHealth() * 0.5);
+            const healAmount = Math.floor(monster.GetMaxHealth() * 0.5);
             monster.SetHealth(healAmount);
             
             // 不屈特效
@@ -721,14 +721,14 @@ public static OnMonsterDeath(monster: CDOTA_BaseNPC): AffixType[] | undefined {
                 
                 // 标记为分裂物
                 (splitling as any).isSplitling = true;
-                (splitling as any). zoneMonsterType = "normal";  // 算作普通怪
+                (splitling as any).zoneMonsterType = "normal";  // 算作普通怪
             }
         }
         
         // 分裂特效
         const particle = ParticleManager.CreateParticle(
             "particles/units/heroes/hero_broodmother/broodmother_spiderlings_spawn.vpcf",
-            ParticleAttachment. ABSORIGIN,
+            ParticleAttachment.ABSORIGIN,
             monster
         );
         ParticleManager.SetParticleControl(particle, 0, pos);
@@ -744,11 +744,11 @@ public static OnMonsterDeath(monster: CDOTA_BaseNPC): AffixType[] | undefined {
         const entityIndex = monster.GetEntityIndex();
         const affixes = this.monsterAffixes.get(entityIndex);
         
-        if (!affixes || !affixes. includes(AffixType.VAMPIRIC)) return;
+        if (!affixes || !affixes.includes(AffixType.VAMPIRIC)) return;
         
         // 回复10%伤害的生命
-        const healAmount = Math. floor(damage * 0.1);
-        monster. SetHealth(Math.min(monster.GetHealth() + healAmount, monster.GetMaxHealth()));
+        const healAmount = Math.floor(damage * 0.1);
+        monster.SetHealth(Math.min(monster.GetHealth() + healAmount, monster.GetMaxHealth()));
     }
     
     /**
@@ -758,7 +758,7 @@ public static OnMonsterDeath(monster: CDOTA_BaseNPC): AffixType[] | undefined {
         const entityIndex = monster.GetEntityIndex();
         const affixes = this.monsterAffixes.get(entityIndex);
         
-        if (!affixes || !affixes. includes(AffixType.THORNS)) return;
+        if (!affixes || !affixes.includes(AffixType.THORNS)) return;
         if (! IsValidEntity(attacker) || !attacker.IsAlive()) return;
         
         // 反弹15%伤害
@@ -767,7 +767,7 @@ public static OnMonsterDeath(monster: CDOTA_BaseNPC): AffixType[] | undefined {
             victim: attacker,
             attacker: monster,
             damage: thornDamage,
-            damage_type: DamageTypes. PURE,
+            damage_type: DamageTypes.PURE,
         });
     }
     

@@ -3,7 +3,7 @@ declare const _G: any;
 import { ExternalRewardItem, ExternalItemType, EquipmentAttribute } from "../dungeon/external_reward_pool";
 
 // ⭐ 初始化全局装备属性表
-_G. EquipmentStats = _G.EquipmentStats || {};
+_G.EquipmentStats = _G.EquipmentStats || {};
 // 装备槽位枚举
 export enum EquipmentSlot {
     HELMET = 'helmet',
@@ -67,12 +67,12 @@ export class EquipmentVaultSystem {
                 return;
             }
             
-            print(`[EquipmentVaultSystem] ✓ 找到玩家${playerId}的英雄：${hero. GetUnitName()}`);
+            print(`[EquipmentVaultSystem] ✓ 找到玩家${playerId}的英雄：${hero.GetUnitName()}`);
             
             // ⭐ 记录英雄的原始基础护甲（只记录一次）
             if (this.playerBaseArmor[playerId] === undefined) {
                 this.playerBaseArmor[playerId] = hero.GetPhysicalArmorBaseValue();
-                print(`[EquipmentVaultSystem] 📝 记录基础护甲: ${this. playerBaseArmor[playerId]}`);
+                print(`[EquipmentVaultSystem] 📝 记录基础护甲: ${this.playerBaseArmor[playerId]}`);
             }
             
             // 检查是否已经有 modifier
@@ -84,7 +84,7 @@ export class EquipmentVaultSystem {
                 return;
             }
             
-            print(`[EquipmentVaultSystem] 尝试添加 modifier_equipment_system... `);
+            print(`[EquipmentVaultSystem] 尝试添加 modifier_equipment_system...`);
             const modifier = hero.AddNewModifier(hero, undefined, "modifier_equipment_system", {});
             
             if (modifier && !modifier.IsNull()) {
@@ -105,7 +105,7 @@ export class EquipmentVaultSystem {
             this.playerVaults[playerId] = [];
         }
         
-        this. playerVaults[playerId].push(item);
+        this.playerVaults[playerId].push(item);
         this.SaveToPersistentStorage(playerId);
     }
 
@@ -171,7 +171,7 @@ export class EquipmentVaultSystem {
 
     // 卸下装备
     static UnequipItem(playerId: PlayerID, slot: string): boolean {
-        const equipment = this. GetEquipment(playerId);
+        const equipment = this.GetEquipment(playerId);
         const item = equipment[slot];
         
         if (!item) {
@@ -182,7 +182,7 @@ export class EquipmentVaultSystem {
         this.SaveToVault(playerId, item);
         equipment[slot] = null;
         this.RefreshEquipmentStats(playerId);
-        this. SaveToPersistentStorage(playerId);
+        this.SaveToPersistentStorage(playerId);
         
         print(`[EquipmentVaultSystem] ✓ 玩家${playerId}卸下了：${item.name}`);
         return true;
@@ -211,14 +211,14 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
         magic_resistance: 0,
     };
     
-    print(`[EquipmentVaultSystem] 开始计算装备属性总和... `);
+    print(`[EquipmentVaultSystem] 开始计算装备属性总和...`);
     
     for (const slot in equipment) {
         const item = equipment[slot];
         if (item) {
             print(`[EquipmentVaultSystem]   槽位 ${slot}: ${item.name}`);
-            item.stats. forEach(stat => {
-                const key = this.AttributeToKey(stat. attribute);
+            item.stats.forEach(stat => {
+                const key = this.AttributeToKey(stat.attribute);
                 if (key) {
                     totalStats[key] = (totalStats[key] || 0) + stat.value;
                     print(`[EquipmentVaultSystem]     +${stat.value} ${stat.attribute} (${key})`);
@@ -233,9 +233,9 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
     const baseArmor = this.playerBaseArmor[playerId] || 0;
     const newArmor = baseArmor + totalStats.armor;
     hero.SetPhysicalArmorBaseValue(newArmor);
-    print(`[EquipmentVaultSystem] 🛡️ 设置护甲: 基础(${baseArmor}) + 装备(${totalStats. armor}) = ${newArmor}`);
+    print(`[EquipmentVaultSystem] 🛡️ 设置护甲: 基础(${baseArmor}) + 装备(${totalStats.armor}) = ${newArmor}`);
     
-    modifier. Destroy();
+    modifier.Destroy();
     
     print(`[EquipmentVaultSystem] ⭐ 重新创建 Modifier 以刷新属性`);
     
@@ -287,7 +287,7 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
         
         const serializedItems: any = {};
         items.forEach((item, index) => {
-            serializedItems[index. toString()] = {
+            serializedItems[index.toString()] = {
                 name: item.name,
                 type: item.type,
                 icon: item.icon,
@@ -299,14 +299,14 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
         for (const slot in equipment) {
             const item = equipment[slot];
             serializedEquipment[slot] = item ? {
-                name: item. name,
-                type: item. type,
-                icon: item. icon,
-                stats: item. stats.map(stat => ({ attribute: stat.attribute, value: stat.value }))
+                name: item.name,
+                type: item.type,
+                icon: item.icon,
+                stats: item.stats.map(stat => ({ attribute: stat.attribute, value: stat.value }))
             } : null;
         }
         
-        CustomNetTables.SetTableValue("player_vaults", playerId. toString(), {
+        CustomNetTables.SetTableValue("player_vaults", playerId.toString(), {
             items: serializedItems,
             equipment: serializedEquipment,
             timestamp: Time()
@@ -323,7 +323,7 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
                 for (const key in data.items) {
                     const item = data.items[key];
                     let statsArray = Array.isArray(item.stats) ? item.stats : Object.values(item.stats);
-                    items.push({ name: item.name, type: item.type, icon: item. icon, stats: statsArray });
+                    items.push({ name: item.name, type: item.type, icon: item.icon, stats: statsArray });
                 }
                 this.playerVaults[playerId] = items;
             }

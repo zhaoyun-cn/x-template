@@ -8,19 +8,19 @@ DEFLATE/zlib format.
 @copyright LibDeflate <2018-2021> Haoqian He
 @license zlib License
 
-This library is implemented according to the following specifications. <br>
-Report a bug if LibDeflate is not fully compliant with those specs. <br>
+This library is implemented according to the following specifications.<br>
+Report a bug if LibDeflate is not fully compliant with those specs.<br>
 Both compressors and decompressors have been implemented in the library.<br>
-1. RFC1950: DEFLATE Compressed Data Format Specification version 1.3 <br>
+1.RFC1950: DEFLATE Compressed Data Format Specification version 1.3 <br>
 https://tools.ietf.org/html/rfc1951 <br>
-2. RFC1951: ZLIB Compressed Data Format Specification version 3.3 <br>
+2.RFC1951: ZLIB Compressed Data Format Specification version 3.3 <br>
 https://tools.ietf.org/html/rfc1950 <br>
 
-This library requires Lua 5.1/5.2/5.3/5.4 interpreter or LuaJIT v2.0+. <br>
-This library does not have any dependencies. <br>
+This library requires Lua 5.1/5.2/5.3/5.4 interpreter or LuaJIT v2.0+.<br>
+This library does not have any dependencies.<br>
 <br>
 This file "LibDeflate.lua" is the only source file of
-the library. <br>
+the library.<br>
 Submit suggestions or report bugs to
 https://github.com/safeteeWow/LibDeflate/issues
 ]] --[[
@@ -29,25 +29,25 @@ zlib License
 (C) 2018-2021 Haoqian He
 
 This software is provided 'as-is', without any express or implied
-warranty.  In no event will the authors be held liable for any damages
+warranty. In no event will the authors be held liable for any damages
 arising from the use of this software.
 
 Permission is granted to anyone to use this software for any purpose,
 including commercial applications, and to alter it and redistribute it
 freely, subject to the following restrictions:
 
-1. The origin of this software must not be misrepresented; you must not
-   claim that you wrote the original software. If you use this software
+1.The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software.If you use this software
    in a product, an acknowledgment in the product documentation would be
    appreciated but is not required.
-2. Altered source versions must be plainly marked as such, and must not be
+2.Altered source versions must be plainly marked as such, and must not be
    misrepresented as being the original software.
-3. This notice may not be removed or altered from any source distribution.
+3.This notice may not be removed or altered from any source distribution.
 
 License History:
-1. GNU General Public License Version 3 in v1.0.0 and earlier versions.
-2. GNU Lesser General Public License Version 3 in v1.0.1
-3. the zlib License since v1.0.2
+1.GNU General Public License Version 3 in v1.0.0 and earlier versions.
+2.GNU Lesser General Public License Version 3 in v1.0.1
+3.the zlib License since v1.0.2
 
 Credits and Disclaimer:
 This library rewrites the code from the algorithm
@@ -56,19 +56,19 @@ and uses their code to help to test the correctness of this library,
 but their code is not included directly in the library itself.
 Their original licenses shall be comply when used.
 
-1. zlib, by Jean-loup Gailly (compression) and Mark Adler (decompression).
+1.zlib, by Jean-loup Gailly (compression) and Mark Adler (decompression).
 	http://www.zlib.net/
-	Licensed under zlib License. http://www.zlib.net/zlib_license.html
+	Licensed under zlib License.http://www.zlib.net/zlib_license.html
 	For the compression algorithm.
-2. puff, by Mark Adler. https://github.com/madler/zlib/tree/master/contrib/puff
-	Licensed under zlib License. http://www.zlib.net/zlib_license.html
+2.puff, by Mark Adler.https://github.com/madler/zlib/tree/master/contrib/puff
+	Licensed under zlib License.http://www.zlib.net/zlib_license.html
 	For the decompression algorithm.
-3. LibCompress, by jjsheets and Galmok of European Stormrage (Horde)
+3.LibCompress, by jjsheets and Galmok of European Stormrage (Horde)
 	https://www.wowace.com/projects/libcompress
 	Licensed under GPLv2.
 	https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 	For the code to create customized codec.
-4. WeakAuras2,
+4.WeakAuras2,
 	https://github.com/WeakAuras/WeakAuras2
 	Licensed under GPLv2.
 	For the 6bit encoding and decoding.
@@ -81,12 +81,12 @@ Their original licenses shall be comply when used.
 --]] local LibDeflate
 
 do
-  -- Semantic version. all lowercase.
+  -- Semantic version.all lowercase.
   -- Suffix can be alpha1, alpha2, beta1, beta2, rc1, rc2, etc.
   -- NOTE: Two version numbers needs to modify.
-  -- 1. On the top of LibDeflate.lua
-  -- 2. _VERSION
-  -- 3. _MINOR
+  -- 1.On the top of LibDeflate.lua
+  -- 2._VERSION
+  -- 3._MINOR
 
   -- version to store the official version of LibDeflate
   local _VERSION = "1.0.2-release"
@@ -101,7 +101,7 @@ do
   -- 3 : v1.0.2
   local _MINOR = 3
 
-  local _COPYRIGHT = "LibDeflate " .. _VERSION ..
+  local _COPYRIGHT = "LibDeflate " .._VERSION ..
                        " Copyright (C) 2018-2021 Haoqian He." ..
                        " Licensed under the zlib License"
 
@@ -199,7 +199,7 @@ local _literal_deflate_code_to_extra_bitlen =
     5, 5, 5, 0
   }
 
--- Convert a distance deflate code to base LZ77 distance. (0<=code<=29)
+-- Convert a distance deflate code to base LZ77 distance.(0<=code<=29)
 local _dist_deflate_code_to_base_dist = {
   [0] = 1,
   2,
@@ -233,7 +233,7 @@ local _dist_deflate_code_to_base_dist = {
   24577
 }
 
--- Convert a distance deflate code to LZ77 bits length. (0<=code<=29)
+-- Convert a distance deflate code to LZ77 bits length.(0<=code<=29)
 local _dist_deflate_code_to_extra_bitlen =
   {
     [0] = 0,
@@ -392,7 +392,7 @@ do
   end
 end
 
---- Calculate the Adler-32 checksum of the string. <br>
+--- Calculate the Adler-32 checksum of the string.<br>
 -- See RFC1950 Page 9 https://tools.ietf.org/html/rfc1950 for the
 -- definition of Adler-32 checksum.
 -- @param str [string] the input string to calcuate its Adler-32 checksum.
@@ -451,14 +451,14 @@ end
 --- Create a preset dictionary.
 --
 -- This function is not fast, and the memory consumption of the produced
--- dictionary is about 50 times of the input string. Therefore, it is suggestted
+-- dictionary is about 50 times of the input string.Therefore, it is suggestted
 -- to run this function only once in your program.
 --
 -- It is very important to know that if you do use a preset dictionary,
--- compressors and decompressors MUST USE THE SAME dictionary. That is,
--- dictionary must be created using the same string. If you update your program
+-- compressors and decompressors MUST USE THE SAME dictionary.That is,
+-- dictionary must be created using the same string.If you update your program
 -- with a new dictionary, people with the old version won't be able to transmit
--- data with people with the new version. Therefore, changing the dictionary
+-- data with people with the new version.Therefore, changing the dictionary
 -- must be very careful.
 --
 -- The parameters "strlen" and "adler32" add a layer of verification to ensure
@@ -475,15 +475,15 @@ end
 --
 -- local dict = LibDeflate:CreateDictionary(dict_str, 10, 187433486)
 --
--- @param str [string] The string used as the preset dictionary. <br>
+-- @param str [string] The string used as the preset dictionary.<br>
 -- You should put stuffs that frequently appears in the dictionary
 -- string and preferablely put more frequently appeared stuffs toward the end
--- of the string. <br>
+-- of the string.<br>
 -- Empty string and string longer than 32768 bytes are not allowed.
--- @param strlen [integer] The length of 'str'. Please pass in this parameter
--- as a hardcoded constant, in order to verify the content of 'str'. The value
+-- @param strlen [integer] The length of 'str'.Please pass in this parameter
+-- as a hardcoded constant, in order to verify the content of 'str'.The value
 -- of this parameter should be known before your program runs.
--- @param adler32 [integer] The Adler-32 checksum of 'str'. Please pass in this
+-- @param adler32 [integer] The Adler-32 checksum of 'str'.Please pass in this
 -- parameter as a hardcoded constant, in order to verify the content of 'str'.
 -- The value of this parameter should be known before your program runs.
 -- @return  [table] The dictionary used for preset dictionary compression and
@@ -624,19 +624,19 @@ end
 	there is no guarantee that higher compression level does not create
 	bigger file than lower level, but I can say it's 99% likely)
 
-	Be careful with the high compression level. This is a pure lua
+	Be careful with the high compression level.This is a pure lua
 	implementation compressor/decompressor, which is significant slower than
-	a C/C++ equivalant compressor/decompressor. Very high compression level
+	a C/C++ equivalant compressor/decompressor.Very high compression level
 	costs significant more CPU time, and usually compression size won't be
 	significant smaller when you increase compression level by 1, when the
-	level is already very high. Benchmark yourself if you can afford it.
+	level is already very high.Benchmark yourself if you can afford it.
 
 	See also https://github.com/madler/zlib/blob/master/doc/algorithm.txt,
 	https://github.com/madler/zlib/blob/master/deflate.c for more information.
 
 	The meaning of each field:
 	@field 1 use_lazy_evaluation:
-		true/false. Whether the program uses lazy evaluation.
+		true/false.Whether the program uses lazy evaluation.
 		See what is "lazy evaluation" in the link above.
 		lazy_evaluation improves ratio, but relatively slow.
 	@field 2 good_prev_length:
@@ -649,10 +649,10 @@ end
 		If using lazy evaluation, only continue lazy evaluation,
 		if previous match length is strictly smaller than this value.
 	@field 4 nice_length:
-		Number. Don't continue to go down the hash chain,
+		Number.Don't continue to go down the hash chain,
 		if match length is above this.
 	@field 5 max_chain:
-		Number. The maximum number of hash chains we look.
+		Number.The maximum number of hash chains we look.
 --]]
 local _compression_level_configs = {
   [0] = {false, nil, 0, 0, 0}, -- level 0, no compression
@@ -729,9 +729,9 @@ local _FLUSH_MODE_NO_FLUSH = 3
 --[[
 	Create an empty writer to easily write stuffs as the unit of bits.
 	Return values:
-	1. WriteBits(code, bitlen):
-	2. WriteString(str):
-	3. Flush(mode):
+	1.WriteBits(code, bitlen):
+	2.WriteString(str):
+	3.Flush(mode):
 --]]
 local function CreateWriter()
   local buffer_size = 0
@@ -750,7 +750,7 @@ local function CreateWriter()
     cache = cache + value * _pow2[cache_bitlen]
     cache_bitlen = cache_bitlen + bitlen
     total_bitlen = total_bitlen + bitlen
-    -- Only bulk to buffer every 4 bytes. This is quicker.
+    -- Only bulk to buffer every 4 bytes.This is quicker.
     if cache_bitlen >= 32 then
       buffer_size = buffer_size + 1
       buffer[buffer_size] = _byte_to_char[cache % 256] ..
@@ -797,7 +797,7 @@ local function CreateWriter()
 
       if cache_bitlen > 0 then
         -- padding with all 1 bits, mainly because "\000" is not
-        -- good to be tranmitted. I do this so "\000" is a little bit
+        -- good to be tranmitted.I do this so "\000" is a little bit
         -- less frequent.
         cache = cache - _pow2[cache_bitlen] +
                   _pow2[cache_bitlen + padding_bitlen]
@@ -833,7 +833,7 @@ end
 
 -- Push an element into a max heap
 -- @param heap A max heap whose max element is at index 1.
--- @param e The element to be pushed. Assume element "e" is a table
+-- @param e The element to be pushed.Assume element "e" is a table
 --  and comparison is done via its first entry e[1]
 -- @param heap_size current number of elements in the heap.
 --  NOTE: There may be some garbage stored in
@@ -960,7 +960,7 @@ end
 -- @param max_bitlen: See description of return value.
 -- @param max_symbol: The maximum symbol
 -- @return a table whose key is the symbol, and the value is the huffman bit
---		bit length. We guarantee that all bit length <= max_bitlen.
+--		bit length.We guarantee that all bit length <= max_bitlen.
 --		For 0<=symbol<=max_symbol, table value could be nil if the frequency
 --		of the symbol is 0 or nil.
 -- @return a table whose key is the symbol, and the value is the huffman code.
@@ -990,7 +990,7 @@ local function GetHuffmanBitlenAndCode(symbol_counts, max_bitlen, max_symbol)
     -- no code.
     return {}, {}, -1
   elseif (number_unique_symbols == 1) then
-    -- Only one code. In this case, its huffman code
+    -- Only one code.In this case, its huffman code
     -- needs to be assigned as 0, and bit length is 1.
     -- This is the only case that the return result
     -- represents an imcomplete huffman tree.
@@ -1093,7 +1093,7 @@ end
 -- @param max_non_zero_bitlen_dcode: The maximum LZ77 distance symbol
 --		whose huffman bit length is not zero.
 -- @return The run length encoded codes.
--- @return The extra bits. One entry for each rle code that needs extra bits.
+-- @return The extra bits.One entry for each rle code that needs extra bits.
 --		(code == 16 or 17 or 18).
 -- @return The count of appearance of each rle codes.
 local function RunLengthEncodeHuffmanBitlen(lcode_bitlens,
@@ -1196,16 +1196,16 @@ local function LoadStringToTable(str, t, start, stop, offset)
   return t
 end
 
--- Do LZ77 process. This function uses the majority of the CPU time.
+-- Do LZ77 process.This function uses the majority of the CPU time.
 -- @see zlib/deflate.c:deflate_fast(), zlib/deflate.c:deflate_slow()
 -- @see https://github.com/madler/zlib/blob/master/doc/algorithm.txt
--- This function uses the algorithms used above. You should read the
+-- This function uses the algorithms used above.You should read the
 -- algorithm.txt above to understand what is the hash function and the
 -- lazy evaluation.
 --
 -- The special optimization used here is hash functions used here.
 -- The hash function is just the multiplication of the three consective
--- characters. So if the hash matches, it guarantees 3 characters are matched.
+-- characters.So if the hash matches, it guarantees 3 characters are matched.
 -- This optimization can be implemented because Lua table is a hash table.
 --
 -- @param level integer that describes compression level.
@@ -1219,7 +1219,7 @@ end
 --			If dictionary is presented, the last 258 bytes of the dictionary
 --			needs to be loaded into sing_table[-257..0]
 --			(See more in the description of offset.)
--- @param hash_tables. The table key is the hash value (0<=hash<=16777216=256^3)
+-- @param hash_tables.The table key is the hash value (0<=hash<=16777216=256^3)
 --			The table value is an array0 that stores the indexes of the
 --			input data string to be compressed, such that
 --			hash == str[index]*str[index+1]*str[index+2]
@@ -1521,7 +1521,7 @@ local function GetBlockDynamicHuffmanHeader(lcodes_counts, dcodes_counts)
 end
 
 -- Get the size of dynamic block without writing any bits into the writer.
--- @param ... Read the source code of GetBlockDynamicHuffmanHeader()
+-- @param ...Read the source code of GetBlockDynamicHuffmanHeader()
 -- @return the bit length of the dynamic block
 local function GetDynamicHuffmanBlockSize(lcodes, dcodes, HCLEN,
                                           rle_codes_huffman_bitlens,
@@ -1567,7 +1567,7 @@ local function GetDynamicHuffmanBlockSize(lcodes, dcodes, HCLEN,
 end
 
 -- Write dynamic block.
--- @param ... Read the source code of GetBlockDynamicHuffmanHeader()
+-- @param ...Read the source code of GetBlockDynamicHuffmanHeader()
 local function CompressDynamicHuffmanBlock(WriteBits, is_last_block, lcodes,
                                            lextra_bits, dcodes, dextra_bits,
                                            HLIT, HDIST, HCLEN,
@@ -1727,7 +1727,7 @@ local function GetStoreBlockSize(block_start, block_end, total_bitlen)
 end
 
 -- Write the store block.
--- @param ... lots of stuffs
+-- @param ...lots of stuffs
 -- @return nil
 local function CompressStoreBlock(WriteBits, WriteString, is_last_block, str,
                                   block_start, block_end, total_bitlen)
@@ -1756,7 +1756,7 @@ end
 -- The first block is 64KB, the following block is 32KB.
 -- After each block, there is a memory cleanup operation.
 -- This is not a fast operation, but it is needed to save memory usage, so
--- the memory usage does not grow unboundly. If the data size is less than
+-- the memory usage does not grow unboundly.If the data size is less than
 -- 64KB, then memory cleanup won't happen.
 -- This function determines whether to use store/fixed/dynamic blocks by
 -- calculating the block size of each block type and chooses the smallest one.
@@ -1944,16 +1944,16 @@ local function Deflate(configs, WriteBits, WriteString, FlushWriter, str,
   end
 end
 
---- The description to compression configuration table. <br>
--- Any field can be nil to use its default. <br>
+--- The description to compression configuration table.<br>
+-- Any field can be nil to use its default.<br>
 -- Table with keys other than those below is an invalid table.
 -- @class table
 -- @name compression_configs
--- @field level The compression level ranged from 0 to 9. 0 is no compression.
--- 9 is the slowest but best compression. Use nil for default level.
--- @field strategy The compression strategy. "fixed" to only use fixed deflate
--- compression block. "dynamic" to only use dynamic block. "huffman_only" to
--- do no LZ77 compression. Only do huffman compression.
+-- @field level The compression level ranged from 0 to 9.0 is no compression.
+-- 9 is the slowest but best compression.Use nil for default level.
+-- @field strategy The compression strategy."fixed" to only use fixed deflate
+-- compression block."dynamic" to only use dynamic block."huffman_only" to
+-- do no LZ77 compression.Only do huffman compression.
 
 -- @see LibDeflate:CompressDeflate(str, configs)
 -- @see LibDeflate:CompressDeflateWithDict(str, dictionary, configs)
@@ -2026,7 +2026,7 @@ end
 --- Compress using the raw deflate format.
 -- @param str [string] The data to be compressed.
 -- @param configs [table/nil] The configuration table to control the compression
--- . If nil, use the default configuration.
+-- .If nil, use the default configuration.
 -- @return [string] The compressed data.
 -- @return [integer] The number of bits padded at the end of output.
 -- 0 <= bits < 8  <br>
@@ -2039,7 +2039,7 @@ end
 function LibDeflate:CompressDeflate(str, configs)
   local arg_valid, arg_err = IsValidArguments(str, false, nil, true, configs)
   if not arg_valid then
-    error(("Usage: LibDeflate:CompressDeflate(str, configs): " .. arg_err), 2)
+    error(("Usage: LibDeflate:CompressDeflate(str, configs): " ..arg_err), 2)
   end
   return CompressDeflateInternal(str, nil, configs)
 end
@@ -2049,7 +2049,7 @@ end
 -- @param dictionary [table] The preset dictionary produced by
 -- LibDeflate:CreateDictionary
 -- @param configs [table/nil] The configuration table to control the compression
--- . If nil, use the default configuration.
+-- .If nil, use the default configuration.
 -- @return [string] The compressed data.
 -- @return [integer] The number of bits padded at the end of output.
 -- 0 <= bits < 8  <br>
@@ -2065,7 +2065,7 @@ function LibDeflate:CompressDeflateWithDict(str, dictionary, configs)
                                               configs)
   if not arg_valid then
     error(("Usage: LibDeflate:CompressDeflateWithDict" ..
-            "(str, dictionary, configs): " .. arg_err), 2)
+            "(str, dictionary, configs): " ..arg_err), 2)
   end
   return CompressDeflateInternal(str, dictionary, configs)
 end
@@ -2073,7 +2073,7 @@ end
 --- Compress using the zlib format.
 -- @param str [string] the data to be compressed.
 -- @param configs [table/nil] The configuration table to control the compression
--- . If nil, use the default configuration.
+-- .If nil, use the default configuration.
 -- @return [string] The compressed data.
 -- @return [integer] The number of bits padded at the end of output.
 -- Should always be 0.
@@ -2083,7 +2083,7 @@ end
 function LibDeflate:CompressZlib(str, configs)
   local arg_valid, arg_err = IsValidArguments(str, false, nil, true, configs)
   if not arg_valid then
-    error(("Usage: LibDeflate:CompressZlib(str, configs): " .. arg_err), 2)
+    error(("Usage: LibDeflate:CompressZlib(str, configs): " ..arg_err), 2)
   end
   return CompressZlibInternal(str, nil, configs)
 end
@@ -2093,7 +2093,7 @@ end
 -- @param dictionary [table] A preset dictionary produced
 -- by LibDeflate:CreateDictionary()
 -- @param configs [table/nil] The configuration table to control the compression
--- . If nil, use the default configuration.
+-- .If nil, use the default configuration.
 -- @return [string] The compressed data.
 -- @return [integer] The number of bits padded at the end of output.
 -- Should always be 0.
@@ -2106,7 +2106,7 @@ function LibDeflate:CompressZlibWithDict(str, dictionary, configs)
                                               configs)
   if not arg_valid then
     error(("Usage: LibDeflate:CompressZlibWithDict" ..
-            "(str, dictionary, configs): " .. arg_err), 2)
+            "(str, dictionary, configs): " ..arg_err), 2)
   end
   return CompressZlibInternal(str, dictionary, configs)
 end
@@ -2118,11 +2118,11 @@ end
 --[[
 	Create a reader to easily reader stuffs as the unit of bits.
 	Return values:
-	1. ReadBits(bitlen)
-	2. ReadBytes(bytelen, buffer, buffer_size)
-	3. Decode(huffman_bitlen_count, huffman_symbol, min_bitlen)
-	4. ReaderBitlenLeft()
-	5. SkipToByteBoundary()
+	1.ReadBits(bitlen)
+	2.ReadBytes(bytelen, buffer, buffer_size)
+	3.Decode(huffman_bitlen_count, huffman_symbol, min_bitlen)
+	4.ReaderBitlenLeft()
+	5.SkipToByteBoundary()
 --]]
 local function CreateReader(input_string)
   local input = input_string
@@ -2196,7 +2196,7 @@ local function CreateReader(input_string)
   -- To improve speed, this function does not check
   -- if the input has been exhausted.
   -- Use ReaderBitlenLeft() < 0 to check it.
-  -- Credits for Mark Adler. This code is from puff:Decode()
+  -- Credits for Mark Adler.This code is from puff:Decode()
   -- @see puff:Decode(...)
   -- @param huffman_bitlen_count
   -- @param huffman_symbol
@@ -2271,7 +2271,7 @@ end
 
 -- Create a deflate state, so I can pass in less arguments to functions.
 -- @param str the whole string to be decompressed.
--- @param dictionary The preset dictionary. nil if not provided.
+-- @param dictionary The preset dictionary.nil if not provided.
 --		This dictionary should be produced by LibDeflate:CreateDictionary(str)
 -- @return The decomrpess state.
 local function CreateDecompressState(str, dictionary)
@@ -2348,7 +2348,7 @@ end
 -- @see puff.c:codes()
 -- @param state decompression state that will be modified by this function.
 --	@see CreateDecompressState
--- @param ... Read the source code
+-- @param ...Read the source code
 -- @return 0 on success, other value on failure.
 local function DecodeUntilEndOfBlock(state, lcodes_huffman_bitlens,
                                      lcodes_huffman_symbols,
@@ -2616,7 +2616,7 @@ end
 
 -- Decompress a deflate stream
 -- @param state: a decompression state
--- @return the decompressed string if succeeds. nil if fails.
+-- @return the decompressed string if succeeds.nil if fails.
 local function Inflate(state)
   local ReadBits = state.ReadBits
 
@@ -2729,12 +2729,12 @@ end
 --- Decompress a raw deflate compressed data.
 -- @param str [string] The data to be decompressed.
 -- @return [string/nil] If the decompression succeeds, return the decompressed
--- data. If the decompression fails, return nil. You should check if this return
+-- data.If the decompression fails, return nil.You should check if this return
 -- value is non-nil to know if the decompression succeeds.
 -- @return [integer] If the decompression succeeds, return the number of
--- unprocessed bytes in the input compressed data. This return value is a
+-- unprocessed bytes in the input compressed data.This return value is a
 -- positive integer if the input data is a valid compressed data appended by an
--- arbitary non-empty string. This return value is 0 if the input data does not
+-- arbitary non-empty string.This return value is 0 if the input data does not
 -- contain any extra bytes.<br>
 -- If the decompression fails (The first return value of this function is nil),
 -- this return value is undefined.
@@ -2742,7 +2742,7 @@ end
 function LibDeflate:DecompressDeflate(str)
   local arg_valid, arg_err = IsValidArguments(str)
   if not arg_valid then
-    error(("Usage: LibDeflate:DecompressDeflate(str): " .. arg_err), 2)
+    error(("Usage: LibDeflate:DecompressDeflate(str): " ..arg_err), 2)
   end
   return DecompressDeflateInternal(str)
 end
@@ -2755,12 +2755,12 @@ end
 -- Otherwise wrong decompressed data could be produced without generating any
 -- error.
 -- @return [string/nil] If the decompression succeeds, return the decompressed
--- data. If the decompression fails, return nil. You should check if this return
+-- data.If the decompression fails, return nil.You should check if this return
 -- value is non-nil to know if the decompression succeeds.
 -- @return [integer] If the decompression succeeds, return the number of
--- unprocessed bytes in the input compressed data. This return value is a
+-- unprocessed bytes in the input compressed data.This return value is a
 -- positive integer if the input data is a valid compressed data appended by an
--- arbitary non-empty string. This return value is 0 if the input data does not
+-- arbitary non-empty string.This return value is 0 if the input data does not
 -- contain any extra bytes.<br>
 -- If the decompression fails (The first return value of this function is nil),
 -- this return value is undefined.
@@ -2777,12 +2777,12 @@ end
 --- Decompress a zlib compressed data.
 -- @param str [string] The data to be decompressed
 -- @return [string/nil] If the decompression succeeds, return the decompressed
--- data. If the decompression fails, return nil. You should check if this return
+-- data.If the decompression fails, return nil.You should check if this return
 -- value is non-nil to know if the decompression succeeds.
 -- @return [integer] If the decompression succeeds, return the number of
--- unprocessed bytes in the input compressed data. This return value is a
+-- unprocessed bytes in the input compressed data.This return value is a
 -- positive integer if the input data is a valid compressed data appended by an
--- arbitary non-empty string. This return value is 0 if the input data does not
+-- arbitary non-empty string.This return value is 0 if the input data does not
 -- contain any extra bytes.<br>
 -- If the decompression fails (The first return value of this function is nil),
 -- this return value is undefined.
@@ -2790,7 +2790,7 @@ end
 function LibDeflate:DecompressZlib(str)
   local arg_valid, arg_err = IsValidArguments(str)
   if not arg_valid then
-    error(("Usage: LibDeflate:DecompressZlib(str): " .. arg_err), 2)
+    error(("Usage: LibDeflate:DecompressZlib(str): " ..arg_err), 2)
   end
   return DecompressZlibInternal(str)
 end
@@ -2803,12 +2803,12 @@ end
 -- Otherwise wrong decompressed data could be produced without generating any
 -- error.
 -- @return [string/nil] If the decompression succeeds, return the decompressed
--- data. If the decompression fails, return nil. You should check if this return
+-- data.If the decompression fails, return nil.You should check if this return
 -- value is non-nil to know if the decompression succeeds.
 -- @return [integer] If the decompression succeeds, return the number of
--- unprocessed bytes in the input compressed data. This return value is a
+-- unprocessed bytes in the input compressed data.This return value is a
 -- positive integer if the input data is a valid compressed data appended by an
--- arbitary non-empty string. This return value is 0 if the input data does not
+-- arbitary non-empty string.This return value is 0 if the input data does not
 -- contain any extra bytes.<br>
 -- If the decompression fails (The first return value of this function is nil),
 -- this return value is undefined.
@@ -2855,7 +2855,7 @@ end
 
 -- to be able to match any requested byte value, the search
 -- string must be preprocessed characters to escape with %:
--- ( ) . % + - * ? [ ] ^ $
+-- ( ) .% + - * ? [ ] ^ $
 -- "illegal" byte values:
 -- 0 is replaces %z
 local _gsub_escape_table = {
@@ -2878,19 +2878,19 @@ local function escape_for_gsub(str)
   return str:gsub("([%z%(%)%.%%%+%-%*%?%[%]%^%$])", _gsub_escape_table)
 end
 
---- Create a custom codec with encoder and decoder. <br>
+--- Create a custom codec with encoder and decoder.<br>
 -- This codec is used to convert an input string to make it not contain
 -- some specific bytes.
 -- This created codec and the parameters of this function do NOT take
--- localization into account. One byte (0-255) in the string is exactly one
+-- localization into account.One byte (0-255) in the string is exactly one
 -- character (0-255).
 -- Credits to LibCompress.
--- The code has been rewritten by the author of LibDeflate. <br>
+-- The code has been rewritten by the author of LibDeflate.<br>
 -- @param reserved_chars [string] The created encoder will ensure encoded
--- data does not contain any single character in reserved_chars. This parameter
+-- data does not contain any single character in reserved_chars.This parameter
 -- should be non-empty.
 -- @param escape_chars [string] The escape character(s) used in the created
--- codec. The codec converts any character included in reserved\_chars /
+-- codec.The codec converts any character included in reserved\_chars /
 -- escape\_chars / map\_chars to (one escape char + one character not in
 -- reserved\_chars / escape\_chars / map\_chars).
 -- You usually only need to provide a length-1 string for this parameter.
@@ -2904,8 +2904,8 @@ end
 -- If the codec can be created according to the given
 -- parameters, return the codec, which is a encode/decode table.
 -- The table contains two functions: <br>
--- t:Encode(str) returns the encoded string. <br>
--- t:Decode(str) returns the decoded string if succeeds. nil if fails.
+-- t:Encode(str) returns the encoded string.<br>
+-- t:Decode(str) returns the decoded string if succeeds.nil if fails.
 -- @return [nil/string] If the codec is successfully created, return nil.
 -- If not, return a string that describes the reason why the codec cannot be
 -- created.
@@ -2922,7 +2922,7 @@ function LibDeflate:CreateCodec(reserved_chars, escape_chars, map_chars)
   if type(reserved_chars) ~= "string" or type(escape_chars) ~= "string" or
     type(map_chars) ~= "string" then
     error("Usage: LibDeflate:CreateCodec(reserved_chars," ..
-            " escape_chars, map_chars):" .. " All arguments must be string.", 2)
+            " escape_chars, map_chars):" .." All arguments must be string.", 2)
   end
 
   if escape_chars == "" then return nil, "No escape characters supplied." end
@@ -2932,7 +2932,7 @@ function LibDeflate:CreateCodec(reserved_chars, escape_chars, map_chars)
   end
   if reserved_chars == "" then return nil, "No characters to encode." end
 
-  local encode_bytes = reserved_chars .. escape_chars .. map_chars
+  local encode_bytes = reserved_chars ..escape_chars ..map_chars
   -- build list of bytes not available as a suffix to a prefix byte
   local taken = {}
   for i = 1, #encode_bytes do
@@ -2966,7 +2966,7 @@ function LibDeflate:CreateCodec(reserved_chars, escape_chars, map_chars)
       decode_search[#decode_search + 1] = to
     end
     decode_patterns[#decode_patterns + 1] =
-      "([" .. escape_for_gsub(table_concat(decode_search)) .. "])"
+      "([" ..escape_for_gsub(table_concat(decode_search)) .."])"
     decode_repls[#decode_repls + 1] = decode_translate
   end
 
@@ -2985,8 +2985,8 @@ function LibDeflate:CreateCodec(reserved_chars, escape_chars, map_chars)
         r = r + 1
         if r > 255 then -- switch to next escapeChar
           decode_patterns[#decode_patterns + 1] =
-            escape_for_gsub(escape_char) .. "([" ..
-              escape_for_gsub(table_concat(decode_search)) .. "])"
+            escape_for_gsub(escape_char) .."([" ..
+              escape_for_gsub(table_concat(decode_search)) .."])"
           decode_repls[#decode_repls + 1] = decode_translate
 
           escape_char_index = escape_char_index + 1
@@ -3007,7 +3007,7 @@ function LibDeflate:CreateCodec(reserved_chars, escape_chars, map_chars)
       end
 
       local char_r = _byte_to_char[r]
-      encode_translate[c] = escape_char .. char_r
+      encode_translate[c] = escape_char ..char_r
       encode_search[#encode_search + 1] = c
       decode_translate[char_r] = c
       decode_search[#decode_search + 1] = char_r
@@ -3015,34 +3015,34 @@ function LibDeflate:CreateCodec(reserved_chars, escape_chars, map_chars)
     end
     if i == #encode_bytes then
       decode_patterns[#decode_patterns + 1] =
-        escape_for_gsub(escape_char) .. "([" ..
-          escape_for_gsub(table_concat(decode_search)) .. "])"
+        escape_for_gsub(escape_char) .."([" ..
+          escape_for_gsub(table_concat(decode_search)) .."])"
       decode_repls[#decode_repls + 1] = decode_translate
     end
   end
 
   local codec = {}
 
-  local encode_pattern = "([" .. escape_for_gsub(table_concat(encode_search)) ..
+  local encode_pattern = "([" ..escape_for_gsub(table_concat(encode_search)) ..
                            "])"
   local encode_repl = encode_translate
 
   function codec:Encode(str)
     if type(str) ~= "string" then
       error(
-        ("Usage: codec:Encode(str):" .. " 'str' - string expected got '%s'."):format(
+        ("Usage: codec:Encode(str):" .." 'str' - string expected got '%s'."):format(
           type(str)), 2)
     end
     return string_gsub(str, encode_pattern, encode_repl)
   end
 
   local decode_tblsize = #decode_patterns
-  local decode_fail_pattern = "([" .. escape_for_gsub(reserved_chars) .. "])"
+  local decode_fail_pattern = "([" ..escape_for_gsub(reserved_chars) .."])"
 
   function codec:Decode(str)
     if type(str) ~= "string" then
       error(
-        ("Usage: codec:Decode(str):" .. " 'str' - string expected got '%s'."):format(
+        ("Usage: codec:Decode(str):" .." 'str' - string expected got '%s'."):format(
           type(str)), 2)
     end
     if string_find(str, decode_fail_pattern) then return nil end
@@ -3062,7 +3062,7 @@ local function GenerateWoWAddonChannelCodec()
 end
 
 --- Encode the string to make it ready to be transmitted in World of
--- Warcraft addon channel. <br>
+-- Warcraft addon channel.<br>
 -- The encoded string is guaranteed to contain no NULL ("\000") character.
 -- @param str [string] The string to be encoded.
 -- @return The encoded string.
@@ -3080,7 +3080,7 @@ end
 
 --- Decode the string produced by LibDeflate:EncodeForWoWAddonChannel
 -- @param str [string] The string to be decoded.
--- @return [string/nil] The decoded string if succeeds. nil if fails.
+-- @return [string/nil] The decoded string if succeeds.nil if fails.
 -- @see LibDeflate:EncodeForWoWAddonChannel
 function LibDeflate:DecodeForWoWAddonChannel(str)
   if type(str) ~= "string" then
@@ -3095,7 +3095,7 @@ end
 
 -- For World of Warcraft Chat Channel Encoding
 -- Credits to LibCompress.
--- The code has been rewritten by the author of LibDeflate. <br>
+-- The code has been rewritten by the author of LibDeflate.<br>
 -- Following byte values are not allowed:
 -- \000, s, S, \010, \013, \124, %
 -- Because SendChatMessage will error
@@ -3110,7 +3110,7 @@ end
 -- to ensure the encoding doesn't contain that value.
 -- or use this: local message, match = arg1:gsub("^(.*)\029.-$", "%1")
 -- arg1 is message from channel, \029 is the string terminator
--- , but may be used in the encoded datastream as well. :-)
+-- , but may be used in the encoded datastream as well.:-)
 -- This encoding will expand data anywhere from:
 -- 0% (average with pure ascii text)
 -- 53.5% (average with random data valued zero to 255)
@@ -3119,14 +3119,14 @@ local function GenerateWoWChatChannelCodec()
   local r = {}
   for i = 128, 255 do r[#r + 1] = _byte_to_char[i] end
 
-  local reserved_chars = "sS\000\010\013\124%" .. table_concat(r)
+  local reserved_chars = "sS\000\010\013\124%" ..table_concat(r)
   return LibDeflate:CreateCodec(reserved_chars, "\029\031", "\015\020")
 end
 
 local _chat_channel_codec
 
 --- Encode the string to make it ready to be transmitted in World of
--- Warcraft chat channel. <br>
+-- Warcraft chat channel.<br>
 -- See also https://wow.gamepedia.com/ValidChatMessageCharacters
 -- @param str [string] The string to be encoded.
 -- @return [string] The encoded string.
@@ -3144,7 +3144,7 @@ end
 
 --- Decode the string produced by LibDeflate:EncodeForWoWChatChannel.
 -- @param str [string] The string to be decoded.
--- @return [string/nil] The decoded string if succeeds. nil if fails.
+-- @return [string/nil] The decoded string if succeeds.nil if fails.
 -- @see LibDeflate:EncodeForWoWChatChannel
 function LibDeflate:DecodeForWoWChatChannel(str)
   if type(str) ~= "string" then
@@ -3296,12 +3296,12 @@ local _6bit_to_byte = {
   [41] = 63
 }
 
---- Encode the string to make it printable. <br>
+--- Encode the string to make it printable.<br>
 --
 -- Credit to WeakAuras2, this function is equivalant to the implementation
--- it is using right now. <br>
--- The code has been rewritten by the author of LibDeflate. <br>
--- The encoded string will be 25% larger than the origin string. However, every
+-- it is using right now.<br>
+-- The code has been rewritten by the author of LibDeflate.<br>
+-- The encoded string will be 25% larger than the origin string.However, every
 -- single byte of the encoded string will be one of 64 printable ASCII
 -- characters, which are can be easier copied, pasted and displayed.
 -- (26 lowercase letters, 26 uppercase letters, 10 numbers digits,
@@ -3329,8 +3329,8 @@ function LibDeflate:EncodeForPrint(str)
     local b3 = cache % 64
     local b4 = (cache - b3) / 64
     buffer_size = buffer_size + 1
-    buffer[buffer_size] = _byte_to_6bit_char[b1] .. _byte_to_6bit_char[b2] ..
-                            _byte_to_6bit_char[b3] .. _byte_to_6bit_char[b4]
+    buffer[buffer_size] = _byte_to_6bit_char[b1] .._byte_to_6bit_char[b2] ..
+                            _byte_to_6bit_char[b3] .._byte_to_6bit_char[b4]
   end
 
   local cache = 0
@@ -3357,11 +3357,11 @@ end
 -- removed before it is decoded, so it is easier to use if "str" comes form
 -- user copy and paste with some prefixed or trailing spaces.
 -- Then decode fails if the string contains any characters cant be produced by
--- LibDeflate:EncodeForPrint. That means, decode fails if the string contains a
+-- LibDeflate:EncodeForPrint.That means, decode fails if the string contains a
 -- characters NOT one of 26 lowercase letters, 26 uppercase letters,
 -- 10 numbers digits, left parenthese, or right parenthese.
 -- @param str [string] The string to be decoded
--- @return [string/nil] The decoded string if succeeds. nil if fails.
+-- @return [string/nil] The decoded string if succeeds.nil if fails.
 function LibDeflate:DecodeForPrint(str)
   if type(str) ~= "string" then
     error(("Usage: LibDeflate:DecodeForPrint(str):" ..
@@ -3390,7 +3390,7 @@ function LibDeflate:DecodeForPrint(str)
     local b2 = cache % 256
     local b3 = (cache - b2) / 256
     buffer_size = buffer_size + 1
-    buffer[buffer_size] = _byte_to_char[b1] .. _byte_to_char[b2] ..
+    buffer[buffer_size] = _byte_to_char[b1] .._byte_to_char[b2] ..
                             _byte_to_char[b3]
   end
 
@@ -3421,7 +3421,7 @@ local function InternalClearCache()
   _addon_channel_codec = nil
 end
 
--- For test. Don't use the functions in this table for real application.
+-- For test.Don't use the functions in this table for real application.
 -- Stuffs in this table is subject to change.
 LibDeflate.internals = {
   LoadStringToTable = LoadStringToTable,
@@ -3436,7 +3436,7 @@ LibDeflate.internals = {
 @class table
 @name CommandlineOptions
 @usage lua LibDeflate.lua [OPTION] [INPUT] [OUTPUT]
-\-0    store only. no compression.
+\-0    store only.no compression.
 \-1    fastest compression.
 \-9    slowest and best compression.
 \-d    do decompression instead of compression.
@@ -3472,7 +3472,7 @@ if io and os and debug and _G.arg then
       if a == "-h" then
         print(LibDeflate._COPYRIGHT ..
                 "\nUsage: lua LibDeflate.lua [OPTION] [INPUT] [OUTPUT]\n" ..
-                "  -0    store only. no compression.\n" ..
+                "  -0    store only.no compression.\n" ..
                 "  -1    fastest compression.\n" ..
                 "  -9    slowest and best compression.\n" ..
                 "  -d    do decompression instead of compression.\n" ..
@@ -3509,7 +3509,7 @@ if io and os and debug and _G.arg then
         dict_file:close()
         -- In your lua program, you should pass in adler32 as a CONSTANT
         -- , so it actually prevent you from modifying dictionary
-        -- unintentionally during the program development. I do this
+        -- unintentionally during the program development.I do this
         -- here just because no convenient way to verify in commandline.
         dictionary = LibDeflate:CreateDictionary(dict_str, #dict_str,
                                                  LibDeflate:Adler32(dict_str))

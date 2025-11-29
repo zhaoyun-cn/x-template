@@ -30,7 +30,7 @@ export class ShadowFiendBoss {
 
     private StartHealthCheck(): void {
         this.checkInterval = Timers.CreateTimer(0.5, () => {
-            if (this.boss && this. boss.IsAlive()) {
+            if (this.boss && this.boss.IsAlive()) {
                 this.CheckHealthThreshold();
                 return 0.5;
             }
@@ -43,7 +43,7 @@ export class ShadowFiendBoss {
         print("[ShadowFiendBoss] Starting auto ability cast (every 10s)...");
         
         this.abilityInterval = Timers.CreateTimer(10, () => {
-            if (this. boss && this.boss.IsAlive()) {
+            if (this.boss && this.boss.IsAlive()) {
                 this.CastPhaseAbility();
                 return 10;  // ✅ 每10秒重复
             }
@@ -59,7 +59,7 @@ export class ShadowFiendBoss {
         } else if (healthPercent <= 33 && this.currentPhase === 1) {
             this.TriggerPhase(2);
         } else if (healthPercent <= 10 && this.currentPhase === 2) {
-            this. TriggerPhase(3);
+            this.TriggerPhase(3);
         }
     }
 
@@ -77,14 +77,14 @@ export class ShadowFiendBoss {
             "",
             `<font color='#888888'>⚔️ Boss进入【${config.name}】！</font>`,
             `<font color='#FF6600'>🔥 Boss进入【${config.name}】！烈焰之力觉醒！</font>`,
-            `<font color='#8B00FF'>💀 Boss进入【${config. name}】！恶魔真身降临！</font>`,
+            `<font color='#8B00FF'>💀 Boss进入【${config.name}】！恶魔真身降临！</font>`,
         ];
         
         GameRules.SendCustomMessage(messages[phase], this.playerId, 0);
         
         // 应用阶段变化
         Timers.CreateTimer(0.5, () => {
-            if (! this.boss. IsAlive()) return undefined;
+            if (! this.boss.IsAlive()) return undefined;
             
             this.ApplyPhaseChanges(phase, config);
             
@@ -103,7 +103,7 @@ export class ShadowFiendBoss {
         ScreenShake(this.boss.GetAbsOrigin(), 10, 150, 0.5, 2000, 0, true);
         
         const particle = ParticleManager.CreateParticle(
-            "particles/units/heroes/hero_nevermore/nevermore_shadowraze_a. vpcf",
+            "particles/units/heroes/hero_nevermore/nevermore_shadowraze_a.vpcf",
             ParticleAttachment.ABSORIGIN,
             this.boss
         );
@@ -127,12 +127,12 @@ export class ShadowFiendBoss {
         print(`[ShadowFiendBoss] ✓ Model scale: ${config.modelScale}`);
         
         // 改变颜色
-        this.boss. SetRenderColor(config.color. r, config.color.g, config.color.b);
+        this.boss.SetRenderColor(config.color.r, config.color.g, config.color.b);
         print(`[ShadowFiendBoss] ✓ Color: RGB(${config.color.r}, ${config.color.g}, ${config.color.b})`);
         
         // 改变攻击属性
         this.boss.SetBaseDamageMin(config.baseDamage);
-        this.boss.SetBaseDamageMax(config. baseDamage + 50);
+        this.boss.SetBaseDamageMax(config.baseDamage + 50);
         this.boss.SetBaseAttackTime(config.attackSpeed);
         print(`[ShadowFiendBoss] ✓ Damage: ${config.baseDamage}, Attack Speed: ${config.attackSpeed}`);
         
@@ -151,7 +151,7 @@ export class ShadowFiendBoss {
         
         // 阶段3狂暴
         if (phase === 3) {
-            this.boss.AddNewModifier(this. boss, undefined, "modifier_shadow_boss_enrage", {});
+            this.boss.AddNewModifier(this.boss, undefined, "modifier_shadow_boss_enrage", {});
             print("[ShadowFiendBoss] ✓ Enrage modifier added");
         }
         
@@ -169,13 +169,13 @@ export class ShadowFiendBoss {
         
         const level = ability.GetLevel();
         const cooldown = ability.GetCooldownTimeRemaining();
-        print(`[ShadowFiendBoss] Ability: Level=${level}, Cooldown=${cooldown. toFixed(1)}s`);
+        print(`[ShadowFiendBoss] Ability: Level=${level}, Cooldown=${cooldown.toFixed(1)}s`);
         
         if (ability.IsFullyCastable()) {
             print("[ShadowFiendBoss] ✓ Casting ability...");
             this.boss.CastAbilityNoTarget(ability, -1);
         } else {
-            print("[ShadowFiendBoss] Ability on cooldown or not ready, resetting.. .");
+            print("[ShadowFiendBoss] Ability on cooldown or not ready, resetting...");
             ability.EndCooldown();
             
             Timers.CreateTimer(0.1, () => {
@@ -200,7 +200,7 @@ export class ShadowFiendBoss {
         if (!config || !config.particleEffect) return;
         
         const particle = ParticleManager.CreateParticle(
-            config. particleEffect,
+            config.particleEffect,
             ParticleAttachment.ABSORIGIN_FOLLOW,
             this.boss
         );
@@ -209,12 +209,12 @@ export class ShadowFiendBoss {
         
         // 阶段3额外特效
         if (phase === 3) {
-            const particle2 = ParticleManager. CreateParticle(
-                "particles/units/heroes/hero_shadow_demon/shadow_demon_soul_catcher. vpcf",
+            const particle2 = ParticleManager.CreateParticle(
+                "particles/units/heroes/hero_shadow_demon/shadow_demon_soul_catcher.vpcf",
                 ParticleAttachment.ABSORIGIN_FOLLOW,
                 this.boss
             );
-            ParticleManager.SetParticleControl(particle2, 0, this. boss.GetAbsOrigin());
+            ParticleManager.SetParticleControl(particle2, 0, this.boss.GetAbsOrigin());
             this.phaseParticles.push(particle2);
         }
         
@@ -222,7 +222,7 @@ export class ShadowFiendBoss {
     }
 
     public Destroy(): void {
-        print("[ShadowFiendBoss] Destroying.. .");
+        print("[ShadowFiendBoss] Destroying...");
         
         // ✅ 停止血量检测
         if (this.checkInterval) {
@@ -232,12 +232,12 @@ export class ShadowFiendBoss {
         
         // ✅ 停止技能释放
         if (this.abilityInterval) {
-            Timers.RemoveTimer(this. abilityInterval);
-            this. abilityInterval = undefined;
+            Timers.RemoveTimer(this.abilityInterval);
+            this.abilityInterval = undefined;
         }
         
         // 清理特效
-        this. phaseParticles.forEach(p => {
+        this.phaseParticles.forEach(p => {
             ParticleManager.DestroyParticle(p, false);
             ParticleManager.ReleaseParticleIndex(p);
         });
@@ -254,7 +254,7 @@ export class modifier_shadow_boss_enrage extends BaseModifier {
     IsDebuff(): boolean { return false; }
     
     GetEffectName(): string {
-        return "particles/units/heroes/hero_nevermore/nevermore_necro_souls. vpcf";
+        return "particles/units/heroes/hero_nevermore/nevermore_necro_souls.vpcf";
     }
     
     GetEffectAttachType(): ParticleAttachment {
@@ -263,7 +263,7 @@ export class modifier_shadow_boss_enrage extends BaseModifier {
     
     DeclareFunctions(): ModifierFunction[] {
         return [
-            ModifierFunction. ATTACKSPEED_BONUS_CONSTANT,
+            ModifierFunction.ATTACKSPEED_BONUS_CONSTANT,
             ModifierFunction.INCOMING_DAMAGE_PERCENTAGE,
         ];
     }
@@ -278,7 +278,7 @@ export class modifier_shadow_boss_enrage extends BaseModifier {
     
     OnCreated(): void {
         if (! IsServer()) return;
-        this.GetParent().EmitSound("Hero_Ursa. Enrage");
+        this.GetParent().EmitSound("Hero_Ursa.Enrage");
         print("[modifier_shadow_boss_enrage] Boss ENRAGED!");
     }
 }
@@ -292,7 +292,7 @@ export class modifier_shadow_boss_attack_range extends BaseModifier {
     
     DeclareFunctions(): ModifierFunction[] {
         return [
-            ModifierFunction. ATTACK_RANGE_BONUS,
+            ModifierFunction.ATTACK_RANGE_BONUS,
         ];
     }
     

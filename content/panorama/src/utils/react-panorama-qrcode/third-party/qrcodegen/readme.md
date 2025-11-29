@@ -1,6 +1,6 @@
 # QR Code generator library (TypeScript)
 
-Copyright (c) Project Nayuki. (MIT License)
+Copyright (c) Project Nayuki.(MIT License)
 
 https://www.nayuki.io/page/qr-code-generator-library
 

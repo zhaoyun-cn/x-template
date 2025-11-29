@@ -34,8 +34,8 @@ export class ZoneDungeon {
     private mainTimer: string | undefined;
     
     constructor() {
-        print("[ZoneDungeon] 初始化刷怪区域系统.. .");
-        this. ListenToEvents();
+        print("[ZoneDungeon] 初始化刷怪区域系统...");
+        this.ListenToEvents();
         this.ListenToChatCommands();
     }
     
@@ -49,9 +49,9 @@ export class ZoneDungeon {
     }
     
     private ShowInventory(playerId: PlayerID): void {
-    const inventory = ZoneLootSystem. GetInventory(playerId);
+    const inventory = ZoneLootSystem.GetInventory(playerId);
     
-    if (inventory. size === 0) {
+    if (inventory.size === 0) {
         GameRules.SendCustomMessage("<font color='#888888'>背包是空的</font>", playerId, 0);
         return;
     }
@@ -61,7 +61,7 @@ export class ZoneDungeon {
     inventory.forEach((count, itemType) => {
         const config = LOOT_ITEMS[itemType];
         GameRules.SendCustomMessage(
-            `<font color='${config. color}'>${config. name}: ${count}</font>`,
+            `<font color='${config.color}'>${config.name}: ${count}</font>`,
             playerId,
             0
         );
@@ -69,7 +69,7 @@ export class ZoneDungeon {
 }
     private ListenToChatCommands(): void {
         ListenToGameEvent("player_chat", (event) => {
-            const text = event.text. trim(). toLowerCase();
+            const text = event.text.trim().toLowerCase();
             const playerId = event.playerid as PlayerID;
             
             // 查看背包命令
@@ -80,7 +80,7 @@ export class ZoneDungeon {
            
            // 测试掉落命令
            if (text === "-testdrop") {
-               ZoneLootSystem. ProcessLoot("boss", [playerId], 2.0);
+               ZoneLootSystem.ProcessLoot("boss", [playerId], 2.0);
                GameRules.SendCustomMessage("<font color='#00FF00'>测试掉落已发放！</font>", playerId, 0);
            }
            
@@ -91,8 +91,8 @@ export class ZoneDungeon {
             }
             
             // 测试命令：-zone 3 投入3张票A
-            if (text. startsWith("-zone ")) {
-                const ticketCount = parseInt(text. split(" ")[1]) || 0;
+            if (text.startsWith("-zone ")) {
+                const ticketCount = parseInt(text.split(" ")[1]) || 0;
                 this.TryEnterZone(playerId, ticketCount);
             }
             
@@ -121,12 +121,12 @@ export class ZoneDungeon {
     public CanEnter(playerId: PlayerID): { canEnter: boolean; reason: string } {
         // TODO: 检查疲劳值
         // const fatigue = FatigueSystem.GetFatigue(playerId);
-        // if (fatigue < ZONE_CONFIG. FATIGUE_COST) {
+        // if (fatigue < ZONE_CONFIG.FATIGUE_COST) {
         //     return { canEnter: false, reason: "疲劳值不足" };
         // }
         
         // 检查是否已在副本中
-        if (this.isActive && this.players. has(playerId)) {
+        if (this.isActive && this.players.has(playerId)) {
             return { canEnter: false, reason: "你已经在刷怪区域中" };
         }
         
@@ -159,7 +159,7 @@ export class ZoneDungeon {
         
         // 如果副本未激活，创建新副本
         if (! this.isActive) {
-            this. StartZone(playerId, hero, ticketACount);
+            this.StartZone(playerId, hero, ticketACount);
         } else {
             // 加入现有副本
             this.JoinZone(playerId, hero, ticketACount);
@@ -174,10 +174,10 @@ export class ZoneDungeon {
         print(`[ZoneDungeon] 区域大小: ${ZONE_AREA.halfSize * 2} x ${ZONE_AREA.halfSize * 2}`);
         
         this.isActive = true;
-        this. startTime = GameRules.GetGameTime();
+        this.startTime = GameRules.GetGameTime();
         this.teamScore = 0;
         this.monsters = [];
-        this.eliteThreshold = ZONE_CONFIG. ELITE_TRIGGER_SCORE;
+        this.eliteThreshold = ZONE_CONFIG.ELITE_TRIGGER_SCORE;
         this.bossThreshold = ZONE_CONFIG.BOSS_TRIGGER_SCORE;
         
         // 添加玩家
@@ -217,7 +217,7 @@ export class ZoneDungeon {
         this.UpdateMonsterScaling();
         
         // 通知所有玩家
-        this.BroadcastMessage(`✅ 玩家加入！当前 ${this.players. size} 人`, "#00FF00");
+        this.BroadcastMessage(`✅ 玩家加入！当前 ${this.players.size} 人`, "#00FF00");
         
         // TODO: 消耗疲劳值
     }
@@ -229,7 +229,7 @@ export class ZoneDungeon {
             isAlive: true,
             ticketAUsed: ticketACount,
         });
-        print(`[ZoneDungeon] 玩家 ${playerId} 加入，当前 ${this. players.size} 人`);
+        print(`[ZoneDungeon] 玩家 ${playerId} 加入，当前 ${this.players.size} 人`);
     }
     
     private TeleportToZone(hero: CDOTA_BaseNPC_Hero): void {
@@ -247,7 +247,7 @@ export class ZoneDungeon {
             return;
         }
         
-        const player = this.players. get(playerId);
+        const player = this.players.get(playerId);
         if (!player) {
             GameRules.SendCustomMessage(
                 `<font color='#FF0000'>❌ 你不在这个副本中</font>`,
@@ -300,13 +300,13 @@ export class ZoneDungeon {
             if (! this.isActive) return undefined;
             
             elapsed++;
-            const remaining = ZONE_CONFIG. DURATION - elapsed;
+            const remaining = ZONE_CONFIG.DURATION - elapsed;
             
             // 难度递进提示
-            if (elapsed === ZONE_CONFIG. DIFFICULTY_TIME_1) {
-                this.BroadcastMessage(`⏰ 难度提升！怪物变强了！(${ZONE_CONFIG. DIFFICULTY_MULT_1}x)`, "#FFFF00");
+            if (elapsed === ZONE_CONFIG.DIFFICULTY_TIME_1) {
+                this.BroadcastMessage(`⏰ 难度提升！怪物变强了！(${ZONE_CONFIG.DIFFICULTY_MULT_1}x)`, "#FFFF00");
             } else if (elapsed === ZONE_CONFIG.DIFFICULTY_TIME_2) {
-                this.BroadcastMessage(`⏰ 难度提升！怪物变强了！(${ZONE_CONFIG. DIFFICULTY_MULT_2}x)`, "#FF6600");
+                this.BroadcastMessage(`⏰ 难度提升！怪物变强了！(${ZONE_CONFIG.DIFFICULTY_MULT_2}x)`, "#FF6600");
             }
             
             // 每分钟提醒
@@ -330,12 +330,12 @@ export class ZoneDungeon {
         });
         
         // 刷怪计时器：每30秒
-        this.spawnTimer = Timers.CreateTimer(ZONE_CONFIG. SPAWN_INTERVAL, () => {
+        this.spawnTimer = Timers.CreateTimer(ZONE_CONFIG.SPAWN_INTERVAL, () => {
             if (!this.isActive) return undefined;
             
             this.SpawnWave();
             
-            return ZONE_CONFIG. SPAWN_INTERVAL;
+            return ZONE_CONFIG.SPAWN_INTERVAL;
         });
     }
     
@@ -343,16 +343,16 @@ export class ZoneDungeon {
     
     private SpawnWave(): void {
         // 清理无效怪物引用
-        this. monsters = this.monsters.filter(m => IsValidEntity(m) && m.IsAlive());
+        this.monsters = this.monsters.filter(m => IsValidEntity(m) && m.IsAlive());
         
-        const currentCount = this.monsters. length;
+        const currentCount = this.monsters.length;
         const spawnCount = Math.min(
             ZONE_CONFIG.MAX_MONSTERS - currentCount,
             RandomInt(10, 15)  // 每波刷10-15只
         );
         
         if (spawnCount <= 0) {
-            print(`[ZoneDungeon] 怪物已满 (${currentCount}/${ZONE_CONFIG. MAX_MONSTERS})，跳过刷新`);
+            print(`[ZoneDungeon] 怪物已满 (${currentCount}/${ZONE_CONFIG.MAX_MONSTERS})，跳过刷新`);
             return;
         }
         
@@ -382,7 +382,7 @@ export class ZoneDungeon {
                 const spawnPos = Vector(
                     clusterCenter.x + offsetX,
                     clusterCenter.y + offsetY,
-                    clusterCenter. z
+                    clusterCenter.z
                 );
                 
                 this.SpawnMonster("normal", spawnPos);
@@ -394,7 +394,7 @@ export class ZoneDungeon {
   private GetRandomSpawnPoints(count: number): Vector[] {
     // 使用 Fisher-Yates 洗牌算法，避免 Lua sort 的问题
     const result: Vector[] = [];
-    const available = [... SPAWN_POINTS];
+    const available = [...SPAWN_POINTS];
     
     for (let i = 0; i < count && available.length > 0; i++) {
         const randomIndex = RandomInt(0, available.length - 1);
@@ -421,7 +421,7 @@ private SpawnMonster(type: "normal" | "elite" | "boss", position?: Vector): CDOT
         true,
         undefined,
         undefined,
-        DotaTeam. BADGUYS
+        DotaTeam.BADGUYS
     );
     
     if (monster) {
@@ -459,7 +459,7 @@ private SpawnMonster(type: "normal" | "elite" | "boss", position?: Vector): CDOT
         Timers.CreateTimer(0.5, () => {
             if (! IsValidEntity(monster) || ! monster.IsAlive()) return undefined;
             
-            const nearestHero = this.FindNearestPlayerHero(monster. GetAbsOrigin());
+            const nearestHero = this.FindNearestPlayerHero(monster.GetAbsOrigin());
             if (nearestHero) {
                 monster.MoveToTargetToAttack(nearestHero);
             }
@@ -480,7 +480,7 @@ private SetupBossStats(boss: CDOTA_BaseNPC): void {
             
             // 🔧 固定属性，不叠加任何倍率
             hero.SetBaseStrength(150);       // 约 3300 血量
-            hero. SetBaseAgility(10);         // 一点攻击力
+            hero.SetBaseAgility(10);         // 一点攻击力
             hero.SetBaseIntellect(20);
             
             // 🔧 关键：强制设置护甲
@@ -494,7 +494,7 @@ private SetupBossStats(boss: CDOTA_BaseNPC): void {
                 const currentMax = hero.GetMaxHealth();
                 if (currentMax < targetHealth) {
                     const extraStr = Math.floor((targetHealth - currentMax) / 22);
-                    hero. ModifyStrength(extraStr);
+                    hero.ModifyStrength(extraStr);
                 }
                 
                 // 再次强制设置护甲（加完力量后护甲会变）
@@ -504,7 +504,7 @@ private SetupBossStats(boss: CDOTA_BaseNPC): void {
                 
                 // 设置攻击力
                 hero.SetBaseDamageMin(200);
-                hero. SetBaseDamageMax(250);
+                hero.SetBaseDamageMax(250);
                 
                 print(`[ZoneDungeon] Boss 设置完成: 血量=${hero.GetMaxHealth()}, 护甲=${hero.GetPhysicalArmorValue(false)}, 攻击=${hero.GetBaseDamageMax()}`);
                 
@@ -518,7 +518,7 @@ private SetupBossStats(boss: CDOTA_BaseNPC): void {
     
     private GetRandomPosition(): Vector {
         const x = RandomFloat(ZONE_BOUNDS.minX + 500, ZONE_BOUNDS.maxX - 500);
-        const y = RandomFloat(ZONE_BOUNDS. minY + 500, ZONE_BOUNDS.maxY - 500);
+        const y = RandomFloat(ZONE_BOUNDS.minY + 500, ZONE_BOUNDS.maxY - 500);
         return Vector(x, y, ZONE_AREA.z);
     }
     
@@ -526,8 +526,8 @@ private SetupBossStats(boss: CDOTA_BaseNPC): void {
         let nearest: CDOTA_BaseNPC_Hero | undefined;
         let nearestDist = Infinity;
         
-        for (const [, player] of this. players) {
-            if (! player.isAlive || !player.hero || !IsValidEntity(player. hero)) continue;
+        for (const [, player] of this.players) {
+            if (! player.isAlive || !player.hero || !IsValidEntity(player.hero)) continue;
             
             const heroPos = player.hero.GetAbsOrigin();
             const dist = ((position.x - heroPos.x) ** 2 + (position.y - heroPos.y) ** 2) ** 0.5;
@@ -589,7 +589,7 @@ private ApplyMonsterScaling(monster: CDOTA_BaseNPC, type: string): void {
             const currentMax = hero.GetMaxHealth();
             if (targetHealth > currentMax) {
                 const extraStr = Math.floor((targetHealth - currentMax) / 22);
-                hero. ModifyStrength(extraStr);
+                hero.ModifyStrength(extraStr);
             }
             
             hero.SetHealth(hero.GetMaxHealth());
@@ -639,7 +639,7 @@ private ApplyMonsterScaling(monster: CDOTA_BaseNPC, type: string): void {
         if (type === "boss") {
             const targetDamage = Math.floor(150 * damageMult);  // 基础150攻击
             hero.SetBaseDamageMin(targetDamage);
-            hero. SetBaseDamageMax(targetDamage + 30);
+            hero.SetBaseDamageMax(targetDamage + 30);
         } else {
             const bonusDamage = Math.floor(100 * damageMult);
             hero.ModifyAgility(bonusDamage);
@@ -658,10 +658,10 @@ private ApplyMonsterScaling(monster: CDOTA_BaseNPC, type: string): void {
 }
     
     private GetTimeMultiplier(): number {
-        const elapsed = GameRules. GetGameTime() - this.startTime;
+        const elapsed = GameRules.GetGameTime() - this.startTime;
         
-        if (elapsed >= ZONE_CONFIG. DIFFICULTY_TIME_2) return ZONE_CONFIG.DIFFICULTY_MULT_2;
-        if (elapsed >= ZONE_CONFIG. DIFFICULTY_TIME_1) return ZONE_CONFIG.DIFFICULTY_MULT_1;
+        if (elapsed >= ZONE_CONFIG.DIFFICULTY_TIME_2) return ZONE_CONFIG.DIFFICULTY_MULT_2;
+        if (elapsed >= ZONE_CONFIG.DIFFICULTY_TIME_1) return ZONE_CONFIG.DIFFICULTY_MULT_1;
         return 1.0;
     }
     
@@ -680,7 +680,7 @@ private OnEntityKilled(event: EntityKilledEvent): void {
     if (!killedUnit) return;
     
     // 检查是否是玩家死亡
-    if (killedUnit. IsRealHero() && killedUnit. GetTeam() === DotaTeam.GOODGUYS) {
+    if (killedUnit.IsRealHero() && killedUnit.GetTeam() === DotaTeam.GOODGUYS) {
         this.OnPlayerDeath(killedUnit as CDOTA_BaseNPC_Hero);
         return;
     }
@@ -692,14 +692,14 @@ private OnEntityKilled(event: EntityKilledEvent): void {
             this.teamScore += 1;
             
             // 🆕 分裂物/召唤物也有少量掉落
-            const playerIds = Array.from(this. players.keys());
-            ZoneLootSystem. ProcessLoot("normal", playerIds, 0.5);
+            const playerIds = Array.from(this.players.keys());
+            ZoneLootSystem.ProcessLoot("normal", playerIds, 0.5);
         }
         return;
     }
     
     // 移除怪物
-    this.monsters. splice(index, 1);
+    this.monsters.splice(index, 1);
     
     const monsterType = (killedUnit as any).zoneMonsterType as "normal" | "elite" | "boss" || "normal";
     const score = MONSTER_SCORE[monsterType] || 1;
@@ -714,19 +714,19 @@ private OnEntityKilled(event: EntityKilledEvent): void {
     }
     
     // 🆕 处理掉落 - 为所有玩家独立计算
-    const playerIds = Array.from(this.players. keys());
-    ZoneLootSystem. ProcessLoot(monsterType, playerIds, dropBonus);
+    const playerIds = Array.from(this.players.keys());
+    ZoneLootSystem.ProcessLoot(monsterType, playerIds, dropBonus);
     
     // 清理怪物特效
     this.CleanupMonsterEffects(killedUnit);
     
     this.teamScore += score;
     
-    if (affixes && affixes. length > 0) {
+    if (affixes && affixes.length > 0) {
         const affixText = AffixSystem.GetAffixDisplayText(affixes);
         const typeName = monsterType === "elite" ? "精英怪" : "Boss";
         this.BroadcastMessage(
-            `击杀 ${typeName} ${affixText}，积分 +${score}，掉落加成 x${dropBonus. toFixed(1)}`,
+            `击杀 ${typeName} ${affixText}，积分 +${score}，掉落加成 x${dropBonus.toFixed(1)}`,
             "#FFD700"
         );
     }
@@ -767,18 +767,18 @@ private CleanupMonsterEffects(monster: CDOTA_BaseNPC): void {
 }
     
 private CheckScoreTrigger(): void {
-    print(`[ZoneDungeon] 检查触发: 当前积分=${this.teamScore}, 精英阈值=${this.eliteThreshold}, Boss阈值=${this. bossThreshold}`);
+    print(`[ZoneDungeon] 检查触发: 当前积分=${this.teamScore}, 精英阈值=${this.eliteThreshold}, Boss阈值=${this.bossThreshold}`);
     
     // 检查精英触发
     while (this.teamScore >= this.eliteThreshold) {
-        this.eliteThreshold += ZONE_CONFIG. ELITE_TRIGGER_SCORE;
+        this.eliteThreshold += ZONE_CONFIG.ELITE_TRIGGER_SCORE;
         this.TriggerElite();
     }
     
     // 检查Boss触发
     while (this.teamScore >= this.bossThreshold) {
-        print(`[ZoneDungeon] 🔴 触发Boss!  积分=${this.teamScore}, 阈值=${this. bossThreshold}`);
-        this. bossThreshold += ZONE_CONFIG. BOSS_TRIGGER_SCORE;
+        print(`[ZoneDungeon] 🔴 触发Boss!  积分=${this.teamScore}, 阈值=${this.bossThreshold}`);
+        this.bossThreshold += ZONE_CONFIG.BOSS_TRIGGER_SCORE;
         this.TriggerBoss();
     }
 }
@@ -806,7 +806,7 @@ private CheckScoreTrigger(): void {
     this.BroadcastMessage(`🔴 小Boss降临！`, "#FF0000");
     
     // 播放音效给所有玩家
-    for (const [, player] of this. players) {
+    for (const [, player] of this.players) {
         if (player.hero && IsValidEntity(player.hero)) {
             EmitSoundOn("Hero_WraithKing.Hellfire", player.hero);
         }
@@ -822,7 +822,7 @@ private CheckScoreTrigger(): void {
             ParticleAttachment.ABSORIGIN,
             boss
         );
-        ParticleManager.SetParticleControl(particle, 0, boss. GetAbsOrigin());
+        ParticleManager.SetParticleControl(particle, 0, boss.GetAbsOrigin());
     } else {
         print(`[ZoneDungeon] ❌ Boss生成失败! `);
     }
@@ -858,11 +858,11 @@ private CheckScoreTrigger(): void {
         this.BroadcastMessage(`💀 有玩家阵亡！`, "#FF6600");
         
         // 检查是否全灭
-        const aliveCount = Array.from(this. players.values()).filter(p => p. isAlive).length;
+        const aliveCount = Array.from(this.players.values()).filter(p => p.isAlive).length;
         if (aliveCount === 0) {
             this.BroadcastMessage(`☠️ 全军覆没！副本结束`, "#FF0000");
             Timers.CreateTimer(3.0, () => {
-                this. EndZone();
+                this.EndZone();
                 return undefined;
             });
         }
@@ -872,12 +872,12 @@ private CheckScoreTrigger(): void {
     
     private EndZone(): void {
         print(`[ZoneDungeon] ========== 刷怪区域结束 ==========`);
-        print(`[ZoneDungeon] 总积分：${this. teamScore}`);
+        print(`[ZoneDungeon] 总积分：${this.teamScore}`);
         
         this.isActive = false;
         
         // 清理计时器
-        if (this.mainTimer) Timers.RemoveTimer(this. mainTimer);
+        if (this.mainTimer) Timers.RemoveTimer(this.mainTimer);
         if (this.spawnTimer) Timers.RemoveTimer(this.spawnTimer);
         
         // 清理怪物

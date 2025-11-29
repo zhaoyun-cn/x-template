@@ -12,7 +12,7 @@ import config from './addon.config';
 
     const dotaPath = await getDotaPath();
     if (dotaPath === undefined) {
-        console.log('No Dota 2 installation found. Addon linking is skipped.');
+        console.log('No Dota 2 installation found.Addon linking is skipped.');
         return;
     }
 

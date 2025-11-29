@@ -20,20 +20,20 @@ export const DIFFICULTY_NAMES: Record<DungeonDifficulty, string> = {
     [DungeonDifficulty.NORMAL_2]: "普通⭐⭐",
     [DungeonDifficulty.NORMAL_3]: "普通⭐⭐⭐",
     [DungeonDifficulty.HARD_1]: "困难⭐",
-    [DungeonDifficulty. HARD_2]: "困难⭐⭐",
+    [DungeonDifficulty.HARD_2]: "困难⭐⭐",
     [DungeonDifficulty.HARD_3]: "困难⭐⭐⭐"
 };
 
 // 难度系数配置 (1.2倍递增)
 export const DIFFICULTY_MULTIPLIERS: Record<DungeonDifficulty, number> = {
     [DungeonDifficulty.EASY_1]: 0.60,    // 基础 * 0.6
-    [DungeonDifficulty. EASY_2]: 0.72,    // * 0.6 * 1.2
+    [DungeonDifficulty.EASY_2]: 0.72,    // * 0.6 * 1.2
     [DungeonDifficulty.EASY_3]: 0.86,    // * 0.6 * 1.2 * 1.2
-    [DungeonDifficulty. NORMAL_1]: 1.00,  // 基础难度
+    [DungeonDifficulty.NORMAL_1]: 1.00,  // 基础难度
     [DungeonDifficulty.NORMAL_2]: 1.20,  // * 1.2
-    [DungeonDifficulty.NORMAL_3]: 1.44,  // * 1.2 * 1. 2
+    [DungeonDifficulty.NORMAL_3]: 1.44,  // * 1.2 * 1.2
     [DungeonDifficulty.HARD_1]: 1.73,    // * 1.2 * 1.2 * 1.2
-    [DungeonDifficulty. HARD_2]: 2.07,    // * 1.2^4
+    [DungeonDifficulty.HARD_2]: 2.07,    // * 1.2^4
     [DungeonDifficulty.HARD_3]: 2.49     // * 1.2^5
 };
 
@@ -62,17 +62,17 @@ export interface CompletionReward {
 // ⭐ 通关奖励配置 - 9个难度
 export const DIFFICULTY_REWARDS: Record<DungeonDifficulty, CompletionReward> = {
     // 简单难度
-    [DungeonDifficulty. EASY_1]: {
+    [DungeonDifficulty.EASY_1]: {
         gold: 300,
         experience: 200,
         items: ["item_branches", "item_tango"]
     },
-    [DungeonDifficulty. EASY_2]: {
+    [DungeonDifficulty.EASY_2]: {
         gold: 500,
         experience: 350,
         items: ["item_boots", "item_magic_wand"]
     },
-    [DungeonDifficulty. EASY_3]: {
+    [DungeonDifficulty.EASY_3]: {
         gold: 700,
         experience: 500,
         items: ["item_power_treads", "item_bracer"]
@@ -89,7 +89,7 @@ export const DIFFICULTY_REWARDS: Record<DungeonDifficulty, CompletionReward> = {
         experience: 1000,
         items: ["item_maelstrom", "item_vladmir"]
     },
-    [DungeonDifficulty. NORMAL_3]: {
+    [DungeonDifficulty.NORMAL_3]: {
         gold: 2000,
         experience: 1400,
         items: ["item_orchid", "item_blink", "item_force_staff"]
@@ -106,7 +106,7 @@ export const DIFFICULTY_REWARDS: Record<DungeonDifficulty, CompletionReward> = {
         experience: 2500,
         items: ["item_mjollnir", "item_heart", "item_butterfly"]
     },
-    [DungeonDifficulty. HARD_3]: {
+    [DungeonDifficulty.HARD_3]: {
         gold: 5000,
         experience: 3500,
         items: ["item_bloodthorn", "item_satanic", "item_radiance", "item_refresher"]
@@ -124,7 +124,7 @@ export const BOSS_LOOT: Record<DungeonDifficulty, BossLoot> = {
         ],
         gold: { min: 100, max: 200 }
     },
-    [DungeonDifficulty. EASY_2]: {
+    [DungeonDifficulty.EASY_2]: {
         guaranteedItems: ["item_boots"],
         randomItems: [
             { itemName: "item_magic_wand", dropChance: 0.7, minCount: 1, maxCount: 1 },
@@ -143,7 +143,7 @@ export const BOSS_LOOT: Record<DungeonDifficulty, BossLoot> = {
     },
     
     // ========== 普通难度 ==========
-    [DungeonDifficulty. NORMAL_1]: {
+    [DungeonDifficulty.NORMAL_1]: {
         guaranteedItems: ["item_power_treads", "item_perseverance"],
         randomItems: [
             { itemName: "item_maelstrom", dropChance: 0.6, minCount: 1, maxCount: 1 },
@@ -171,7 +171,7 @@ export const BOSS_LOOT: Record<DungeonDifficulty, BossLoot> = {
     },
     
     // ========== 困难难度 ==========
-    [DungeonDifficulty. HARD_1]: {
+    [DungeonDifficulty.HARD_1]: {
         guaranteedItems: ["item_black_king_bar", "item_assault"],
         randomItems: [
             { itemName: "item_mjollnir", dropChance: 0.7, minCount: 1, maxCount: 1 },
@@ -190,7 +190,7 @@ export const BOSS_LOOT: Record<DungeonDifficulty, BossLoot> = {
         ],
         gold: { min: 3000, max: 4500 }
     },
-    [DungeonDifficulty. HARD_3]: {
+    [DungeonDifficulty.HARD_3]: {
         guaranteedItems: ["item_bloodthorn", "item_satanic", "item_radiance"],
         randomItems: [
             { itemName: "item_refresher", dropChance: 0.9, minCount: 1, maxCount: 1 },
