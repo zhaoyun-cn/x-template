@@ -75,12 +75,12 @@ assert(Lua_has_int64 or Lua_has_int32 or not Lua_has_integers, "Lua integers mus
 --       Lua 5.1/5.2    with "int64"               will not work.
 --       Lua 5.1/5.2    with "int128"              will not work.
 --       Lua 5.1/5.2    with "float"               will not work.
---       Lua 5.1/5.2    with "double"              is OK.        (default config for Lua 5.1, Lua 5.2, LuaJIT)
+--       Lua 5.1/5.2    with "double"              is OK.       (default config for Lua 5.1, Lua 5.2, LuaJIT)
 --       Lua 5.3/5.4    with "int32"  + "float"    will not work.
 --       Lua 5.3/5.4    with "int64"  + "float"    will not work.
 --       Lua 5.3/5.4    with "int128" + "float"    will not work.
---       Lua 5.3/5.4    with "int32"  + "double"   is OK.        (config used by Fengari)
---       Lua 5.3/5.4    with "int64"  + "double"   is OK.        (default config for Lua 5.3, Lua 5.4)
+--       Lua 5.3/5.4    with "int32"  + "double"   is OK.       (config used by Fengari)
+--       Lua 5.3/5.4    with "int64"  + "double"   is OK.       (default config for Lua 5.3, Lua 5.4)
 --       Lua 5.3/5.4    with "int128" + "double"   will not work.
 --   Using floating point numbers better than "double" instead of "double" is OK (non-IEEE-754 floating point implementation are allowed).
 --   Using "int128" instead of "int64" is not OK: "int128" would require different branch of implementation for optimized SHA512.
@@ -1119,7 +1119,7 @@ if branch == "LJ" then
 
       function sha512_feed_128(H_lo, H_hi, str, offs, size)
          -- offs >= 0, size >= 0, size is multiple of 128
-         -- W1_hi, W1_lo, W2_hi, W2_lo, ... Wk_hi = W[2*k-1], Wk_lo = W[2*k]
+         -- W1_hi, W1_lo, W2_hi, W2_lo, ...Wk_hi = W[2*k-1], Wk_lo = W[2*k]
          local W, K_lo, K_hi = common_W, sha2_K_lo, sha2_K_hi
          for pos = offs, offs + size - 1, 128 do
             for j = 1, 16 * 2 do
@@ -1221,7 +1221,7 @@ if branch == "LJ" then
 
       function sha512_feed_128(H_lo, H_hi, str, offs, size)
          -- offs >= 0, size >= 0, size is multiple of 128
-         -- W1_hi, W1_lo, W2_hi, W2_lo, ... Wk_hi = W[2*k-1], Wk_lo = W[2*k]
+         -- W1_hi, W1_lo, W2_hi, W2_lo, ...Wk_hi = W[2*k-1], Wk_lo = W[2*k]
          local W, K_lo, K_hi = common_W, sha2_K_lo, sha2_K_hi
          for pos = offs, offs + size - 1, 128 do
             for j = 1, 16 * 2 do
@@ -1815,7 +1815,7 @@ if branch == "INT32" then
       end
       local function sha512_feed_128(H_lo, H_hi, str, offs, size)
          -- offs >= 0, size >= 0, size is multiple of 128
-         -- W1_hi, W1_lo, W2_hi, W2_lo, ... Wk_hi = W[2*k-1], Wk_lo = W[2*k]
+         -- W1_hi, W1_lo, W2_hi, W2_lo, ...Wk_hi = W[2*k-1], Wk_lo = W[2*k]
          local floor, W, K_lo, K_hi = floor, common_W, sha2_K_lo, sha2_K_hi
          local h1_lo, h2_lo, h3_lo, h4_lo, h5_lo, h6_lo, h7_lo, h8_lo = H_lo[1], H_lo[2], H_lo[3], H_lo[4], H_lo[5], H_lo[6], H_lo[7], H_lo[8]
          local h1_hi, h2_hi, h3_hi, h4_hi, h5_hi, h6_hi, h7_hi, h8_hi = H_hi[1], H_hi[2], H_hi[3], H_hi[4], H_hi[5], H_hi[6], H_hi[7], H_hi[8]
@@ -2246,7 +2246,7 @@ if branch == "LIB32" or branch == "EMUL" then
 
    function sha512_feed_128(H_lo, H_hi, str, offs, size)
       -- offs >= 0, size >= 0, size is multiple of 128
-      -- W1_hi, W1_lo, W2_hi, W2_lo, ... Wk_hi = W[2*k-1], Wk_lo = W[2*k]
+      -- W1_hi, W1_lo, W2_hi, W2_lo, ...Wk_hi = W[2*k-1], Wk_lo = W[2*k]
       local W, K_lo, K_hi = common_W, sha2_K_lo, sha2_K_hi
       local h1_lo, h2_lo, h3_lo, h4_lo, h5_lo, h6_lo, h7_lo, h8_lo =
          H_lo[1],

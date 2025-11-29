@@ -16,8 +16,9 @@ import './modifiers/modifier_equipment_system';
 import { ZoneDungeon } from "./zone/zone_dungeon";
 import { MaterialUseSystem } from './zone/zone_loot';
 import { ClassSystem } from './systems/class_system';  // ⭐ 新增导入
-
+import { InitSkillEquipSystem } from './systems/skill_equip_system';
 import { InitSkillPointSystem, SkillPointSystem } from './systems/skill_point_system';
+import { InitRuneSystem, RuneSystem } from './systems/rune_system';
 // 初始化模块
 if (IsServer()) {
     pcall(() => require('init_modifiers'));
@@ -29,7 +30,8 @@ declare global {
         ZoneDungeon?: ZoneDungeon;
     }
 }
-
+InitRuneSystem();
+print('[GameMode] 护石系统已初始化');
 declare function require(module: string): void;
 
 MaterialUseSystem.Init();
@@ -360,7 +362,7 @@ Object.assign(getfenv(), {
         
         // ⭐ 初始化职业系统（在其他系统之前）
         ClassSystem.Init();
-        print("[GameMode] Activating.. .");
+        print("[GameMode] Activating...");
 print("=".repeat(50));
 
 ActivateModules();
@@ -371,6 +373,10 @@ ClassSystem.Init();
 // ⭐ 初始化技能点系统
 InitSkillPointSystem();
 print("[GameMode] 技能点系统已初始化");
+
+InitSkillPointSystem();
+InitSkillEquipSystem();
+print('[GameMode] 技能装备系统已初始化');
 
 RageSystem.Init();
         RageSystem.Init();

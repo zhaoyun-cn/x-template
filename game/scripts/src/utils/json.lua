@@ -434,10 +434,10 @@ end
 
 local chars_to_be_escaped_in_JSON_string
    = '['
-   ..  '"'    -- class sub-pattern to match a double quote
-   ..  '%\\'  -- class sub-pattern to match a backslash
-   ..  '%z'   -- class sub-pattern to match a null
-   ..  '\001' ..'-' ..'\031' -- class sub-pattern to match control characters
+   .. '"'    -- class sub-pattern to match a double quote
+   .. '%\\'  -- class sub-pattern to match a backslash
+   .. '%z'   -- class sub-pattern to match a null
+   .. '\001' ..'-' ..'\031' -- class sub-pattern to match control characters
    ..']'
 
 local function json_string_literal(value)

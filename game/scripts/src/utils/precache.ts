@@ -55,7 +55,7 @@ export default function Precache(context: CScriptPrecacheContext) {
             'models/items/nevermore/demon_eater/demon_eater_shoulders.vmdl',
             'particles/econ/items/shadow_fiend/sf_fire_arcana/sf_fire_arcana_ambient.vpcf',
             
-            'models/props_gameplay/team_portal/team_portal.vmdl',// 传送门模型
+            'models/props_gameplay/team_portal/team_portal.vmdl',
            
             // === 影魔Boss - 荒芜之臂套装 (Arms of Desolation) ===
             'models/items/nevermore/arms_of_desolation/arms_of_desolation.vmdl',
@@ -69,58 +69,50 @@ export default function Precache(context: CScriptPrecacheContext) {
             // === 通用特效 ===
             'particles/generic_gameplay/generic_hit_blood.vpcf',
             'soundevents/game_sounds_heroes/game_sounds_earthshaker.vsndevts',
-// === 冥魂大帝 Boss - 完整模型 ===
-'models/heroes/wraith_king/wraith_king.vmdl',
-'models/heroes/wraith_king/wraith_king_base.vmdl',
-'models/heroes/wraith_king/wraith_king_head.vmdl',
-'models/heroes/wraith_king/wraith_king_weapon.vmdl',
-'models/heroes/wraith_king/wraith_king_legs.vmdl',
-'models/heroes/wraith_king/wraith_king_arms.vmdl',
-'models/heroes/wraith_king/wraith_king_shoulder.vmdl',
-'models/heroes/wraith_king/wraith_king_cape.vmdl',
-'models/heroes/wraith_king/wraith_king_armor.vmdl',
-
-// === 冥魂大帝 - 粒子特效 ===
-'particles/units/heroes/hero_skeletonking/skeletonking_ambient.vpcf',
-'particles/units/heroes/hero_skeletonking/skeletonking_sword_ambient.vpcf',
-//'particles/units/heroes/hero_skeletonking/wraith_king_hellfire_eruption.vpcf',
-// === 冥魂大帝 - 音效 ===
-'soundevents/game_sounds_heroes/game_sounds_skeletonking.vsndevts',
-
-// === 光环词条特效 ===
-'particles/generic_gameplay/generic_slowed_cold.vpcf',
-'particles/units/heroes/hero_huskar/huskar_burning_spear_debuff.vpcf',
-              // === 🆕 刷怪区域 - 词条系统特效 ===
-        // 护盾词条
-        'particles/items_fx/black_king_bar_avatar.vpcf',
-        // 召唤词条
-        'particles/units/heroes/hero_enigma/enigma_demonic_conversion.vpcf',
-        // 冰霜光环词条
-        'particles/units/heroes/hero_crystalmaiden/maiden_freezing_field_snow.vpcf',
-        // 燃烧光环词条
-        'particles/units/heroes/hero_ember_spirit/ember_spirit_flameguard.vpcf',
-        // 狂暴化词条
-        'particles/units/heroes/hero_huskar/huskar_berserkers_blood.vpcf',
-        // 不屈词条
-        'particles/units/heroes/hero_skeletonking/skeleton_king_reincarnate.vpcf',
-        // 分裂词条
-        'particles/units/heroes/hero_broodmother/broodmother_spiderlings_spawn.vpcf',
-        // 通用词条光环
-        'particles/generic_gameplay/generic_buff.vpcf',
-        // 高词条/Boss出现特效
-        'particles/econ/events/ti10/portal/portal_open_good.vpcf',
+            
+            // === 冥魂大帝 Boss - 完整模型 ===
+            'models/heroes/wraith_king/wraith_king.vmdl',
+            'models/heroes/wraith_king/wraith_king_base.vmdl',
+            'models/heroes/wraith_king/wraith_king_head.vmdl',
+            'models/heroes/wraith_king/wraith_king_weapon.vmdl',
+            'models/heroes/wraith_king/wraith_king_legs.vmdl',
+            'models/heroes/wraith_king/wraith_king_arms.vmdl',
+            'models/heroes/wraith_king/wraith_king_shoulder.vmdl',
+            'models/heroes/wraith_king/wraith_king_cape.vmdl',
+            'models/heroes/wraith_king/wraith_king_armor.vmdl',
+            
+            // === 冥魂大帝 - 粒子特效 ===
+            'particles/units/heroes/hero_skeletonking/skeletonking_ambient.vpcf',
+            'particles/units/heroes/hero_skeletonking/skeletonking_sword_ambient.vpcf',
+            
+            // === 冥魂大帝 - 音效 ===
+            'soundevents/game_sounds_heroes/game_sounds_skeletonking.vsndevts',
+            
+            // === 光环词条特效 ===
+            'particles/generic_gameplay/generic_slowed_cold.vpcf',
+            'particles/units/heroes/hero_huskar/huskar_burning_spear_debuff.vpcf',
+            
+            // === 刷怪区域 - 词条系统特效 ===
+            'particles/items_fx/black_king_bar_avatar.vpcf',
+            'particles/units/heroes/hero_enigma/enigma_demonic_conversion.vpcf',
+            'particles/units/heroes/hero_crystalmaiden/maiden_freezing_field_snow.vpcf',
+            'particles/units/heroes/hero_ember_spirit/ember_spirit_flameguard.vpcf',
+            'particles/units/heroes/hero_huskar/huskar_berserkers_blood.vpcf',
+            'particles/units/heroes/hero_skeletonking/skeleton_king_reincarnate.vpcf',
+            'particles/units/heroes/hero_broodmother/broodmother_spiderlings_spawn.vpcf',
+            'particles/generic_gameplay/generic_buff.vpcf',
+            'particles/econ/events/ti10/portal/portal_open_good.vpcf',
         ],
         context
     );
     
-    // ⭐ 预缓存装备图标
+    // 预缓存装备图标
     precacheEquipmentIcons(context);
     
-    // 需要预载入的kv文件，会自动解析KV文件中的所有vpcf资源等等
+    // ⭐ 修正：使用完整路径加载 KV 文件
     precacheEveryResourceInKV(
         [
-            // kv文件路径
-            'npc_abilities_custom.txt',
+            'scripts/npc/npc_abilities_custom.txt',
         ],
         context
     );
@@ -128,7 +120,6 @@ export default function Precache(context: CScriptPrecacheContext) {
     // 需要预载入的单位
     precacheUnits(
         [
-            // 影魔Boss英雄单位
             'npc_dota_hero_nevermore',
             'npc_dota_hero_skeleton_king'
         ],
@@ -136,18 +127,12 @@ export default function Precache(context: CScriptPrecacheContext) {
     );
     
     // 需要预载入的物品
-    precacheItems(
-        [
-            // 物品名称
-            // 'item_***',
-        ],
-        context
-    );
+    precacheItems([], context);
     
-    print(`[Precache] Precache finished.`);
+    print('[Precache] Precache finished.');
 }
 
-// ⭐ 新增：预缓存装备图标
+// 预缓存装备图标
 function precacheEquipmentIcons(context: CScriptPrecacheContext) {
     const equipmentIcons = [
         'file://{images}/custom_game/sword.png',
@@ -161,17 +146,43 @@ function precacheEquipmentIcons(context: CScriptPrecacheContext) {
     ];
     
     equipmentIcons.forEach(icon => {
-        // Panorama 图片使用 'panorama' 类型预缓存
         PrecacheResource('panorama', icon, context);
     });
     
-    print(`[Precache] Precached ${equipmentIcons.length} equipment icons.`);
+    print('[Precache] Precached ' + equipmentIcons.length + ' equipment icons.');
 }
 
 // 预载入KV文件中的所有资源
 function precacheEveryResourceInKV(kvFileList: string[], context: CScriptPrecacheContext) {
     kvFileList.forEach(file => {
+        print('[Precache] Loading KV file: ' + file);
         const kvTable = LoadKeyValues(file);
+        
+        if (kvTable == null) {
+            print('[Precache] ERROR: Failed to load KV file: ' + file);
+            print('[Precache] Trying alternative path...');
+            
+            // ⭐ 尝试不同的路径格式
+            const altPaths = [
+                file,
+                'scripts/npc/' + file,
+                file.replace('scripts/npc/', ''),
+            ];
+            
+            for (const altPath of altPaths) {
+                const altTable = LoadKeyValues(altPath);
+                if (altTable != null) {
+                    print('[Precache] SUCCESS with path: ' + altPath);
+                    precacheEverythingFromTable(altTable, context);
+                    return;
+                }
+            }
+            
+            print('[Precache] WARNING: Could not load KV file with any path variant');
+            return;
+        }
+        
+        print('[Precache] KV file loaded successfully: ' + file);
         precacheEverythingFromTable(kvTable, context);
     });
 }
@@ -213,13 +224,27 @@ function precacheItems(itemList: string[], context: CScriptPrecacheContext) {
     });
 }
 
-// 一个辅助的，从KV表中解析出所有资源并预载入的方法
+// 从KV表中解析出所有资源并预载入
 function precacheEverythingFromTable(kvTable: any, context: CScriptPrecacheContext) {
+    if (kvTable == null) {
+        return;
+    }
+    
     for (const [k, v] of pairs(kvTable)) {
-        if (type(v) === 'table') {
+        if (v == null) {
+            continue;
+        }
+        
+        const valueType = type(v);
+        
+        if (valueType === 'table') {
             precacheEverythingFromTable(v, context);
-        } else if (type(v) === 'string') {
-            precacheResString(v, context);
+        } else if (valueType === 'string') {
+            const str = v as string;
+            // 只预缓存资源文件
+            if (str.endsWith('.vpcf') || str.endsWith('.vsndevts') || str.endsWith('.vmdl')) {
+                precacheResString(str, context);
+            }
         }
     }
 }

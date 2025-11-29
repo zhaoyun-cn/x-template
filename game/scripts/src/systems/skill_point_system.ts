@@ -69,7 +69,7 @@ class SkillPointSystemClass {
         });
 
         CustomGameEventManager.RegisterListener('skill_point_reset', (_, data: any) => {
-            const playerId = data. PlayerID as PlayerID;
+            const playerId = data.PlayerID as PlayerID;
             print('[SkillPointSystem] 收到重置请求，玩家: ' + playerId);
             this.resetSkills(playerId);
         });
@@ -84,7 +84,7 @@ class SkillPointSystemClass {
         
         let totalPoints = 0;
         for (let i = 1; i <= currentLevel; i++) {
-            totalPoints += this. calculateSkillPointsForLevel(i);
+            totalPoints += this.calculateSkillPointsForLevel(i);
         }
 
         this.playerData.set(playerId, {
@@ -111,7 +111,7 @@ class SkillPointSystemClass {
         let data = this.playerData.get(playerId);
         
         if (!data) {
-            print('[SkillPointSystem] 玩家 ' + playerId + ' 数据不存在，初始化.. .');
+            print('[SkillPointSystem] 玩家 ' + playerId + ' 数据不存在，初始化...');
             this.initPlayer(playerId);
             return;
         }
@@ -134,13 +134,13 @@ class SkillPointSystemClass {
     }
 
     public getAvailablePoints(playerId: PlayerID): number {
-        const data = this. playerData.get(playerId);
+        const data = this.playerData.get(playerId);
         if (!data) return 0;
         return data.totalSkillPoints - data.usedSkillPoints;
     }
 
     public getSkillLevel(playerId: PlayerID, skillId: string): number {
-        const data = this.playerData. get(playerId);
+        const data = this.playerData.get(playerId);
         if (!data) return 0;
         return data.skillLevels[skillId] || 0;
     }
@@ -181,7 +181,7 @@ class SkillPointSystemClass {
 
     public upgradeSkill(playerId: PlayerID, skillId: string): boolean {
         const checkResult = this.canUpgradeSkill(playerId, skillId);
-        if (!checkResult. canUpgrade) {
+        if (!checkResult.canUpgrade) {
             print('[SkillPointSystem] 无法升级: ' + checkResult.reason);
             this.sendError(playerId, checkResult.reason || '无法升级');
             return false;
@@ -209,7 +209,7 @@ class SkillPointSystemClass {
     }
 
     public resetSkills(playerId: PlayerID): void {
-        const data = this. playerData.get(playerId);
+        const data = this.playerData.get(playerId);
         if (!data) return;
 
         const hero = PlayerResource.GetSelectedHeroEntity(playerId);

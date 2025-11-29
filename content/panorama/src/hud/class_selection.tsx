@@ -22,7 +22,7 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
     const handleSelectLocked = () => {};
 
     const handleConfirm = () => {
-        if (! selectedClass || isConfirming) return;
+        if (!  selectedClass || isConfirming) return;
         setIsConfirming(true);
         
         const playerId = Players.GetLocalPlayer();
@@ -32,14 +32,47 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
         } as never);
     };
 
+    // ⭐ 测试用：强制关闭
+    const handleDevClose = () => {
+        $. Msg('[ClassSelection] DEV: 强制关闭职业选择界面');
+        onSelect('warrior'); // 直接触发选择完成
+    };
+
     const isWarriorSelected = selectedClass === 'warrior';
     const isWarriorHovered = hoveredClass === 'warrior';
 
     return (
         <Panel style={{ width: '100%', height: '100%' }}>
             
+            {/* ⭐ 测试用关闭按钮 - 右上角 */}
+            <Panel
+                hittest={true}
+                style={{
+                    width: '120px',
+                    height: '35px',
+                    backgroundColor: '#aa0000',
+                    border: '2px solid #ff0000',
+                    horizontalAlign: 'right',
+                    verticalAlign: 'top',
+                    marginTop: '10px',
+                    marginRight: '10px',
+                    zIndex: 9999,
+                }}
+                onactivate={handleDevClose}
+            >
+                <Label
+                    text="[DEV] 跳过"
+                    style={{
+                        fontSize: '14px',
+                        color: '#ffffff',
+                        fontWeight: 'bold',
+                        horizontalAlign: 'center',
+                        marginTop: '7px',
+                    }}
+                />
+            </Panel>
+
             {/* ========== 背景层 ========== */}
-            {/* 您的自定义背景图 */}
             <Image
                 src="file://{images}/custom_game/class_bg.png"
                 style={{
@@ -48,10 +81,8 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                 }}
             />
             
-            {/* 暗色遮罩 - 让背景不那么亮 */}
             <Panel style={{ width: '100%', height: '100%', backgroundColor: '#000000aa' }} />
             
-            {/* 顶部渐变 */}
             <Panel
                 style={{
                     width: '100%',
@@ -60,7 +91,6 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                 }}
             />
             
-            {/* 底部渐变 */}
             <Panel
                 style={{
                     width: '100%',
@@ -135,18 +165,17 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                             height: '460px',
                             marginRight: '40px',
                             flowChildren: 'down',
-                            backgroundColor: isWarriorSelected ?  '#0f1a0fdd' : (isWarriorHovered ? '#151510cc' : '#0c0c0cee'),
+                            backgroundColor: isWarriorSelected ?  '#0f1a0fdd' : (isWarriorHovered ?  '#151510cc' : '#0c0c0cee'),
                             border: isWarriorSelected 
-                                ?  '2px solid #00cc00' 
+                                ?   '2px solid #00cc00' 
                                 : (isWarriorHovered ?  '2px solid #8b6914' : '2px solid #3a3020'),
                         }}
                         onactivate={handleSelectWarrior}
                         onmouseover={() => setHoveredClass('warrior')}
                         onmouseout={() => setHoveredClass(null)}
                     >
-                        <Panel style={{ width: '100%', height: '3px', backgroundColor: isWarriorSelected ? '#00cc00' : '#8b6914' }} />
+                        <Panel style={{ width: '100%', height: '3px', backgroundColor: isWarriorSelected ?  '#00cc00' : '#8b6914' }} />
                         
-                        {/* 斧王头像 */}
                         <Panel style={{ width: '100%', height: '180px', backgroundColor: '#0a0a08' }}>
                             <Image
                                 src="file://{images}/heroes/npc_dota_hero_axe.png"
@@ -224,7 +253,7 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                         </Panel>
 
                         <Panel style={{ width: '100%', padding: '12px', backgroundColor: '#060606', flowChildren: 'down', horizontalAlign: 'center' }}>
-                            <Label text="?? ?" style={{ fontSize: '30px', color: '#333333', fontWeight: 'bold' }} />
+                            <Label text="? ?  ?" style={{ fontSize: '30px', color: '#333333', fontWeight: 'bold' }} />
                             <Label text="LOCKED" style={{ fontSize: '10px', color: '#222222', letterSpacing: '4px', marginTop: '3px' }} />
                             <Label text="(尚未开发)" style={{ fontSize: '13px', color: '#552222', marginTop: '8px' }} />
                         </Panel>
