@@ -1,91 +1,165 @@
 /**
- * 护石系统
+ * 护石系统 v2
+ * - 5槽位（3开放+2锁定）
+ * - Roll值系统（整数）
+ * - 效果实际应用
  */
 
 export enum RuneQuality {
-    COMMON = 'common',
-    UNCOMMON = 'uncommon',
-    RARE = 'rare',
-    EPIC = 'epic',
-    LEGENDARY = 'legendary',
+    COMMON = 1,      // 白色 - Roll 1-20%
+    UNCOMMON = 2,    // 绿色 - Roll 15-40%
+    RARE = 3,        // 蓝色 - Roll 30-60%
+    EPIC = 4,        // 紫色 - Roll 50-80%
+    LEGENDARY = 5,   // 橙色 - Roll 70-100%
 }
 
 export enum RuneEffectType {
-    DAMAGE_BONUS = 'damage_bonus',
+    DAMAGE_PERCENT = 'damage_percent',
+    RANGE_PERCENT = 'range_percent',
     COOLDOWN_REDUCTION = 'cooldown_reduction',
-    RANGE_BONUS = 'range_bonus',
     LIFESTEAL = 'lifesteal',
     CRIT_CHANCE = 'crit_chance',
+    CRIT_DAMAGE = 'crit_damage',
+    RAGE_COST_REDUCTION = 'rage_cost_reduction',
+    BURN_DAMAGE = 'burn_damage',
 }
 
-interface RuneDefinition {
+// 效果类型中文名
+const EFFECT_TYPE_NAMES: Record<string, string> = {
+    [RuneEffectType.DAMAGE_PERCENT]: '伤害',
+    [RuneEffectType.RANGE_PERCENT]: '范围',
+    [RuneEffectType.COOLDOWN_REDUCTION]: '冷却缩减',
+    [RuneEffectType.LIFESTEAL]: '生命偷取',
+    [RuneEffectType.CRIT_CHANCE]: '暴击率',
+    [RuneEffectType.CRIT_DAMAGE]: '暴击伤害',
+    [RuneEffectType.RAGE_COST_REDUCTION]: '怒气消耗',
+    [RuneEffectType.BURN_DAMAGE]: '燃烧伤害',
+};
+
+// 品质对应的Roll值范围（整数）
+const QUALITY_ROLL_RANGES: Record<number, { min: number; max: number }> = {
+    [RuneQuality.COMMON]: { min: 1, max: 20 },
+    [RuneQuality.UNCOMMON]: { min: 15, max: 40 },
+    [RuneQuality.RARE]: { min: 30, max: 60 },
+    [RuneQuality.EPIC]: { min: 50, max: 80 },
+    [RuneQuality. LEGENDARY]: { min: 70, max: 100 },
+};
+
+const QUALITY_NAMES: Record<number, string> = {
+    [RuneQuality.COMMON]: '普通',
+    [RuneQuality. UNCOMMON]: '优秀',
+    [RuneQuality.RARE]: '稀有',
+    [RuneQuality.EPIC]: '史诗',
+    [RuneQuality.LEGENDARY]: '传说',
+};
+
+interface RuneTypeDefinition {
     id: string;
     name: string;
-    description: string;
-    icon: string;
     effectType: RuneEffectType;
-    baseValue: number;
+    icon: string;
+    minValue: number;  // 效果最小值（整数）
+    maxValue: number;  // 效果最大值（整数）
     applicableSkills: string[];
 }
 
-interface RuneInstance {
-    id: string;
-    definitionId: string;
-    quality: RuneQuality;
-    equippedTo: string | null;
-}
-
-const RUNE_DEFINITIONS: RuneDefinition[] = [
+const RUNE_TYPES: RuneTypeDefinition[] = [
     {
-        id: 'rune_thunder_damage',
-        name: '雷霆增幅',
-        description: '雷霆一击伤害提高',
+        id: 'rune_damage',
+        name: '伤害增幅',
+        effectType: RuneEffectType.DAMAGE_PERCENT,
         icon: 'item_ultimate_orb',
-        effectType: RuneEffectType.DAMAGE_BONUS,
-        baseValue: 30,
-        applicableSkills: ['warrior_thunder_strike'],
+        minValue: 5,
+        maxValue: 30,
+        applicableSkills: [],
     },
     {
-        id: 'rune_thunder_range',
-        name: '雷霆扩散',
-        description: '雷霆一击范围扩大',
+        id: 'rune_range',
+        name: '范围扩展',
+        effectType: RuneEffectType.RANGE_PERCENT,
         icon: 'item_aether_lens',
-        effectType: RuneEffectType.RANGE_BONUS,
-        baseValue: 20,
+        minValue: 10,
+        maxValue: 50,
         applicableSkills: ['warrior_thunder_strike'],
     },
     {
         id: 'rune_cooldown',
         name: '时光碎片',
-        description: '技能冷却缩减',
-        icon: 'item_octarine_core',
         effectType: RuneEffectType.COOLDOWN_REDUCTION,
-        baseValue: 10,
+        icon: 'item_octarine_core',
+        minValue: 5,
+        maxValue: 25,
         applicableSkills: [],
     },
     {
         id: 'rune_lifesteal',
         name: '生命汲取',
-        description: '技能伤害转化生命',
-        icon: 'item_satanic',
         effectType: RuneEffectType.LIFESTEAL,
-        baseValue: 5,
+        icon: 'item_satanic',
+        minValue: 3,
+        maxValue: 15,
         applicableSkills: [],
+    },
+    {
+        id: 'rune_crit_chance',
+        name: '致命本能',
+        effectType: RuneEffectType.CRIT_CHANCE,
+        icon: 'item_greater_crit',
+        minValue: 5,
+        maxValue: 20,
+        applicableSkills: [],
+    },
+    {
+        id: 'rune_crit_damage',
+        name: '毁灭打击',
+        effectType: RuneEffectType.CRIT_DAMAGE,
+        icon: 'item_bloodthorn',
+        minValue: 15,
+        maxValue: 50,
+        applicableSkills: [],
+    },
+    {
+        id: 'rune_burn',
+        name: '烈焰附魔',
+        effectType: RuneEffectType.BURN_DAMAGE,
+        icon: 'item_radiance',
+        minValue: 10,
+        maxValue: 40,
+        applicableSkills: [],
+    },
+    {
+        id: 'rune_thunder_special',
+        name: '雷霆之怒',
+        effectType: RuneEffectType.DAMAGE_PERCENT,
+        icon: 'item_mjollnir',
+        minValue: 20,
+        maxValue: 60,
+        applicableSkills: ['warrior_thunder_strike'],
+    },
+    {
+        id: 'rune_execute_special',
+        name: '死神印记',
+        effectType: RuneEffectType.DAMAGE_PERCENT,
+        icon: 'item_desolator',
+        minValue: 15,
+        maxValue: 40,
+        applicableSkills: ['warrior_execute'],
     },
 ];
 
-const QUALITY_MULTIPLIERS: Record<RuneQuality, number> = {
-    [RuneQuality.COMMON]: 1.0,
-    [RuneQuality.UNCOMMON]: 1.25,
-    [RuneQuality.RARE]: 1.5,
-    [RuneQuality.EPIC]: 1.75,
-    [RuneQuality.LEGENDARY]: 2.0,
-};
+interface RuneInstance {
+    id: string;
+    typeId: string;
+    quality: RuneQuality;
+    rollPercent: number;   // 0-100 整数
+    rollValue: number;     // 实际效果值 整数
+    equippedTo: string | null;
+    slotIndex: number;
+}
 
 interface PlayerRuneData {
     inventory: RuneInstance[];
-    equipped: Record<string, string[]>;
-    maxSlotsPerSkill: number;
+    skillSlotUnlocks: Record<string, boolean[]>;
 }
 
 class RuneSystemClass {
@@ -97,27 +171,25 @@ class RuneSystemClass {
         if (this.initialized) return;
 
         print('[RuneSystem] ========================================');
-        print('[RuneSystem] 初始化护石系统');
+        print('[RuneSystem] 初始化护石系统 v2');
         print('[RuneSystem] ========================================');
 
         CustomGameEventManager.RegisterListener('rune_equip', (_, data: any) => {
             const playerId = data.PlayerID as PlayerID;
             const runeId = data.runeId as string;
             const skillId = data.skillId as string;
-            print('[RuneSystem] 装备护石: 玩家=' + playerId + ', 护石=' + runeId + ', 技能=' + skillId);
-            this.equipRune(playerId, runeId, skillId);
+            const slotIndex = data. slotIndex as number;
+            this.equipRune(playerId, runeId, skillId, slotIndex);
         });
 
         CustomGameEventManager.RegisterListener('rune_unequip', (_, data: any) => {
             const playerId = data.PlayerID as PlayerID;
             const runeId = data.runeId as string;
-            print('[RuneSystem] 卸下护石: 玩家=' + playerId + ', 护石=' + runeId);
             this.unequipRune(playerId, runeId);
         });
 
-        CustomGameEventManager.RegisterListener('rune_request_data', (_, data: any) => {
+        CustomGameEventManager. RegisterListener('rune_request_data', (_, data: any) => {
             const playerId = data.PlayerID as PlayerID;
-            print('[RuneSystem] 数据请求: 玩家=' + playerId);
             this.sendDataToClient(playerId);
         });
 
@@ -127,103 +199,150 @@ class RuneSystemClass {
 
     private generateRuneId(): string {
         this.runeIdCounter++;
-        return 'rune_inst_' + this.runeIdCounter + '_' + RandomInt(1000, 9999);
+        return 'rune_' + this. runeIdCounter + '_' + RandomInt(1000, 9999);
+    }
+
+    // ⭐ 计算护石效果值（整数）
+    private calculateRuneValue(typeId: string, quality: RuneQuality, rollPercent: number): number {
+        const runeType = RUNE_TYPES.find(t => t.id === typeId);
+        if (!runeType) return 0;
+
+        // rollPercent 直接作为在 minValue~maxValue 范围内的百分比位置
+        const value = runeType.minValue + (runeType.maxValue - runeType.minValue) * (rollPercent / 100);
+        return Math.floor(value); // ⭐ 取整
+    }
+
+    // 创建随机护石
+    public createRandomRune(typeId: string, quality: RuneQuality): RuneInstance {
+        const rollPercent = RandomInt(0, 100); // 整数 0-100
+        const rollValue = this.calculateRuneValue(typeId, quality, rollPercent);
+
+        return {
+            id: this.generateRuneId(),
+            typeId: typeId,
+            quality: quality,
+            rollPercent: rollPercent,
+            rollValue: rollValue,
+            equippedTo: null,
+            slotIndex: -1,
+        };
+    }
+
+    // 创建保底护石（最低Roll）
+    public createGuaranteedRune(typeId: string, quality: RuneQuality): RuneInstance {
+        const rollPercent = 0;
+        const rollValue = this.calculateRuneValue(typeId, quality, rollPercent);
+
+        return {
+            id: this.generateRuneId(),
+            typeId: typeId,
+            quality: quality,
+            rollPercent: rollPercent,
+            rollValue: rollValue,
+            equippedTo: null,
+            slotIndex: -1,
+        };
     }
 
     public initPlayer(playerId: PlayerID): void {
         print('[RuneSystem] ========================================');
         print('[RuneSystem] 初始化玩家: ' + playerId);
-        
+
         this.playerData.set(playerId, {
             inventory: [],
-            equipped: {},
-            maxSlotsPerSkill: 3,
+            skillSlotUnlocks: {},
         });
 
         // 添加测试护石
-        print('[RuneSystem] 添加测试护石...');
-        this.addRuneToPlayer(playerId, 'rune_thunder_damage', RuneQuality.UNCOMMON);
-        this.addRuneToPlayer(playerId, 'rune_thunder_range', RuneQuality.COMMON);
-        this.addRuneToPlayer(playerId, 'rune_cooldown', RuneQuality.RARE);
-        this.addRuneToPlayer(playerId, 'rune_lifesteal', RuneQuality.COMMON);
+        this.addRuneToPlayer(playerId, this.createRandomRune('rune_damage', RuneQuality. UNCOMMON));
+        this.addRuneToPlayer(playerId, this.createRandomRune('rune_range', RuneQuality. RARE));
+        this.addRuneToPlayer(playerId, this. createRandomRune('rune_cooldown', RuneQuality. COMMON));
+        this.addRuneToPlayer(playerId, this. createRandomRune('rune_lifesteal', RuneQuality. EPIC));
+        this.addRuneToPlayer(playerId, this. createRandomRune('rune_thunder_special', RuneQuality. RARE));
+        this.addRuneToPlayer(playerId, this. createRandomRune('rune_crit_chance', RuneQuality.UNCOMMON));
 
-        const data = this.playerData.get(playerId);
-        print('[RuneSystem] 玩家护石数量: ' + (data ? data.inventory.length : 0));
+        print('[RuneSystem] 添加了 6 个测试护石');
         print('[RuneSystem] ========================================');
-        
-        // 立即发送数据
+
         this.sendDataToClient(playerId);
     }
 
-    public addRuneToPlayer(playerId: PlayerID, definitionId: string, quality: RuneQuality): RuneInstance | null {
+    public addRuneToPlayer(playerId: PlayerID, rune: RuneInstance): void {
         const data = this.playerData.get(playerId);
-        if (!data) {
-            print('[RuneSystem] 错误: 玩家数据不存在 ' + playerId);
-            return null;
-        }
-
-        const definition = RUNE_DEFINITIONS.find(d => d.id === definitionId);
-        if (! definition) {
-            print('[RuneSystem] 错误: 护石定义不存在 ' + definitionId);
-            return null;
-        }
-
-        const rune: RuneInstance = {
-            id: this.generateRuneId(),
-            definitionId: definitionId,
-            quality: quality,
-            equippedTo: null,
-        };
+        if (!data) return;
 
         data.inventory.push(rune);
-        print('[RuneSystem] 添加护石成功: ' + definition.name + ' (' + quality + '), ID=' + rune.id);
-
-        return rune;
+        const runeType = RUNE_TYPES. find(t => t.id === rune.typeId);
+        print('[RuneSystem] 添加护石: ' + (runeType?.name || rune.typeId) + 
+              ' [' + QUALITY_NAMES[rune. quality] + '] Roll:' + rune.rollPercent + '% 效果:+' + rune.rollValue + '%');
     }
 
-    private canEquipRuneToSkill(rune: RuneInstance, skillId: string): boolean {
-        const definition = RUNE_DEFINITIONS.find(d => d.id === rune.definitionId);
-        if (!definition) return false;
-        if (definition.applicableSkills.length === 0) return true;
-        return definition.applicableSkills.indexOf(skillId) >= 0;
-    }
-
-    public equipRune(playerId: PlayerID, runeId: string, skillId: string): boolean {
+    private getSkillSlotUnlocks(playerId: PlayerID, skillId: string): boolean[] {
         const data = this.playerData.get(playerId);
+        if (!data) return [true, true, true, false, false];
+
+        if (!data.skillSlotUnlocks[skillId]) {
+            data.skillSlotUnlocks[skillId] = [true, true, true, false, false];
+        }
+        return data.skillSlotUnlocks[skillId];
+    }
+
+    public unlockSlot(playerId: PlayerID, skillId: string, slotIndex: number): boolean {
+        const data = this. playerData.get(playerId);
+        if (!data) return false;
+
+        const unlocks = this.getSkillSlotUnlocks(playerId, skillId);
+        if (slotIndex < 0 || slotIndex > 4) return false;
+        
+        unlocks[slotIndex] = true;
+        this.sendDataToClient(playerId);
+        return true;
+    }
+
+    private canEquipToSkill(rune: RuneInstance, skillId: string): boolean {
+        const runeType = RUNE_TYPES.find(t => t. id === rune.typeId);
+        if (!runeType) return false;
+
+        if (runeType.applicableSkills.length === 0) return true;
+        return runeType.applicableSkills.indexOf(skillId) >= 0;
+    }
+
+    public equipRune(playerId: PlayerID, runeId: string, skillId: string, slotIndex: number): boolean {
+        const data = this. playerData.get(playerId);
         if (!data) return false;
 
         const rune = data.inventory.find(r => r.id === runeId);
         if (!rune) {
-            print('[RuneSystem] 护石不存在: ' + runeId);
             this.sendError(playerId, '护石不存在');
             return false;
         }
 
         if (rune.equippedTo) {
-            print('[RuneSystem] 护石已装备');
             this.sendError(playerId, '请先卸下护石');
             return false;
         }
 
-        if (!this.canEquipRuneToSkill(rune, skillId)) {
-            print('[RuneSystem] 护石不能装备到此技能');
+        if (!this.canEquipToSkill(rune, skillId)) {
             this.sendError(playerId, '此护石不能装备到该技能');
             return false;
         }
 
-        if (! data.equipped[skillId]) {
-            data.equipped[skillId] = [];
-        }
-        if (data.equipped[skillId].length >= data.maxSlotsPerSkill) {
-            print('[RuneSystem] 护石槽已满');
-            this.sendError(playerId, '护石槽已满');
+        const unlocks = this.getSkillSlotUnlocks(playerId, skillId);
+        if (slotIndex < 0 || slotIndex > 4 || ! unlocks[slotIndex]) {
+            this.sendError(playerId, '该槽位未解锁');
             return false;
         }
 
-        rune.equippedTo = skillId;
-        data.equipped[skillId].push(runeId);
+        const existingRune = data.inventory. find(r => r.equippedTo === skillId && r.slotIndex === slotIndex);
+        if (existingRune) {
+            this. sendError(playerId, '该槽位已有护石');
+            return false;
+        }
 
-        print('[RuneSystem] 护石装备成功');
+        rune. equippedTo = skillId;
+        rune.slotIndex = slotIndex;
+
+        print('[RuneSystem] 装备成功');
         this.sendDataToClient(playerId);
         return true;
     }
@@ -233,68 +352,65 @@ class RuneSystemClass {
         if (!data) return false;
 
         const rune = data.inventory.find(r => r.id === runeId);
-        if (!rune || ! rune.equippedTo) {
-            return false;
-        }
+        if (!rune || ! rune.equippedTo) return false;
 
-        const skillId = rune.equippedTo;
-        rune.equippedTo = null;
+        rune. equippedTo = null;
+        rune.slotIndex = -1;
 
-        if (data.equipped[skillId]) {
-            const idx = data.equipped[skillId].indexOf(runeId);
-            if (idx >= 0) {
-                data.equipped[skillId].splice(idx, 1);
-            }
-        }
-
-        print('[RuneSystem] 护石卸下成功');
+        print('[RuneSystem] 卸下成功');
         this.sendDataToClient(playerId);
         return true;
     }
 
+    // 获取技能护石加成
+    public getSkillRuneBonus(playerId: PlayerID, skillId: string, effectType: RuneEffectType): number {
+        const data = this.playerData.get(playerId);
+        if (!data) return 0;
+
+        let totalBonus = 0;
+        for (const rune of data.inventory) {
+            if (rune.equippedTo !== skillId) continue;
+
+            const runeType = RUNE_TYPES.find(t => t.id === rune. typeId);
+            if (!runeType || runeType.effectType !== effectType) continue;
+
+            totalBonus += rune.rollValue;
+        }
+
+        return totalBonus;
+    }
+
     public sendDataToClient(playerId: PlayerID): void {
         const player = PlayerResource.GetPlayer(playerId);
-        if (!player) {
-            print('[RuneSystem] 错误: 找不到玩家 ' + playerId);
-            return;
-        }
+        if (!player) return;
 
         const data = this.playerData.get(playerId);
-        if (!data) {
-            print('[RuneSystem] 错误: 玩家数据不存在 ' + playerId);
-            return;
-        }
+        if (!data) return;
 
-        print('[RuneSystem] 发送护石数据, 数量: ' + data.inventory.length);
+        print('[RuneSystem] 发送数据, 护石数量: ' + data.inventory.length);
 
-        // 构建护石数据 - 使用对象而非数组
         const runesObj: Record<string, any> = {};
-        for (let i = 0; i < data.inventory.length; i++) {
-            const rune = data.inventory[i];
-            const def = RUNE_DEFINITIONS.find(d => d.id === rune.definitionId);
-            if (! def) continue;
-
-            // 构建 applicableSkills 对象
-            const applicableObj: Record<string, boolean> = {};
-            for (const skillId of def.applicableSkills) {
-                applicableObj[skillId] = true;
-            }
+        for (const rune of data.inventory) {
+            const runeType = RUNE_TYPES.find(t => t.id === rune.typeId);
+            if (!runeType) continue;
 
             runesObj[rune.id] = {
                 id: rune.id,
-                definitionId: rune.definitionId,
-                name: def.name,
-                description: def.description,
-                icon: def.icon,
-                effectType: def.effectType,
-                baseValue: def.baseValue,
+                typeId: rune.typeId,
+                name: runeType.name,
+                icon: runeType.icon,
+                effectType: runeType.effectType,
+                effectTypeName: EFFECT_TYPE_NAMES[runeType. effectType] || '',
                 quality: rune.quality,
+                qualityName: QUALITY_NAMES[rune.quality],
+                rollPercent: rune.rollPercent,
+                rollValue: rune.rollValue,
+                minValue: runeType.minValue,
+                maxValue: runeType.maxValue,
                 equippedTo: rune.equippedTo || '',
-                applicableSkills: applicableObj,
-                isUniversal: def.applicableSkills.length === 0,
+                slotIndex: rune.slotIndex,
+                isUniversal: runeType.applicableSkills.length === 0,
             };
-            
-            print('[RuneSystem] - 护石: ' + def.name + ' (' + rune.quality + ')');
         }
 
         CustomGameEventManager.Send_ServerToPlayer(
@@ -302,11 +418,8 @@ class RuneSystemClass {
             'rune_data_update' as never,
             {
                 runes: runesObj,
-                maxSlots: data.maxSlotsPerSkill,
             } as never
         );
-        
-        print('[RuneSystem] 数据发送完成');
     }
 
     private sendError(playerId: PlayerID, message: string): void {

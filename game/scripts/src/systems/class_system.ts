@@ -1,7 +1,7 @@
 /**
  * 职业系统
  */
-
+import { RuneSystem } from './rune_system';  // ⭐ 添加这行
 import { SkillPointSystem } from './skill_point_system';
 import { SkillEquipSystem } from './skill_equip_system'
 export enum PlayerClass {
@@ -109,56 +109,60 @@ export class ClassSystem {
         });
     }
 
-    private static ConfirmClassSelection(
-        playerId: PlayerID,
-        classConfig: ClassConfig,
-        hero: CDOTA_BaseNPC_Hero
-    ): void {
-        print('========================================');
-        print('[ClassSystem] 确认职业选择');
-        print('[ClassSystem] 玩家: ' + playerId + ', 职业: ' + classConfig.name);
-        print('========================================');
+ private static ConfirmClassSelection(
+    playerId: PlayerID,
+    classConfig: ClassConfig,
+    hero: CDOTA_BaseNPC_Hero
+): void {
+    print('========================================');
+    print('[ClassSystem] 确认职业选择');
+    print('[ClassSystem] 玩家: ' + playerId + ', 职业: ' + classConfig.name);
+    print('========================================');
 
-        this.playerClasses.set(playerId, {
-            classId: classConfig.id,
-            confirmed: true,
-        });
+    this.playerClasses. set(playerId, {
+        classId: classConfig.id,
+        confirmed: true,
+    });
 
-        this.SetupHero(hero, classConfig);
+    this.SetupHero(hero, classConfig);
 
-        // ⭐ 修正：直接调用 SkillPointSystem.initPlayer()
-        SkillPointSystem.initPlayer(playerId);
-        print('[ClassSystem] 已初始化玩家技能点系统');
-SkillPointSystem.initPlayer(playerId);
-SkillEquipSystem.initPlayer(playerId);
-print('[ClassSystem] 已初始化玩家技能装备系统');
-        // 修正出生点坐标
-        const spawnPoint = Vector(-13760, 12544, 192);
-        FindClearSpaceForUnit(hero, spawnPoint, true);
+    // ⭐ 初始化所有玩家系统
+    SkillPointSystem.initPlayer(playerId);
+    print('[ClassSystem] 已初始化玩家技能点系统');
+    
+    SkillEquipSystem.initPlayer(playerId);
+    print('[ClassSystem] 已初始化玩家技能装备系统');
+    
+    RuneSystem.initPlayer(playerId);  // ⭐ 添加这行！
+    print('[ClassSystem] 已初始化玩家护石系统');
 
-        // 发送确认事件
-        const player = PlayerResource.GetPlayer(playerId);
-        if (player) {
-            print('[ClassSystem] 发送确认事件到客户端');
-            CustomGameEventManager.Send_ServerToPlayer(
-                player,
-                'class_selection_confirmed' as never,
-                {
-                    classId: classConfig.id,
-                    className: classConfig.name,
-                    success: true,
-                } as never
-            );
-        }
+    // 修正出生点坐标
+    const spawnPoint = Vector(-13760, 12544, 192);
+    FindClearSpaceForUnit(hero, spawnPoint, true);
 
-        GameRules.SendCustomMessage(
-            '<font color="#00FF00">欢迎，' + classConfig.name + '！你的冒险开始了！</font>',
-            playerId,
-            0
+    // 发送确认事件
+    const player = PlayerResource.GetPlayer(playerId);
+    if (player) {
+        print('[ClassSystem] 发送确认事件到客户端');
+        CustomGameEventManager.Send_ServerToPlayer(
+            player,
+            'class_selection_confirmed' as never,
+            {
+                classId: classConfig.id,
+                className: classConfig.name,
+                success: true,
+            } as never
         );
-
-        print('[ClassSystem] 职业选择完成！');
     }
+
+    GameRules.SendCustomMessage(
+        '<font color="#00FF00">欢迎，' + classConfig.name + '！你的冒险开始了！</font>',
+        playerId,
+        0
+    );
+
+    print('[ClassSystem] 职业选择完成！');
+}
 
     private static SetupHero(hero: CDOTA_BaseNPC_Hero, classConfig: ClassConfig): void {
         print('[ClassSystem] 设置英雄: ' + hero.GetUnitName());
