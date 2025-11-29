@@ -99,7 +99,7 @@ export class ClassSystem {
             return;
         }
 
-        print('[ClassSystem] 等待英雄生成... 尝试 ' + (attempt + 1) + '/' + maxAttempts);
+        print('[ClassSystem] 等待英雄生成...尝试 ' + (attempt + 1) + '/' + maxAttempts);
         
         Timers.CreateTimer(0.5, () => {
             this.WaitForHeroAndConfirm(playerId, classConfig, attempt + 1);

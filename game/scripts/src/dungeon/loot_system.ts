@@ -29,7 +29,7 @@ export class LootSystem {
             print(`[LootSystem] Dropped guaranteed: ${itemName}`);
         }
         
-        // 2. 随机掉落
+        // 2.随机掉落
         for (const itemDrop of lootConfig.randomItems) {
             if (RandomFloat(0, 1) <= itemDrop.dropChance) {
                 const count = RandomInt(itemDrop.minCount, itemDrop.maxCount);
@@ -65,7 +65,7 @@ export class LootSystem {
         // 1.金币
         hero.ModifyGold(reward.gold, true, ModifyGoldReason.UNSPECIFIED);
         
-        // 2. 经验
+        // 2.经验
         hero.AddExperience(reward.experience, ModifyXpReason.UNSPECIFIED, false, true);
         
         // 3.奖励物品直接放入背包

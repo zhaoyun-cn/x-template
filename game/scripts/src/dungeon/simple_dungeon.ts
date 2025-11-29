@@ -22,7 +22,7 @@ export class SimpleDungeon {
     private currentRewards: ExternalRewardItem[] = [];
     
     constructor() {
-        print("=". repeat(50));
+        print("=".repeat(50));
         print("[SimpleDungeon] Constructor called!");
         print("=".repeat(50));
         
@@ -182,14 +182,14 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
         
         const difficultyMap: Record<string, DungeonDifficulty> = {
             "easy_1": DungeonDifficulty.EASY_1,
-            "easy_2": DungeonDifficulty. EASY_2,
+            "easy_2": DungeonDifficulty.EASY_2,
             "easy_3": DungeonDifficulty.EASY_3,
             "normal_1": DungeonDifficulty.NORMAL_1,
-            "normal_2": DungeonDifficulty. NORMAL_2,
+            "normal_2": DungeonDifficulty.NORMAL_2,
             "normal_3": DungeonDifficulty.NORMAL_3,
-            "hard_1": DungeonDifficulty. HARD_1,
+            "hard_1": DungeonDifficulty.HARD_1,
             "hard_2": DungeonDifficulty.HARD_2,
-            "hard_3": DungeonDifficulty. HARD_3
+            "hard_3": DungeonDifficulty.HARD_3
         };
         
         this.currentDifficulty = difficultyMap[diff] || DungeonDifficulty.NORMAL_1;

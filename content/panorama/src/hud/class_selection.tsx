@@ -38,52 +38,45 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
     return (
         <Panel style={{ width: '100%', height: '100%' }}>
             
-            {/* ========== 视频背景层 ========== */}
-            <Movie
-                src="file://{resources}/videos/class_selection_bg.webm"
-                repeat={true}
-                autoplay="onload"
+            {/* ========== 背景层 ========== */}
+            {/* 您的自定义背景图 */}
+            <Image
+                src="file://{images}/custom_game/class_bg.png"
                 style={{
                     width: '100%',
                     height: '100%',
                 }}
             />
             
-            {/* 暗色遮罩 - 让背景不那么亮，突出前景 */}
+            {/* 暗色遮罩 - 让背景不那么亮 */}
+            <Panel style={{ width: '100%', height: '100%', backgroundColor: '#000000aa' }} />
+            
+            {/* 顶部渐变 */}
             <Panel
                 style={{
                     width: '100%',
-                    height: '100%',
-                    backgroundColor: '#000000bb',
+                    height: '200px',
+                    backgroundColor: 'gradient(linear, 0% 0%, 0% 100%, from(#000000), to(#00000000))',
                 }}
             />
             
-            {/* 顶部暗角 */}
+            {/* 底部渐变 */}
             <Panel
                 style={{
                     width: '100%',
-                    height: '250px',
-                    backgroundColor: 'gradient(linear, 0% 0%, 0% 100%, from(#000000ee), to(#00000000))',
-                }}
-            />
-            
-            {/* 底部暗角 */}
-            <Panel
-                style={{
-                    width: '100%',
-                    height: '250px',
-                    backgroundColor: 'gradient(linear, 0% 100%, 0% 0%, from(#000000ee), to(#00000000))',
+                    height: '200px',
+                    backgroundColor: 'gradient(linear, 0% 100%, 0% 0%, from(#000000), to(#00000000))',
                     verticalAlign: 'bottom',
                 }}
             />
 
             {/* ========== 装饰边框 ========== */}
-            <Panel style={{ width: '100%', height: '6px', backgroundColor: '#0a0a0a' }} />
-            <Panel style={{ width: '100%', height: '2px', backgroundColor: '#8b6914', marginTop: '-4px' }} />
-            <Panel style={{ width: '50%', height: '1px', backgroundColor: '#ffd700', marginTop: '-1px', horizontalAlign: 'center' }} />
+            <Panel style={{ width: '100%', height: '5px', backgroundColor: '#0a0a0a' }} />
+            <Panel style={{ width: '100%', height: '2px', backgroundColor: '#8b6914' }} />
+            <Panel style={{ width: '40%', height: '1px', backgroundColor: '#ffd700', horizontalAlign: 'center' }} />
             
-            <Panel style={{ width: '100%', height: '6px', backgroundColor: '#0a0a0a', verticalAlign: 'bottom' }} />
-            <Panel style={{ width: '100%', height: '2px', backgroundColor: '#8b6914', verticalAlign: 'bottom', marginBottom: '2px' }} />
+            <Panel style={{ width: '100%', height: '5px', backgroundColor: '#0a0a0a', verticalAlign: 'bottom' }} />
+            <Panel style={{ width: '100%', height: '2px', backgroundColor: '#8b6914', verticalAlign: 'bottom', marginBottom: '3px' }} />
 
             {/* ========== 主内容 ========== */}
             <Panel
@@ -96,13 +89,7 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                 }}
             >
                 {/* ===== 标题区域 ===== */}
-                <Panel
-                    style={{
-                        flowChildren: 'down',
-                        horizontalAlign: 'center',
-                        marginBottom: '20px',
-                    }}
-                >
+                <Panel style={{ flowChildren: 'down', horizontalAlign: 'center', marginBottom: '20px' }}>
                     <Panel style={{ flowChildren: 'right', horizontalAlign: 'center', marginBottom: '8px' }}>
                         <Panel style={{ width: '100px', height: '1px', backgroundColor: '#8b6914', marginTop: '6px' }} />
                         <Label text="  ◆  " style={{ fontSize: '12px', color: '#ffd700' }} />
@@ -138,13 +125,8 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                 </Panel>
 
                 {/* ===== 职业卡片区域 ===== */}
-                <Panel
-                    style={{
-                        flowChildren: 'right',
-                        horizontalAlign: 'center',
-                        marginBottom: '20px',
-                    }}
-                >
+                <Panel style={{ flowChildren: 'right', horizontalAlign: 'center', marginBottom: '20px' }}>
+                    
                     {/* ========== 战士卡片 ========== */}
                     <Panel
                         hittest={true}
@@ -153,17 +135,18 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                             height: '460px',
                             marginRight: '40px',
                             flowChildren: 'down',
-                            backgroundColor: isWarriorSelected ?  '#0f1a0fdd' : (isWarriorHovered ?  '#15151088' : '#0c0c0ccc'),
+                            backgroundColor: isWarriorSelected ?  '#0f1a0fdd' : (isWarriorHovered ? '#151510cc' : '#0c0c0cee'),
                             border: isWarriorSelected 
-                                ? '2px solid #00cc00' 
-                                : (isWarriorHovered ? '2px solid #8b6914' : '2px solid #3a302088'),
+                                ?  '2px solid #00cc00' 
+                                : (isWarriorHovered ?  '2px solid #8b6914' : '2px solid #3a3020'),
                         }}
                         onactivate={handleSelectWarrior}
                         onmouseover={() => setHoveredClass('warrior')}
                         onmouseout={() => setHoveredClass(null)}
                     >
-                        <Panel style={{ width: '100%', height: '3px', backgroundColor: isWarriorSelected ?  '#00cc00' : '#8b6914' }} />
+                        <Panel style={{ width: '100%', height: '3px', backgroundColor: isWarriorSelected ? '#00cc00' : '#8b6914' }} />
                         
+                        {/* 斧王头像 */}
                         <Panel style={{ width: '100%', height: '180px', backgroundColor: '#0a0a08' }}>
                             <Image
                                 src="file://{images}/heroes/npc_dota_hero_axe.png"
@@ -173,35 +156,19 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                                 style={{
                                     width: '100%',
                                     height: '50px',
-                                    backgroundColor: 'gradient(linear, 0% 0%, 0% 100%, from(#00000000), to(#0c0c0c))',
+                                    backgroundColor: 'gradient(linear, 0% 0%, 0% 100%, from(#00000000), to(#0a0a08))',
                                     verticalAlign: 'bottom',
                                 }}
                             />
                         </Panel>
 
-                        <Panel
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                backgroundColor: '#0a0a08ee',
-                                borderBottom: '1px solid #3a3020',
-                                flowChildren: 'down',
-                                horizontalAlign: 'center',
-                            }}
-                        >
+                        <Panel style={{ width: '100%', padding: '12px', backgroundColor: '#0a0a08', borderBottom: '1px solid #3a3020', flowChildren: 'down', horizontalAlign: 'center' }}>
                             <Label text="战  士" style={{ fontSize: '30px', color: '#ffd700', fontWeight: 'bold', letterSpacing: '8px' }} />
                             <Label text="WARRIOR" style={{ fontSize: '10px', color: '#8b6914', letterSpacing: '4px', marginTop: '2px' }} />
                             <Label text="近战物理输出" style={{ fontSize: '13px', color: '#ff6600', marginTop: '6px' }} />
                         </Panel>
 
-                        <Panel
-                            style={{
-                                width: '100%',
-                                padding: '10px 15px',
-                                flowChildren: 'down',
-                                backgroundColor: '#080808ee',
-                            }}
-                        >
+                        <Panel style={{ width: '100%', padding: '10px 15px', flowChildren: 'down', backgroundColor: '#080808' }}>
                             <Label text="以怒气为力量源泉的近战勇士" style={{ fontSize: '12px', color: '#777777', marginBottom: '8px', horizontalAlign: 'center' }} />
                             
                             <Panel style={{ flowChildren: 'right', marginBottom: '4px' }}>
@@ -231,7 +198,7 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                         </Panel>
 
                         {isWarriorSelected && (
-                            <Panel style={{ width: '100%', height: '38px', backgroundColor: '#0a4a0aee', borderTop: '2px solid #00cc00' }}>
+                            <Panel style={{ width: '100%', height: '38px', backgroundColor: '#0a4a0a', borderTop: '2px solid #00cc00' }}>
                                 <Label text="◆ 已选择 ◆" style={{ fontSize: '15px', color: '#00ff00', fontWeight: 'bold', horizontalAlign: 'center', marginTop: '9px' }} />
                             </Panel>
                         )}
@@ -244,8 +211,8 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                             width: '400px',
                             height: '460px',
                             flowChildren: 'down',
-                            backgroundColor: '#080808aa',
-                            border: '2px solid #22222288',
+                            backgroundColor: '#080808cc',
+                            border: '2px solid #222222',
                             opacity: '0.5',
                         }}
                         onactivate={handleSelectLocked}
@@ -275,8 +242,8 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                     style={{
                         width: '840px',
                         height: '60px',
-                        backgroundColor: '#0a0a0acc',
-                        border: '2px solid #3a302088',
+                        backgroundColor: '#0a0a0add',
+                        border: '2px solid #3a3020',
                         marginBottom: '15px',
                         horizontalAlign: 'center',
                     }}
@@ -303,25 +270,25 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
                     style={{
                         width: '260px',
                         height: '50px',
-                        backgroundColor: selectedClass ?  (isConfirming ? '#333333cc' : '#1a5a1acc') : '#151515cc',
-                        border: selectedClass ?  '2px solid #00aa00' : '2px solid #33333388',
+                        backgroundColor: selectedClass ? (isConfirming ? '#333333' : '#1a5a1a') : '#151515',
+                        border: selectedClass ? '2px solid #00aa00' : '2px solid #333333',
                         horizontalAlign: 'center',
                     }}
                     onactivate={handleConfirm}
                     onmouseover={(panel) => {
                         if (selectedClass && ! isConfirming) {
-                            panel.style.backgroundColor = '#226622cc';
+                            panel.style.backgroundColor = '#226622';
                         }
                     }}
                     onmouseout={(panel) => {
-                        if (selectedClass && ! isConfirming) {
-                            panel.style.backgroundColor = '#1a5a1acc';
+                        if (selectedClass && !isConfirming) {
+                            panel.style.backgroundColor = '#1a5a1a';
                         }
                     }}
                 >
                     <Panel style={{ width: '100%', height: '2px', backgroundColor: selectedClass ? '#00cc00' : '#333333' }} />
                     <Label
-                        text={isConfirming ? '正在进入.. .' : (selectedClass ? '◆ 确认选择 ◆' : '请先选择职业')}
+                        text={isConfirming ? '正在进入...' : (selectedClass ? '◆ 确认选择 ◆' : '请先选择职业')}
                         style={{ fontSize: '18px', color: selectedClass ? '#ffffff' : '#444444', fontWeight: 'bold', horizontalAlign: 'center', marginTop: '12px' }}
                     />
                 </Panel>
