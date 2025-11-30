@@ -12,8 +12,10 @@ declare interface CustomGameEventDeclarations {
         foo: number;
         bar: string;
     };*/
+    
 
     // 客户端显示奖励选择事件
+    
       player_select_reward: {
         PlayerID: PlayerID;
         
@@ -40,6 +42,32 @@ declare interface CustomGameEventDeclarations {
             value: number;
         }>;
     };
+     request_character_stats: {
+        PlayerID: PlayerID;
+    };
+      update_character_stats: {
+        increasedDamage: number;
+        increasedPhysicalDamage: number;
+        increasedElementalDamage: number;
+        increasedFireDamage: number;
+        increasedColdDamage: number;
+        increasedLightningDamage: number;
+        moreDamageValues: number[];
+        critChance: number;
+        critMultiplier: number;
+        projectileDamage: number;
+        areaDamage: number;
+        meleeDamage: number;
+        spellDamage: number;
+        attackDamage: number;
+        dotDamage: number;
+        cooldownReduction: number;
+        areaOfEffect: number;
+        attackSpeed: number;
+        castSpeed: number;
+        lifesteal: number;
+    };
+
 // 材料使用事件
 use_material: {
     PlayerID: PlayerID;
