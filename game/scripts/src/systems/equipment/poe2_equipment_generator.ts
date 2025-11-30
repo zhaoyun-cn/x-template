@@ -26,7 +26,7 @@ export class POE2EquipmentGenerator {
     // ==================== 生成唯一ID ====================
     private static GenerateItemId(): string {
         this.itemIdCounter++;
-        return `poe2_item_${this. itemIdCounter}_${RandomInt(1000, 9999)}`;
+        return `poe2_item_${this.itemIdCounter}_${RandomInt(1000, 9999)}`;
     }
 
     // ==================== 主生成函数 ====================
@@ -55,26 +55,24 @@ export class POE2EquipmentGenerator {
 
         // 3.  创建装备实例
         const equipment: POE2EquipmentInstance = {
-            id: this. GenerateItemId(),
+            id: this.GenerateItemId(),
             baseTypeId: baseType.id,
             name: '', // 稍后生成
             rarity: finalRarity,
             itemLevel: itemLevel,
             prefixes: [],
             suffixes: [],
-            identified: finalRarity === ItemRarity.NORMAL, // 普通装备自动鉴定
+            identified: true, // ⭐ 所有装备默认鉴定
             corrupted: false,
         };
 
-        // 4. 生成词缀（普通装备无词缀）
-        if (finalRarity !== ItemRarity.NORMAL) {
-            this.RollAffixes(equipment);
-        }
+        // 4. ⭐ 生成词缀（所有稀有度都生成）
+        this.RollAffixes(equipment);
 
         // 5. 生成名称
         equipment.name = this.GenerateEquipmentName(equipment, baseType. name);
 
-        print(`[POE2Generator] 生成装备: ${equipment. name} (iLvl:${itemLevel}, ${RARITY_NAMES[finalRarity]})`);
+        print(`[POE2Generator] 生成装备: ${equipment.name} (iLvl:${itemLevel}, ${RARITY_NAMES[finalRarity]})`);
         return equipment;
     }
 
@@ -130,7 +128,7 @@ export class POE2EquipmentGenerator {
         const roll = RandomInt(1, 1000);
 
         // 基础概率随物品等级提升
-        const legendaryChance = Math.min(10, 2 + itemLevel / 15);      // 0. 2% - 1.0%
+        const legendaryChance = Math.min(10, 2 + itemLevel / 15);      // 0. 2% - 1. 0%
         const rareChance = Math.min(180, 60 + itemLevel * 3);          // 6% - 18%
         const magicChance = Math.min(450, 220 + itemLevel * 4);        // 22% - 45%
 
@@ -143,63 +141,58 @@ export class POE2EquipmentGenerator {
     // ==================== 词缀生成 ====================
 
     /**
-     * 为装备随机生成词缀
+     * ⭐ 为装备随机生成词缀（修改版：普通=1，魔法=2，稀有=3，传说=4）
      */
     private static RollAffixes(equipment: POE2EquipmentInstance): void {
         const limits = RARITY_AFFIX_LIMITS[equipment.rarity];
         const baseType = GetBaseTypeById(equipment.baseTypeId);
         if (!baseType) return;
 
-        // 决定词缀数量
+        // ⭐ 决定词缀数量
         let prefixCount = 0;
         let suffixCount = 0;
 
         switch (equipment.rarity) {
+            case ItemRarity.NORMAL:
+                // 普通装备：1条词缀（只有前缀）
+                prefixCount = 1;
+                suffixCount = 0;
+                break;
+
             case ItemRarity.MAGIC:
-                // 魔法物品：1-2条词缀
-                const total = RandomInt(1, 2);
-                if (total === 1) {
-                    // 只有1条，随机前缀或后缀
-                    if (RandomInt(0, 1) === 0) {
-                        prefixCount = 1;
-                    } else {
-                        suffixCount = 1;
-                    }
-                } else {
-                    // 各1条
-                    prefixCount = 1;
-                    suffixCount = 1;
-                }
+                // 魔法装备：2条词缀（1前缀+1后缀）
+                prefixCount = 1;
+                suffixCount = 1;
                 break;
 
             case ItemRarity.RARE:
-                // 稀有物品：4-6条词缀
-                prefixCount = RandomInt(2, limits.maxPrefix);
-                suffixCount = RandomInt(2, limits.maxSuffix);
+                // 稀有装备：3条词缀（2前缀+1后缀）
+                prefixCount = 2;
+                suffixCount = 1;
                 break;
 
             case ItemRarity.LEGENDARY:
-                // 传说物品：满词缀
-                prefixCount = limits.maxPrefix;
-                suffixCount = limits.maxSuffix;
+                // 传说装备：4条词缀（2前缀+2后缀）
+                prefixCount = 2;
+                suffixCount = 2;
                 break;
         }
 
         // 生成前缀
         equipment.prefixes = [];
         for (let i = 0; i < prefixCount; i++) {
-            const affix = this.RollOneAffix(equipment, AffixPosition.PREFIX, baseType. slot);
+            const affix = this.RollOneAffix(equipment, AffixPosition.PREFIX, baseType.slot);
             if (affix) {
-                equipment.prefixes. push(affix);
+                equipment. prefixes.push(affix);
             }
         }
 
         // 生成后缀
-        equipment. suffixes = [];
+        equipment.suffixes = [];
         for (let i = 0; i < suffixCount; i++) {
-            const affix = this.RollOneAffix(equipment, AffixPosition.SUFFIX, baseType.slot);
+            const affix = this.RollOneAffix(equipment, AffixPosition. SUFFIX, baseType.slot);
             if (affix) {
-                equipment. suffixes.push(affix);
+                equipment.suffixes.push(affix);
             }
         }
 
@@ -219,7 +212,7 @@ export class POE2EquipmentGenerator {
             // 1. 位置匹配
             if (affixDef.position !== position) return false;
 
-            // 2.  槽位限制
+            // 2. 槽位限制
             if (affixDef.allowedSlots. length > 0) {
                 let checkSlot = slot;
                 // 戒指特殊处理
@@ -240,7 +233,7 @@ export class POE2EquipmentGenerator {
             }
 
             // 4.  检查是否有可用层级
-            const availableTiers = affixDef.tiers.filter(
+            const availableTiers = affixDef. tiers.filter(
                 tier => tier.requiredItemLevel <= equipment.itemLevel
             );
             return availableTiers.length > 0;
@@ -252,7 +245,7 @@ export class POE2EquipmentGenerator {
 
         // 加权随机选择词缀
         const selectedAffix = this.WeightedRandomSelectAffix(availableAffixes, equipment.itemLevel);
-        if (!selectedAffix) return null;
+        if (! selectedAffix) return null;
 
         // 选择层级
         const availableTiers = selectedAffix. tiers.filter(
@@ -262,7 +255,7 @@ export class POE2EquipmentGenerator {
         if (!selectedTier) return null;
 
         // 随机数值
-        const value = RandomInt(selectedTier.minValue, selectedTier.maxValue);
+        const value = RandomInt(selectedTier. minValue, selectedTier.maxValue);
 
         return {
             affixId: selectedAffix.id,
@@ -337,14 +330,24 @@ export class POE2EquipmentGenerator {
      */
     private static GenerateEquipmentName(equipment: POE2EquipmentInstance, baseName: string): string {
         if (equipment.rarity === ItemRarity.NORMAL) {
+            // ⭐ 普通装备也可能有词缀，显示词缀名
+            if (equipment.prefixes.length > 0) {
+                const affix = GetAffixById(equipment.prefixes[0].affixId);
+                return affix ?  `${affix.name}${baseName}` : baseName;
+            }
             return baseName;
         }
 
         // 魔法物品
         if (equipment.rarity === ItemRarity.MAGIC) {
+            if (equipment.prefixes.length > 0 && equipment.suffixes.length > 0) {
+                const prefix = GetAffixById(equipment.prefixes[0].affixId);
+                const suffix = GetAffixById(equipment.suffixes[0].affixId);
+                return `${prefix?. name || ''}${baseName}${suffix?. name || ''}`;
+            }
             if (equipment.prefixes.length > 0) {
                 const affix = GetAffixById(equipment.prefixes[0].affixId);
-                return affix ?  `${affix.name}${baseName}` : baseName;
+                return affix ? `${affix.name}${baseName}` : baseName;
             }
             if (equipment.suffixes.length > 0) {
                 const affix = GetAffixById(equipment.suffixes[0].affixId);
@@ -389,7 +392,7 @@ export class POE2EquipmentGenerator {
         // 重新生成名称
         const baseType = GetBaseTypeById(equipment.baseTypeId);
         if (baseType) {
-            equipment. name = this.GenerateEquipmentName(equipment, baseType. name);
+            equipment.name = this.GenerateEquipmentName(equipment, baseType.name);
         }
 
         print(`[POE2Generator] 混沌石: ${equipment.name} 重随完成`);
@@ -400,7 +403,7 @@ export class POE2EquipmentGenerator {
      * 使用崇高石：添加一条词缀
      */
     public static AddRandomAffix(equipment: POE2EquipmentInstance): boolean {
-        if (equipment. rarity !== ItemRarity. RARE && equipment.rarity !== ItemRarity.LEGENDARY) {
+        if (equipment.rarity !== ItemRarity. RARE && equipment.rarity !== ItemRarity.LEGENDARY) {
             print('[POE2Generator] 只能对稀有/传说装备使用崇高石');
             return false;
         }
@@ -415,7 +418,7 @@ export class POE2EquipmentGenerator {
         if (!baseType) return false;
 
         // 检查是否还能添加词缀
-        const canAddPrefix = equipment.prefixes.length < limits. maxPrefix;
+        const canAddPrefix = equipment.prefixes.length < limits.maxPrefix;
         const canAddSuffix = equipment.suffixes.length < limits.maxSuffix;
 
         if (!canAddPrefix && !canAddSuffix) {
@@ -430,7 +433,7 @@ export class POE2EquipmentGenerator {
         } else if (canAddPrefix) {
             position = AffixPosition.PREFIX;
         } else {
-            position = AffixPosition.SUFFIX;
+            position = AffixPosition. SUFFIX;
         }
 
         const newAffix = this.RollOneAffix(equipment, position, baseType.slot);
@@ -440,9 +443,9 @@ export class POE2EquipmentGenerator {
         }
 
         if (position === AffixPosition.PREFIX) {
-            equipment.prefixes. push(newAffix);
+            equipment.prefixes.push(newAffix);
         } else {
-            equipment.suffixes.push(newAffix);
+            equipment. suffixes.push(newAffix);
         }
 
         print(`[POE2Generator] 崇高石: 添加了一条${position === AffixPosition.PREFIX ?  '前缀' : '后缀'}`);
@@ -484,8 +487,8 @@ export class POE2EquipmentGenerator {
         const affixDef = GetAffixById(affix.affixId);
         if (!affixDef) return;
 
-        const tier = affixDef.tiers. find(t => t.tier === affix.tier);
-        if (! tier) return;
+        const tier = affixDef. tiers. find(t => t.tier === affix.tier);
+        if (!tier) return;
 
         affix.value = RandomInt(tier.minValue, tier.maxValue);
     }
