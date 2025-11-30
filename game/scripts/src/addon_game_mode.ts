@@ -21,6 +21,9 @@ import { InitSkillPointSystem, SkillPointSystem } from './systems/skill_point_sy
 import { InitRuneSystem, RuneSystem } from './systems/rune_system';
 import { InitDamageTest } from './systems/damage_test';
 import { InitCharacterStatsHandler } from './systems/character_stats_handler';
+import { POE2Integration } from './systems/equipment/poe2_integration';
+
+
 if (IsServer()) {
     pcall(() => require('init_modifiers'));
 }
@@ -393,6 +396,8 @@ Object.assign(getfenv(), {
         print("[GameMode] 角色属性系统已初始化");
 
         RageSystem.Init();
+        // ⭐ 添加这一行
+        print('[GameMode] POE2 装备系统已加载');
         
         GameRules.SimpleDungeon = new SimpleDungeon();
         GameRules. ZoneDungeon = new ZoneDungeon();
