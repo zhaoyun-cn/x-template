@@ -31,6 +31,15 @@ export interface EquipmentStat {
     value: number;                  // 属性值
 }
 
+// ⭐ 新增：词缀详情接口
+export interface AffixDetail {
+    position: 'prefix' | 'suffix';  // 前缀还是后缀
+    tier: number;                   // 层级（1-4）
+    name: string;                   // 词缀名称（如"锋利的"）
+    description: string;            // 描述（如"+18 攻击伤害"）
+    color?: string;                 // 显示颜色（可选）
+}
+
 // 局外装备定义（完全多属性）
 export interface ExternalRewardItem {
     name: string;                   // 装备名称
@@ -39,6 +48,7 @@ export interface ExternalRewardItem {
     stats: EquipmentStat[];         // 属性列表（必定是数组）
     rarity?: number;                // 稀有度（可选）
     description?: string;           // 描述（可选）
+    affixDetails?: AffixDetail[];   // ⭐ 新增：词缀详细信息
 }
 
 // 局外奖励池 - 所有装备都是多属性
@@ -56,7 +66,7 @@ export const EXTERNAL_REWARD_POOL: ExternalRewardItem[] = [
     { 
         name: "钢剑", 
         type: ExternalItemType.WEAPON, 
-        icon: "file://{images}/items/claymore.png", 
+        icon: "file://{images}/items/claymore. png", 
         stats: [
             { attribute: EquipmentAttribute.STRENGTH, value: 8 },
             { attribute: EquipmentAttribute.ATTACK_DAMAGE, value: 18 }

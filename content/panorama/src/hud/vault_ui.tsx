@@ -6,12 +6,23 @@ interface EquipmentStat {
     value: number;
 }
 
+// ⭐ 新增：词缀详情接口
+interface AffixDetail {
+    position: 'prefix' | 'suffix';
+    tier: number;
+    name: string;
+    description: string;
+    color?: string;
+}
+
 // 装备物品接口
 interface ExternalRewardItem {
     name: string;
     type: string;
     icon: string;
     stats: EquipmentStat[];
+    rarity?: number;
+    affixDetails?: AffixDetail[];  // ⭐ 新增
 }
 
 interface VaultUIProps {
@@ -38,7 +49,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     useEffect(() => {
         if (! visible) return;
 
-        $.Msg('[VaultUI] 界面打开，请求仓库数据');
+        $. Msg('[VaultUI] 界面打开，请求仓库数据');
         
         (GameEvents.SendCustomGameEventToServer as any)('request_vault_data', {
             PlayerID: Players.GetLocalPlayer()
@@ -49,13 +60,13 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
         });
 
         const vaultListener = GameEvents.Subscribe('update_vault_ui', (data: any) => {
-            $.Msg('[VaultUI] 收到仓库数据:', data);
+            $. Msg('[VaultUI] 收到仓库数据:', data);
             
             const items: ExternalRewardItem[] = [];
             if (data.items) {
                 if (Array.isArray(data.items)) {
-                    items.push(...data.items.map((item: { stats: any; }) => ({
-                        ...item,
+                    items.push(...data.items. map((item: { stats: any; }) => ({
+                        ... item,
                         stats: Array.isArray(item.stats) ? item.stats : Object.values(item.stats || {})
                     })));
                 } else if (typeof data.items === 'object') {
@@ -73,7 +84,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
             }
             
             setVaultItems(items);
-            $.Msg(`[VaultUI] 显示 ${items.length} 件装备`);
+            $. Msg(`[VaultUI] 显示 ${items.length} 件装备`);
         });
 
         const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
@@ -86,11 +97,11 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                 
                 if (item) {
                     const statsArray = Array.isArray(item.stats) 
-                        ?  item.stats 
-                        : Object.values(item.stats || {});
+                        ? item. stats 
+                        : Object. values(item.stats || {});
                     
                     processedEquipment[slot] = {
-                        ...item,
+                        ... item,
                         stats: statsArray
                     };
                 } else {
@@ -110,11 +121,11 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     // ==================== 装备物品逻辑 ====================
     const onEquipItem = (index: number) => {
         if (isEquipping) {
-            $.Msg('[VaultUI] ⚠️ 正在装备中，请稍候...');
+            $. Msg('[VaultUI] ⚠️ 正在装备中，请稍候.. .');
             return;
         }
         
-        $.Msg(`[VaultUI] 装备索引 ${index} 的装备`);
+        $. Msg(`[VaultUI] 装备索引 ${index} 的装备`);
         
         setIsEquipping(true);
         
@@ -123,7 +134,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
             index: index
         });
 
-        Game.EmitSound('ui.crafting_gem_create');
+        Game.EmitSound('ui. crafting_gem_create');
         
         setSelectedItem(null);
         setSelectedPosition(null);
@@ -132,14 +143,14 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
         
         setTimeout(() => {
             setIsEquipping(false);
-            $.Msg('[VaultUI] 解除装备锁定');
+            $. Msg('[VaultUI] 解除装备锁定');
         }, 1500);
     };
 
     const findEquippedItemByType = (itemType: string): ExternalRewardItem | null => {
         for (const slot in equippedItems) {
             const equipped = equippedItems[slot];
-            if (equipped && equipped.type === itemType) {
+            if (equipped && equipped. type === itemType) {
                 return equipped;
             }
         }
@@ -173,7 +184,19 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
 
     // ==================== 获取物品品质颜色 ====================
     const getQualityColor = (item: ExternalRewardItem): string => {
-        const totalValue = item.stats.reduce((sum, stat) => sum + stat.value, 0);
+        // ⭐ 优先使用稀有度颜色
+        if (item. rarity !== undefined) {
+            const rarityColors: Record<number, string> = {
+                0: '#c8c8c8',  // 普通 - 灰白色
+                1: '#8888ff',  // 魔法 - 蓝色
+                2: '#ffff77',  // 稀有 - 黄色
+                3: '#ff8800',  // 传说 - 橙色
+            };
+            return rarityColors[item.rarity] || '#9d9d9d';
+        }
+        
+        // 原有逻辑（向下兼容）
+        const totalValue = item.stats.reduce((sum, stat) => sum + stat. value, 0);
         
         if (totalValue >= 50) return '#ff8000';
         if (totalValue >= 35) return '#a335ee';
@@ -357,14 +380,14 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                 const hoverPos = getPopupPosition(hoveredPosition, 350);
                 
                 return (
-                    <Panel  hittest={false}
+                    <Panel hittest={false}
                         style={{
                             width: '740px',
                             height: '520px',
                             marginTop: '-520px',
                         }}
                     >
-                        <Panel  hittest={false}
+                        <Panel hittest={false}
                             style={{
                                 width: '350px',
                                 maxHeight: '480px',
@@ -372,7 +395,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                 border: '3px solid #ffd700',
                                 padding: '15px',
                                 marginLeft: hoverPos.marginLeft,
-                                marginTop: hoverPos.marginTop,
+                                marginTop: hoverPos. marginTop,
                                 flowChildren: 'down',
                                 overflow: 'squish scroll',
                             }}
@@ -425,10 +448,36 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                             text={hoveredItemData.type}
                                             style={{ fontSize: '12px', color: '#ffd700', marginBottom: '5px' }}
                                         />
+                                        
+                                        {/* ⭐ 新增：词缀详情显示 */}
+                                        {hoveredItemData.affixDetails && hoveredItemData.affixDetails. length > 0 ?  (
+                                            <>
+                                                <Label 
+                                                    text="━━━ 词缀 ━━━"
+                                                    style={{ fontSize: '11px', color: '#888888', marginTop: '3px', marginBottom: '3px' }}
+                                                />
+                                                {hoveredItemData.affixDetails. map((affix, idx) => (
+                                                    <Label 
+                                                        key={`affix-${idx}`}
+                                                        text={`[T${affix.tier}] ${affix.name}${affix.description}`}
+                                                        style={{ 
+                                                            fontSize: '11px', 
+                                                            color: affix.color || '#ffffff',
+                                                            marginBottom: '2px',
+                                                        }}
+                                                    />
+                                                ))}
+                                                <Label 
+                                                    text="━━━ 属性 ━━━"
+                                                    style={{ fontSize: '11px', color: '#888888', marginTop: '3px', marginBottom: '3px' }}
+                                                />
+                                            </>
+                                        ) : null}
+                                        
                                         {hoveredItemData.stats.map((stat, idx) => (
                                             <Label 
                                                 key={idx}
-                                                text={`+${stat.value} ${stat.attribute}`}
+                                                text={`+${stat.value} ${stat. attribute}`}
                                                 style={{ 
                                                     fontSize: '14px', 
                                                     color: '#00ff00', 
@@ -482,13 +531,39 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                                     }}
                                                 />
                                                 <Label 
-                                                    text={compareEquipment.type}
+                                                    text={compareEquipment. type}
                                                     style={{ fontSize: '12px', color: '#ffd700', marginBottom: '5px' }}
                                                 />
+                                                
+                                                {/* ⭐ 新增：当前装备词缀显示 */}
+                                                {compareEquipment.affixDetails && compareEquipment.affixDetails.length > 0 ? (
+                                                    <>
+                                                        <Label 
+                                                            text="━━━ 词缀 ━━━"
+                                                            style={{ fontSize: '11px', color: '#888888', marginTop: '3px', marginBottom: '3px' }}
+                                                        />
+                                                        {compareEquipment. affixDetails.map((affix, idx) => (
+                                                            <Label 
+                                                                key={`curr-affix-${idx}`}
+                                                                text={`[T${affix.tier}] ${affix.name}${affix.description}`}
+                                                                style={{ 
+                                                                    fontSize: '11px', 
+                                                                    color: affix.color || '#ffffff',
+                                                                    marginBottom: '2px',
+                                                                }}
+                                                            />
+                                                        ))}
+                                                        <Label 
+                                                            text="━━━ 属性 ━━━"
+                                                            style={{ fontSize: '11px', color: '#888888', marginTop: '3px', marginBottom: '3px' }}
+                                                        />
+                                                    </>
+                                                ) : null}
+                                                
                                                 {compareEquipment.stats.map((stat, idx) => (
                                                     <Label 
                                                         key={idx}
-                                                        text={`+${stat.value} ${stat.attribute}`}
+                                                        text={`+${stat.value} ${stat. attribute}`}
                                                         style={{ 
                                                             fontSize: '14px', 
                                                             color: '#00ff00', 
@@ -526,7 +601,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                             
                                             allAttributes.forEach(attr => {
                                                 const oldStat = compareEquipment.stats.find(s => s.attribute === attr);
-                                                const newStat = hoveredItemData.stats.find(s => s.attribute === attr);
+                                                const newStat = hoveredItemData.stats. find(s => s.attribute === attr);
                                                 
                                                 const oldVal = oldStat ? oldStat.value : 0;
                                                 const newVal = newStat ? newStat.value : 0;
@@ -604,7 +679,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                     {hoveredItemData.stats.map((stat, idx) => (
                                         <Label 
                                             key={idx}
-                                            text={`+${stat.value} ${stat.attribute}`}
+                                            text={`+${stat. value} ${stat.attribute}`}
                                             style={{
                                                 fontSize: '14px',
                                                 color: '#00ff00',
@@ -694,10 +769,36 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                             marginBottom: '5px',
                                         }}
                                     />
+                                    
+                                    {/* ⭐ 新增：确认面板词缀显示 */}
+                                    {item.affixDetails && item.affixDetails. length > 0 ? (
+                                        <>
+                                            <Label 
+                                                text="━━━ 词缀 ━━━"
+                                                style={{ fontSize: '11px', color: '#888888', marginTop: '3px', marginBottom: '3px' }}
+                                            />
+                                            {item.affixDetails.map((affix, idx) => (
+                                                <Label 
+                                                    key={`confirm-affix-${idx}`}
+                                                    text={`[T${affix.tier}] ${affix.name}${affix.description}`}
+                                                    style={{ 
+                                                        fontSize: '11px', 
+                                                        color: affix.color || '#ffffff',
+                                                        marginBottom: '2px',
+                                                    }}
+                                                />
+                                            ))}
+                                            <Label 
+                                                text="━━━ 属性 ━━━"
+                                                style={{ fontSize: '11px', color: '#888888', marginTop: '3px', marginBottom: '3px' }}
+                                            />
+                                        </>
+                                    ) : null}
+                                    
                                     {item.stats.map((stat, idx) => (
                                         <Label 
                                             key={idx}
-                                            text={`+${stat.value} ${stat.attribute}`}
+                                            text={`+${stat.value} ${stat. attribute}`}
                                             style={{
                                                 fontSize: '14px',
                                                 color: '#00ff00',

@@ -44,7 +44,7 @@ print('[GameMode] 护石系统已初始化');
  // ⭐ 添加这两行
         InitPOE2System();
         print('[GameMode] POE2 装备系统已初始化');
-        
+
 declare function require(module: string): void;
 
 MaterialUseSystem.Init();
@@ -168,116 +168,152 @@ function ListenToDungeonSelection() {
         }
     });
 
-    CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: any) => {
-        const playerId = event.PlayerID as PlayerID;
-        
-        print(`[SimpleDungeon] 响应仓库数据请求：${playerId}`);
-        
-        const vault = EquipmentVaultSystem.GetVault(playerId);
-        
-        const serializedItems: any[] = [];
-        vault.forEach((item, index) => {
-            serializedItems.push({
+CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: any) => {
+    const playerId = event.PlayerID as PlayerID;
+    
+    print(`[GameMode] 响应仓库数据请求：${playerId}`);
+    
+    const vault = EquipmentVaultSystem.GetVault(playerId);
+    const serializedItems: any[] = [];
+    
+    vault.forEach((item) => {
+        serializedItems.push({
+            name: item.name,
+            type: item.type,
+            icon: item.icon,
+            stats: item.stats,
+            rarity: item.rarity,
+            // ⭐ 序列化 affixDetails
+            affixDetails: item.affixDetails ? item.affixDetails.map(affix => ({
+                position: affix.position,
+                tier: affix.tier,
+                name: affix.name,
+                description: affix.description,
+                color: affix. color,
+            })) : undefined,
+        });
+    });
+    
+    const player = PlayerResource.GetPlayer(playerId);
+    if (player) {
+        (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+            items: serializedItems
+        });
+        print(`[SimpleDungeon] 响应仓库数据请求：${vault.length} 件装备`);
+    }
+});
+
+  CustomGameEventManager.RegisterListener("request_equipment_data", (userId, event: any) => {
+    const playerId = event.PlayerID as PlayerID;
+    
+    print(`[SimpleDungeon] 响应装备界面数据请求：${playerId}`);
+    
+    const equipment = EquipmentVaultSystem.GetEquipment(playerId);
+    
+    const serializedEquipment: any = {};
+    for (const slot in equipment) {
+        const item = equipment[slot];
+        if (item) {
+            serializedEquipment[slot] = {
                 name: item.name,
                 type: item.type,
                 icon: item.icon,
-                stats: item.stats
-            });
+                stats: item.stats. map(stat => ({
+                    attribute: stat.attribute,
+                    value: stat.value
+                })),
+                rarity: item.rarity,
+                // ⭐ 序列化 affixDetails
+                affixDetails: item.affixDetails ? item.affixDetails.map(affix => ({
+                    position: affix.position,
+                    tier: affix.tier,
+                    name: affix.name,
+                    description: affix.description,
+                    color: affix.color,
+                })) : undefined,
+            };
+        } else {
+            serializedEquipment[slot] = null;
+        }
+    }
+    
+    const player = PlayerResource.GetPlayer(playerId);
+    if (player) {
+        (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
+            equipment: serializedEquipment
         });
-        
+        print(`[SimpleDungeon] 发送装备界面数据`);
+    }
+});
+
+  CustomGameEventManager.RegisterListener("unequip_item", (userId, event: any) => {
+    const playerId = event.PlayerID as PlayerID;
+    const slot = event.slot as string;
+    
+    print(`[SimpleDungeon] 玩家${playerId}卸下槽位${slot}的装备`);
+    
+    if (EquipmentVaultSystem.UnequipItem(playerId, slot)) {
         const player = PlayerResource.GetPlayer(playerId);
         if (player) {
-            (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_vault_ui', {
-                items: serializedItems
-            });
-            print(`[SimpleDungeon] 响应仓库数据请求：${vault.length} 件装备`);
-        }
-    });
-
-    CustomGameEventManager.RegisterListener("request_equipment_data", (userId, event: any) => {
-        const playerId = event.PlayerID as PlayerID;
-        
-        print(`[SimpleDungeon] 响应装备界面数据请求：${playerId}`);
-        
-        const equipment = EquipmentVaultSystem.GetEquipment(playerId);
-        
-        const serializedEquipment: any = {};
-        for (const slot in equipment) {
-            const item = equipment[slot];
-            if (item) {
-                serializedEquipment[slot] = {
-                    name: item. name,
-                    type: item.type,
+            const vault = EquipmentVaultSystem.GetVault(playerId);
+            const serializedVault: any[] = [];
+            vault.forEach((item) => {
+                serializedVault.push({
+                    name: item.name,
+                    type: item. type,
                     icon: item.icon,
-                    stats: item.stats. map(stat => ({
-                        attribute: stat.attribute,
-                        value: stat.value
-                    }))
-                };
-            } else {
-                serializedEquipment[slot] = null;
-            }
-        }
-        
-        const player = PlayerResource.GetPlayer(playerId);
-        if (player) {
-            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
-                equipment: serializedEquipment
+                    stats: item.stats,
+                    rarity: item.rarity,
+                    // ⭐ 序列化 affixDetails
+                    affixDetails: item.affixDetails ? item.affixDetails.map(affix => ({
+                        position: affix.position,
+                        tier: affix.tier,
+                        name: affix.name,
+                        description: affix.description,
+                        color: affix.color,
+                    })) : undefined,
+                });
             });
-            print(`[SimpleDungeon] 发送装备界面数据`);
-        }
-    });
-
-    CustomGameEventManager.RegisterListener("unequip_item", (userId, event: any) => {
-        const playerId = event.PlayerID as PlayerID;
-        const slot = event.slot as string;
-        
-        print(`[SimpleDungeon] 玩家${playerId}卸下槽位${slot}的装备`);
-        
-        if (EquipmentVaultSystem.UnequipItem(playerId, slot)) {
-            const player = PlayerResource.GetPlayer(playerId);
-            if (player) {
-                const vault = EquipmentVaultSystem.GetVault(playerId);
-                const serializedVault: any[] = [];
-                vault.forEach((item) => {
-                    serializedVault.push({
+            
+            const equipment = EquipmentVaultSystem.GetEquipment(playerId);
+            const serializedEquipment: any = {};
+            for (const slot in equipment) {
+                const item = equipment[slot];
+                if (item) {
+                    serializedEquipment[slot] = {
                         name: item.name,
                         type: item.type,
                         icon: item.icon,
-                        stats: item. stats
-                    });
-                });
-                
-                const equipment = EquipmentVaultSystem.GetEquipment(playerId);
-                const serializedEquipment: any = {};
-                for (const slot in equipment) {
-                    const item = equipment[slot];
-                    if (item) {
-                        serializedEquipment[slot] = {
-                            name: item.name,
-                            type: item.type,
-                            icon: item.icon,
-                            stats: item.stats
-                        };
-                    } else {
-                        serializedEquipment[slot] = null;
-                    }
+                        stats: item.stats,
+                        rarity: item. rarity,
+                        // ⭐ 序列化 affixDetails
+                        affixDetails: item.affixDetails ? item.affixDetails.map(affix => ({
+                            position: affix.position,
+                            tier: affix.tier,
+                            name: affix.name,
+                            description: affix.description,
+                            color: affix.color,
+                        })) : undefined,
+                    };
+                } else {
+                    serializedEquipment[slot] = null;
                 }
-                
-                (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_vault_ui', {
-                    items: serializedVault
-                });
-                
-                (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
-                    equipment: serializedEquipment
-                });
-                
-                print(`[SimpleDungeon] ✓ 卸下成功，已推送更新数据`);
             }
-        } else {
-            print(`[SimpleDungeon] ❌ 卸下失败`);
+            
+            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+                items: serializedVault
+            });
+            
+            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
+                equipment: serializedEquipment
+            });
+            
+            print(`[SimpleDungeon] ✓ 卸下成功，已推送更新数据`);
         }
-    });
+    } else {
+        print(`[SimpleDungeon] ❌ 卸下失败`);
+    }
+});
 
     print("[GameMode] 装备系统事件监听已注册");
 }

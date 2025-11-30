@@ -24,12 +24,13 @@ export const RARITY_COLORS: Record<ItemRarity, string> = {
     [ItemRarity.LEGENDARY]: '#ff8800', // 橙色
 };
 
-// 稀有度词缀数量限制
+
+// 稀有度词缀数量限制（⭐ 修改为 1/2/3/4）
 export const RARITY_AFFIX_LIMITS: Record<ItemRarity, { maxPrefix: number; maxSuffix: number }> = {
-    [ItemRarity.NORMAL]: { maxPrefix: 0, maxSuffix: 0 },
-    [ItemRarity.MAGIC]: { maxPrefix: 1, maxSuffix: 1 },
-    [ItemRarity.RARE]: { maxPrefix: 3, maxSuffix: 3 },
-    [ItemRarity.LEGENDARY]: { maxPrefix: 3, maxSuffix: 3 },
+    [ItemRarity.NORMAL]: { maxPrefix: 1, maxSuffix: 0 },      // 1条词缀（只有前缀）
+    [ItemRarity.MAGIC]: { maxPrefix: 1, maxSuffix: 1 },       // 2条词缀（1前缀+1后缀）
+    [ItemRarity.RARE]: { maxPrefix: 2, maxSuffix: 1 },        // 3条词缀（2前缀+1后缀）
+    [ItemRarity.LEGENDARY]: { maxPrefix: 2, maxSuffix: 2 },   // 4条词缀（2前缀+2后缀）
 };
 
 // ==================== 装备槽位 ====================

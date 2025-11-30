@@ -61,32 +61,6 @@ export class SimpleDungeon {
             }
         }, this);
         
-CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: any) => {
-    const playerId = event.PlayerID as PlayerID;
-    const player = PlayerResource.GetPlayer(playerId);
-    
-    if (player) {
-        const vault = EquipmentVaultSystem.GetVault(playerId);
-        
-        // ⭐ 序列化为数组，保持 stats 为数组
-        const serializedItems: any[] = [];
-        vault.forEach((item) => {
-            serializedItems.push({
-                name: item.name,
-                type: item.type,
-                icon: item.icon,
-                stats: item.stats  // ✅ 直接使用数组
-            });
-        });
-        
-        (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
-            items: serializedItems  // ✅ 发送序列化后的数组
-        });
-        
-        print(`[SimpleDungeon] 响应仓库数据请求：${vault.length} 件装备`);
-    }
-});
-        
 CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event: any) => {
     const playerId = event.PlayerID as PlayerID;
     const index = event.index as number;
@@ -104,7 +78,16 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
                     name: item.name,
                     type: item.type,
                     icon: item.icon,
-                    stats: item.stats
+                    stats: item.stats,
+                    rarity: item.rarity,
+                    // ⭐ 序列化 affixDetails
+                    affixDetails: item.affixDetails ?  item.affixDetails. map(affix => ({
+                        position: affix.position,
+                        tier: affix.tier,
+                        name: affix.name,
+                        description: affix.description,
+                        color: affix.color,
+                    })) : undefined,
                 });
             });
             
@@ -116,9 +99,18 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
                 if (item) {
                     serializedEquipment[slot] = {
                         name: item.name,
-                        type: item.type,
+                        type: item. type,
                         icon: item.icon,
-                        stats: item.stats
+                        stats: item.stats,
+                        rarity: item.rarity,
+                        // ⭐ 序列化 affixDetails
+                        affixDetails: item.affixDetails ? item.affixDetails.map(affix => ({
+                            position: affix.position,
+                            tier: affix.tier,
+                            name: affix.name,
+                            description: affix.description,
+                            color: affix.color,
+                        })) : undefined,
                     };
                 } else {
                     serializedEquipment[slot] = null;
