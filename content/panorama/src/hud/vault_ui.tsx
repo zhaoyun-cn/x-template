@@ -41,7 +41,23 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     const [selectedPosition, setSelectedPosition] = useState<{ row: number; col: number } | null>(null);
     const [hoveredPosition, setHoveredPosition] = useState<{ row: number; col: number } | null>(null);
 
-    const hoverTimeoutRef = useRef<number | null>(null);
+    // ⭐ 使用 Panorama 的 Schedule 而不是 setTimeout
+    const hoverScheduleHandle = useRef<ScheduleID | null>(null);
+    const equipScheduleHandle = useRef<ScheduleID | null>(null);
+    
+    // ⭐ 清理所有计划任务
+    useEffect(() => {
+        return () => {
+            if (hoverScheduleHandle.current !== null) {
+                $.CancelScheduled(hoverScheduleHandle.current);
+                hoverScheduleHandle.current = null;
+            }
+            if (equipScheduleHandle.current !== null) {
+                $.CancelScheduled(equipScheduleHandle.current);
+                equipScheduleHandle.current = null;
+            }
+        };
+    }, []);
     
     // ==================== 辅助函数：提取前后缀 ====================
     const extractAffixes = (affixDetails: any) => {
@@ -51,9 +67,9 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
         if (affixDetails) {
             for (const key in affixDetails) {
                 const affix = affixDetails[key];
-                if (affix.position === 'prefix') {
+                if (affix && affix.position === 'prefix') {
                     prefixes.push(affix);
-                } else if (affix.position === 'suffix') {
+                } else if (affix && affix.position === 'suffix') {
                     suffixes.push(affix);
                 }
             }
@@ -64,7 +80,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     
     // ==================== 数据加载逻辑 ====================
     useEffect(() => {
-        if (!  visible) return;
+        if (!visible) return;
 
         (GameEvents.SendCustomGameEventToServer as any)('request_vault_data', {
             PlayerID: Players.GetLocalPlayer()
@@ -78,20 +94,22 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
             const items: ExternalRewardItem[] = [];
             if (data.items) {
                 if (Array.isArray(data.items)) {
-                    items.push(...data.items. map((item: any) => ({
-                        ... item,
+                    items.push(...data.items.map((item: any) => ({
+                        ...item,
                         stats: Array.isArray(item.stats) ? item.stats : Object.values(item.stats || {})
                     })));
                 } else if (typeof data.items === 'object') {
                     for (const key in data.items) {
                         const item = data.items[key];
-                        const statsArray = Array.isArray(item. stats) 
-                            ? item.stats 
-                            : Object.values(item.stats || {});
-                        items.push({
-                            ...item,
-                            stats: statsArray
-                        });
+                        if (item) {
+                            const statsArray = Array.isArray(item.stats) 
+                                ? item.stats 
+                                : Object.values(item.stats || {});
+                            items.push({
+                                ...item,
+                                stats: statsArray
+                            });
+                        }
                     }
                 }
             }
@@ -106,7 +124,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                 
                 if (item) {
                     const statsArray = Array.isArray(item.stats) 
-                        ?  item.stats 
+                        ? item.stats 
                         : Object.values(item.stats || {});
                     
                     processedEquipment[slot] = {
@@ -138,22 +156,30 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
             index: index
         });
 
-        Game.EmitSound('ui. crafting_gem_create');
+        Game.EmitSound('ui.crafting_gem_create');
         
         setSelectedItem(null);
         setSelectedPosition(null);
         setHoveredItem(null);
         setHoveredPosition(null);
+        setCompareEquipment(null);
         
-        setTimeout(() => {
+        // ⭐ 取消之前的计划
+        if (equipScheduleHandle.current !== null) {
+            $.CancelScheduled(equipScheduleHandle.current);
+        }
+        
+        // ⭐ 使用 $.Schedule 代替 setTimeout
+        equipScheduleHandle.current = $.Schedule(1.5, () => {
             setIsEquipping(false);
-        }, 1500);
+            equipScheduleHandle.current = null;
+        });
     };
 
     const findEquippedItemByType = (itemType: string): ExternalRewardItem | null => {
         for (const slot in equippedItems) {
             const equipped = equippedItems[slot];
-            if (equipped && equipped. type === itemType) {
+            if (equipped && equipped.type === itemType) {
                 return equipped;
             }
         }
@@ -161,9 +187,12 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     };
 
     const handleMouseOver = (index: number, item: ExternalRewardItem, row: number, col: number) => {
-        if (hoverTimeoutRef.current) {
-            clearTimeout(hoverTimeoutRef.current);
+        // ⭐ 取消之前的隐藏计划
+        if (hoverScheduleHandle.current !== null) {
+            $.CancelScheduled(hoverScheduleHandle.current);
+            hoverScheduleHandle.current = null;
         }
+        
         setHoveredItem(index);
         setHoveredPosition({ row, col });
         const equipped = findEquippedItemByType(item.type);
@@ -171,17 +200,24 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     };
 
     const handleMouseOut = () => {
-        hoverTimeoutRef.current = setTimeout(() => {
+        // ⭐ 取消之前的计划
+        if (hoverScheduleHandle.current !== null) {
+            $.CancelScheduled(hoverScheduleHandle.current);
+        }
+        
+        // ⭐ 使用 $.Schedule 代替 setTimeout
+        hoverScheduleHandle.current = $.Schedule(0.3, () => {
             setHoveredItem(null);
             setHoveredPosition(null);
             setCompareEquipment(null);
-        }, 300) as any;
+            hoverScheduleHandle.current = null;
+        });
     };
 
     const keepHoverPanel = () => {
-        if (hoverTimeoutRef.current) {
-            clearTimeout(hoverTimeoutRef.current);
-            hoverTimeoutRef.current = null;
+        if (hoverScheduleHandle.current !== null) {
+            $.CancelScheduled(hoverScheduleHandle.current);
+            hoverScheduleHandle.current = null;
         }
     };
 
@@ -197,7 +233,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
             return rarityColors[item.rarity] || '#9d9d9d';
         }
         
-        const totalValue = item.stats.reduce((sum, stat) => sum + stat. value, 0);
+        const totalValue = item.stats.reduce((sum, stat) => sum + stat.value, 0);
         
         if (totalValue >= 50) return '#ff8000';
         if (totalValue >= 35) return '#a335ee';
@@ -242,7 +278,9 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
         };
     };
 
-    const hoveredItemData = hoveredItem !== null ? vaultItems[hoveredItem] : null;
+    const hoveredItemData = hoveredItem !== null && hoveredItem < vaultItems.length 
+        ? vaultItems[hoveredItem] 
+        : null;
 
     return (
         <Panel
@@ -295,7 +333,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                         panel.style.backgroundColor = '#b22222';
                     }}
                     onmouseout={(panel) => {
-                        panel. style.backgroundColor = '#8b0000';
+                        panel.style.backgroundColor = '#8b0000';
                     }}
                 >
                     <Label text="✕" style={{ fontSize: '28px', color: 'white', textAlign: 'center' }} />
@@ -326,7 +364,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                 height: '80px',
                                 margin: '2px',
                                 backgroundColor: isHovered ? '#1a1a1a' : '#0a0a0a',
-                                border: isHovered ? hoverBorder : normalBorder,
+                                border: isHovered ?  hoverBorder : normalBorder,
                                 backgroundImage: `url("${item.icon}")`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
@@ -370,9 +408,9 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
             </Panel>
 
             {/* ⭐ 装备悬停对比面板 */}
-            {hoveredItem !== null && hoveredItemData && hoveredPosition && ! selectedItem && (() => {
+            {hoveredItem !== null && hoveredItemData && hoveredPosition && selectedItem === null && (() => {
                 const hoverPos = getPopupPosition(hoveredPosition, 350);
-                const { prefixes, suffixes } = extractAffixes(hoveredItemData. affixDetails);
+                const { prefixes, suffixes } = extractAffixes(hoveredItemData.affixDetails);
                 
                 return (
                     <Panel hittest={false}
@@ -390,7 +428,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                 border: '3px solid #ffd700',
                                 padding: '15px',
                                 marginLeft: hoverPos.marginLeft,
-                                marginTop: hoverPos. marginTop,
+                                marginTop: hoverPos.marginTop,
                                 flowChildren: 'down',
                                 overflow: 'squish scroll',
                             }}
@@ -444,7 +482,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                             style={{ fontSize: '12px', color: '#ffd700', marginBottom: '8px' }}
                                         />
                                         
-                                        {/* ⭐ 前缀显示 */}
+                                        {/* 前缀显示 */}
                                         {prefixes.length > 0 && (
                                             <>
                                                 <Label 
@@ -465,11 +503,11 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                             </>
                                         )}
                                         
-                                        {/* ⭐ 后缀显示 */}
-                                        {suffixes. length > 0 && (
+                                        {/* 后缀显示 */}
+                                        {suffixes.length > 0 && (
                                             <>
                                                 <Label 
-                                                    text={`━━ 后缀 (${suffixes. length}) ━━`}
+                                                    text={`━━ 后缀 (${suffixes.length}) ━━`}
                                                     style={{ fontSize: '11px', color: '#ffff77', marginTop: '5px', marginBottom: '3px', fontWeight: 'bold' }}
                                                 />
                                                 {suffixes.map((affix: any, idx: number) => (
@@ -499,7 +537,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
 
                             {/* 当前已装备 */}
                             {compareEquipment ?  (() => {
-                                const { prefixes: currPrefixes, suffixes: currSuffixes } = extractAffixes(compareEquipment. affixDetails);
+                                const { prefixes: currPrefixes, suffixes: currSuffixes } = extractAffixes(compareEquipment.affixDetails);
                                 
                                 return (
                                     <Panel style={{
@@ -532,11 +570,11 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                                     }}
                                                 />
                                                 <Label 
-                                                    text={compareEquipment. type}
+                                                    text={compareEquipment.type}
                                                     style={{ fontSize: '12px', color: '#ffd700', marginBottom: '8px' }}
                                                 />
                                                 
-                                                {/* ⭐ 当前装备前缀 */}
+                                                {/* 当前装备前缀 */}
                                                 {currPrefixes.length > 0 && (
                                                     <>
                                                         <Label 
@@ -557,7 +595,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                                     </>
                                                 )}
                                                 
-                                                {/* ⭐ 当前装备后缀 */}
+                                                {/* 当前装备后缀 */}
                                                 {currSuffixes.length > 0 && (
                                                     <>
                                                         <Label 
@@ -567,7 +605,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                                         {currSuffixes.map((affix: any, idx: number) => (
                                                             <Label 
                                                                 key={`curr-suffix-${idx}`}
-                                                                text={`[T${affix. tier}] ${affix.name} ${affix.description}`}
+                                                                text={`[T${affix.tier}] ${affix.name} ${affix.description}`}
                                                                 style={{ 
                                                                     fontSize: '11px', 
                                                                     color: '#ffff77',
@@ -604,7 +642,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
             })()}
 
             {/* ⭐ 装备确认面板 */}
-            {selectedItem !== null && vaultItems[selectedItem] && selectedPosition && (() => {
+            {selectedItem !== null && selectedItem < vaultItems.length && vaultItems[selectedItem] && selectedPosition && (() => {
                 const item = vaultItems[selectedItem];
                 const qualityColor = getQualityColor(item);
                 const popupPos = getPopupPosition(selectedPosition, 320);
@@ -679,7 +717,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                         }}
                                     />
                                     
-                                    {/* ⭐ 确认面板前缀 */}
+                                    {/* 确认面板前缀 */}
                                     {prefixes.length > 0 && (
                                         <>
                                             <Label 
@@ -700,7 +738,7 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
                                         </>
                                     )}
                                     
-                                    {/* ⭐ 确认面板后缀 */}
+                                    {/* 确认面板后缀 */}
                                     {suffixes.length > 0 && (
                                         <>
                                             <Label 
