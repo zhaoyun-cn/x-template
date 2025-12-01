@@ -89,31 +89,37 @@ const SLOT_NAMES: Record<string, string> = {
     boots: '鞋子' 
 };
 
-// ⭐ 辅助函数：提取前后缀（修复版 - 添加空值检查）
+// ⭐ 辅助函数：提取前后缀（最终修复版）
 const extractAffixes = (affixDetails: any) => {
     const prefixes: any[] = [];
     const suffixes: any[] = [];
     
-    // ⭐ 添加空值检查
-    if (!affixDetails) {
+    if (! affixDetails) {
         return { prefixes, suffixes };
     }
     
-    // ⭐ 安全遍历
     try {
         for (const key in affixDetails) {
             const affix = affixDetails[key];
-            // ⭐ 确保 affix 存在且是对象
-            if (affix && typeof affix === 'object' && affix.position) {
-                if (affix.position === 'prefix') {
-                    prefixes. push(affix);
-                } else if (affix.position === 'suffix') {
-                    suffixes.push(affix);
+            if (affix && typeof affix === 'object' && affix.name) {
+                // ⭐⭐⭐ 确保所有字段都有默认值
+                const safeAffix = {
+                    position: affix.position || 'prefix',
+                    tier: affix.tier || 1,
+                    name: String(affix.name || ''),
+                    description: String(affix.description || ''),
+                    color: affix.color || '#ffffff',
+                };
+                
+                if (safeAffix.position === 'prefix') {
+                    prefixes. push(safeAffix);
+                } else if (safeAffix.position === 'suffix') {
+                    suffixes.push(safeAffix);
                 }
             }
         }
     } catch (e) {
-        // 忽略错误，返回空数组
+        // 忽略错误
     }
     
     return { prefixes, suffixes };

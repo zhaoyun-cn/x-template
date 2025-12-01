@@ -231,99 +231,12 @@ export class EquipmentVaultSystem {
         return true;
     }
 
-    // ⭐⭐⭐ 刷新装备属性（安全版本 - 使用延迟重建避免竞态条件）
-    private static RefreshEquipmentStats(playerId: PlayerID): void {
-        if (! IsServer()) return;
-        
-        // ⭐ 防止重入
-        if (this.isRefreshing[playerId]) {
-            print(`[EquipmentVaultSystem] ⚠️ 正在刷新中，跳过`);
-            return;
-        }
-        this.isRefreshing[playerId] = true;
-        
-        const equipment = this.GetEquipment(playerId);
-        
-        const totalStats: { [key: string]: number } = {
-            strength: 0,
-            agility: 0,
-            intelligence: 0,
-            armor: 0,
-            health: 0,
-            mana: 0,
-            attack_damage: 0,
-            attack_speed: 0,
-            move_speed: 0,
-            magic_resistance: 0,
-        };
-        
-        for (const slot in equipment) {
-            const item = equipment[slot];
-            if (item && item.stats) {
-                for (let i = 0; i < item.stats. length; i++) {
-                    const stat = item.stats[i];
-                    if (stat && stat.attribute) {
-                        const key = this.AttributeToKey(stat.attribute);
-                        if (key) {
-                            totalStats[key] = (totalStats[key] || 0) + stat.value;
-                        }
-                    }
-                }
-            }
-        }
-        
-        // 更新全局属性表
-        _G. EquipmentStats[playerId] = totalStats;
-        
-        const hero = PlayerResource.GetSelectedHeroEntity(playerId) as CDOTA_BaseNPC_Hero;
-        if (! hero || hero.IsNull()) {
-            this.isRefreshing[playerId] = false;
-            return;
-        }
-        
-        // 设置护甲
-        const baseArmor = this.playerBaseArmor[playerId] || 0;
-        const newArmor = baseArmor + totalStats.armor;
-        hero.SetPhysicalArmorBaseValue(newArmor);
-        
-        // ⭐ 移除旧的 modifier
-        const existingModifier = hero.FindModifierByName("modifier_equipment_system");
-        if (existingModifier && !existingModifier.IsNull()) {
-            existingModifier. Destroy();
-            this.playerModifiers[playerId] = undefined as any;
-        }
-        
-        // ⭐⭐⭐ 关键修复：延迟创建新的 modifier，避免同一帧内的竞态条件
-        Timers.CreateTimer(0.1, () => {
-            // 重置刷新标记
-            this.isRefreshing[playerId] = false;
-            
-            if (! IsServer()) return undefined;
-            
-            const heroCheck = PlayerResource.GetSelectedHeroEntity(playerId) as CDOTA_BaseNPC_Hero;
-            if (!heroCheck || heroCheck.IsNull()) {
-                return undefined;
-            }
-            
-            // 确保全局属性表是最新的
-            _G.EquipmentStats[playerId] = totalStats;
-            
-            // 检查是否已经有 modifier（防止重复创建）
-            const checkModifier = heroCheck.FindModifierByName("modifier_equipment_system");
-            if (checkModifier && !checkModifier.IsNull()) {
-                this.playerModifiers[playerId] = checkModifier;
-                return undefined;
-            }
-            
-            // 创建新的 modifier
-            const newModifier = heroCheck.AddNewModifier(heroCheck, undefined, "modifier_equipment_system", {});
-            if (newModifier && !newModifier. IsNull()) {
-                this.playerModifiers[playerId] = newModifier;
-            }
-            
-            return undefined;
-        });
-    }
+// ⭐⭐⭐ 刷新装备属性（完全防御版本）
+// ⭐⭐⭐ 刷新装备属性（空函数测试）
+private static RefreshEquipmentStats(playerId: PlayerID): void {
+    // 什么都不做，只打印日志
+    print(`[EquipmentVaultSystem] RefreshEquipmentStats 被调用，playerId: ${playerId}`);
+}
 
     // 属性名称转换为键名
     private static AttributeToKey(attribute: string): string | null {
