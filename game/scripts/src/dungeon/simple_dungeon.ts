@@ -31,7 +31,7 @@ export class SimpleDungeon {
         this.ListenToChatCommand();
         this.RegisterRewardSelectionListener();
         
-        print("[SimpleDungeon] Ready!  Type -start in chat");
+        print("[SimpleDungeon] Ready!   Type -start in chat");
     }
 
     private ListenToChatCommand(): void {
@@ -46,141 +46,214 @@ export class SimpleDungeon {
                 this.StartDungeon(playerId);
             }
             
-          if (text === "-vault" || text === "vault" || text === "-v" || text === "v") {
-    const player = PlayerResource.GetPlayer(playerId);
-    if (player) {
-        (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'show_vault_ui', {});
-        
-        const vault = EquipmentVaultSystem.GetVault(playerId);
-        const serializedVault: any[] = [];
-        
-        vault.forEach((item) => {
-            const serialized: any = {
-                name: item.name,
-                type: item.type,
-                icon: item.icon,
-                stats: item.stats,
-                rarity: item.rarity,
-            };
-            
-            // ⭐ 手动构建 affixDetails
-            if (item.affixDetails && item.affixDetails.length > 0) {
-                const affixArray: any[] = [];
-                for (let i = 0; i < item.affixDetails.length; i++) {
-                    const affix = item. affixDetails[i];
-                    affixArray.push({
-                        position: affix.position,
-                        tier: affix.tier,
-                        name: affix.name,
-                        description: affix.description,
-                        color: affix.color,
+            if (text === "-vault" || text === "vault" || text === "-v" || text === "v") {
+                const player = PlayerResource.GetPlayer(playerId);
+                if (player) {
+                    (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'show_vault_ui', {});
+                    
+                    const vault = EquipmentVaultSystem.GetVault(playerId);
+                    const serializedVault: any[] = [];
+                    
+                    vault.forEach((item) => {
+                        const serialized: any = {
+                            name: item.name,
+                            type: item.type,
+                            icon: item.icon,
+                            stats: item.stats,
+                            rarity: item.rarity,
+                        };
+                        
+                        // ⭐ 修复：使用 Object.entries 安全遍历
+                        if (item.affixDetails) {
+                            const affixArray: any[] = [];
+                            const entries = Object.entries(item.affixDetails as any);
+                            for (let i = 0; i < entries.length; i++) {
+                                const [_, affix] = entries[i];
+                                if (affix && typeof affix === 'object') {
+                                    affixArray.push({
+                                        position: (affix as any).position || 'prefix',
+                                        tier: (affix as any).tier || 1,
+                                        name: (affix as any).name || '',
+                                        description: (affix as any).description || '',
+                                        color: (affix as any).color || '#ffffff',
+                                    });
+                                }
+                            }
+                            if (affixArray.length > 0) {
+                                serialized.affixDetails = affixArray;
+                            }
+                        }
+                        
+                        serializedVault.push(serialized);
                     });
+                    
+                    (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+                        items: serializedVault
+                    });
+                    
+                    print(`[SimpleDungeon] 打开仓库 UI，发送 ${vault.length} 件装备数据`);
                 }
-                serialized.affixDetails = affixArray;
             }
-            
-            serializedVault.push(serialized);
-        });
-        
-        (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
-            items: serializedVault
-        });
-        
-        print(`[SimpleDungeon] 打开仓库 UI，发送 ${vault.length} 件装备数据`);
-    }
-}
         }, this);
         
-CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event: any) => {
-    const playerId = event.PlayerID as PlayerID;
-    const index = event.index as number;
-    
-    print(`[SimpleDungeon] 玩家${playerId}从 UI 装备索引${index}的物品`);
-    
-    if (EquipmentVaultSystem.EquipItem(playerId, index)) {
-        const player = PlayerResource.GetPlayer(playerId);
-        if (player) {
-            // ⭐ 序列化仓库数据
-            const vault = EquipmentVaultSystem.GetVault(playerId);
-           const serializedVault: any[] = [];
-vault.forEach((item) => {
-    const serialized: any = {
-        name: item.name,
-        type: item.type,
-        icon: item.icon,
-        stats: item.stats,
-        rarity: item. rarity,
-    };
-               // ⭐ 手动构建 affixDetails
-    if (item.affixDetails && item.affixDetails.length > 0) {
-        const affixArray: any[] = [];
-        for (let i = 0; i < item. affixDetails.length; i++) {
-            const affix = item.affixDetails[i];
-            affixArray.push({
-                position: affix.position,
-                tier: affix.tier,
-                name: affix. name,
-                description: affix.description,
-                color: affix.color,
-            });
-        }
-        serialized.affixDetails = affixArray;
-    }
-    
-    serializedVault.push(serialized);
-            });
+        CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            const index = event.index as number;
             
-            // ⭐ 序列化装备数据
-            const equipment = EquipmentVaultSystem.GetEquipment(playerId);
-            const serializedEquipment: any = {};
-            for (const slot in equipment) {
-                const item = equipment[slot];
-                if (item) {
-                    serializedEquipment[slot] = {
-                        name: item.name,
-                        type: item. type,
-                        icon: item.icon,
-                        stats: item.stats,
-                        rarity: item.rarity,
-                        // ⭐ 序列化 affixDetails
-                        affixDetails: item.affixDetails ? item.affixDetails.map(affix => ({
-                            position: affix.position,
-                            tier: affix.tier,
-                            name: affix.name,
-                            description: affix.description,
-                            color: affix.color,
-                        })) : undefined,
-                    };
-                } else {
-                    serializedEquipment[slot] = null;
-                }
-            }
+            print(`[SimpleDungeon] 玩家${playerId}从 UI 装备索引${index}的物品`);
             
-            // ⭐ 同时发送仓库和装备数据
-            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
-                items: serializedVault
-            });
-            
-            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
-                equipment: serializedEquipment
-            });
-            
-            GameRules.SendCustomMessage(
-                "✅ 装备成功！",
-                playerId,
-                0
-            );
-            
-            print(`[SimpleDungeon] 装备成功，已推送更新数据`);
-        }
-    } else {
-        GameRules.SendCustomMessage(
-            "❌ 装备失败！",
-            playerId,
-            0
-        );
-    }
+            if (EquipmentVaultSystem.EquipItem(playerId, index)) {
+                const player = PlayerResource.GetPlayer(playerId);
+                if (player) {
+                    // ⭐ 序列化仓库数据（修复版）
+                    const vault = EquipmentVaultSystem.GetVault(playerId);
+                    const serializedVault: any[] = [];
+                    vault.forEach((item) => {
+                        const serialized: any = {
+                            name: item.name,
+                            type: item.type,
+                            icon: item.icon,
+                            stats: item.stats,
+                            rarity: item.rarity,
+                        };
+                        
+                        // ⭐ 修复：使用 Object.entries 安全遍历
+                        if (item.affixDetails) {
+                            const affixArray: any[] = [];
+                            const entries = Object.entries(item.affixDetails as any);
+                            for (let i = 0; i < entries.length; i++) {
+                                const [_, affix] = entries[i];
+                                if (affix && typeof affix === 'object') {
+                                    affixArray.push({
+                                        position: (affix as any).position || 'prefix',
+                                        tier: (affix as any).tier || 1,
+                                        name: (affix as any).name || '',
+                                        description: (affix as any).description || '',
+                                        color: (affix as any).color || '#ffffff',
+                                    });
+                                }
+                            }
+                            if (affixArray.length > 0) {
+                                serialized.affixDetails = affixArray;
+                            }
+                        }
+                        
+                        serializedVault.push(serialized);
+                    });
+                    
+                    // ⭐ 序列化装备数据（修复版）
+                    const equipment = EquipmentVaultSystem.GetEquipment(playerId);
+                    const serializedEquipment: any = {};
+                    for (const slot in equipment) {
+                        const item = equipment[slot];
+                        if (item) {
+                            const itemData: any = {
+                                name: item.name,
+                                type: item.type,
+                                icon: item.icon,
+                                stats: item.stats,
+                                rarity: item.rarity,
+                            };
+                            
+                            // ⭐ 修复：使用 Object.entries 安全遍历
+                            if (item.affixDetails) {
+                                const affixArray: any[] = [];
+                                const entries = Object.entries(item.affixDetails as any);
+                                for (let i = 0; i < entries.length; i++) {
+                                    const [_, affix] = entries[i];
+                                    if (affix && typeof affix === 'object') {
+                                        affixArray.push({
+                                            position: (affix as any).position || 'prefix',
+                                            tier: (affix as any).tier || 1,
+                                            name: (affix as any).name || '',
+                                            description: (affix as any).description || '',
+                                            color: (affix as any).color || '#ffffff',
+                                        });
+                                    }
+                                }
+                                if (affixArray.length > 0) {
+                                    itemData.affixDetails = affixArray;
+                                }
+                            }
+                            
+                            serializedEquipment[slot] = itemData;
+                        } else {
+                            serializedEquipment[slot] = null;
+                        }
+                    }
+                    // ⭐ 发送数据前添加调试
+print(`[SimpleDungeon] ========== 准备发送数据 ==========`);
+print(`[SimpleDungeon] 仓库数量: ${serializedVault.length}`);
+print(`[SimpleDungeon] 装备槽位数量: ${Object.keys(serializedEquipment).length}`);
+
+// 检查每个仓库物品
+serializedVault.forEach((item, idx) => {
+    print(`[SimpleDungeon]   仓库[${idx}]: ${item.name}, affixDetails: ${item.affixDetails ?  item.affixDetails.length : 'null'}`);
 });
+
+// 检查每个装备槽位
+for (const slot in serializedEquipment) {
+    const item = serializedEquipment[slot];
+    if (item) {
+        print(`[SimpleDungeon]   装备[${slot}]: ${item.name}, affixDetails: ${item. affixDetails ? item.affixDetails.length : 'null'}`);
+    } else {
+        print(`[SimpleDungeon]   装备[${slot}]: null`);
+    }
+}
+
+print(`[SimpleDungeon] ========== 开始发送 ==========`);
+
+// ⭐ 分开发送，看哪个崩溃
+try {
+    (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+        items: serializedVault
+    });
+    print(`[SimpleDungeon] ✓ 仓库数据已发送`);
+} catch (e) {
+    print(`[SimpleDungeon] ❌ 发送仓库数据失败: ${e}`);
+}
+
+try {
+    (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
+        equipment: serializedEquipment
+    });
+    print(`[SimpleDungeon] ✓ 装备数据已发送`);
+} catch (e) {
+    print(`[SimpleDungeon] ❌ 发送装备数据失败: ${e}`);
+}
+
+GameRules.SendCustomMessage(
+    "✅ 装备成功！",
+    playerId,
+    0
+);
+
+print(`[SimpleDungeon] 装备成功，已推送更新数据`);
+                    // ⭐ 发送数据
+                    (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+                        items: serializedVault
+                    });
+                    
+                    (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
+                        equipment: serializedEquipment
+                    });
+                    
+                    GameRules.SendCustomMessage(
+                        "✅ 装备成功！",
+                        playerId,
+                        0
+                    );
+                    
+                    print(`[SimpleDungeon] 装备成功，已推送更新数据`);
+                }
+            } else {
+                GameRules.SendCustomMessage(
+                    "❌ 装备失败！",
+                    playerId,
+                    0
+                );
+            }
+        });
         
         print("[SimpleDungeon] Chat listener registered");
     }
@@ -390,10 +463,10 @@ vault.forEach((item) => {
                             print("[SimpleDungeon] ✓ Boss Manager initialized!");
                             
                             Timers.CreateTimer(1, () => {
-                                if (!boss.IsAlive()) return undefined;
+                                if (! boss.IsAlive()) return undefined;
                                 
                                 boss.RemoveModifierByName("modifier_invulnerable");
-                                print("[SimpleDungeon] ✓ Boss is now vulnerable!  Fight begins!");
+                                print("[SimpleDungeon] ✓ Boss is now vulnerable!   Fight begins!");
                                 
                                 if (this.playerId !== undefined) {
                                     GameRules.SendCustomMessage(
@@ -449,15 +522,14 @@ vault.forEach((item) => {
         );
         ParticleManager.SetParticleControl(particle, 0, boss.GetAbsOrigin());
         
-        print(`[SimpleDungeon] Boss enhanced!  HP: ${boss.GetMaxHealth()}`);
+        print(`[SimpleDungeon] Boss enhanced!   HP: ${boss.GetMaxHealth()}`);
     }
 
-    // ⭐ 修复：直接发送完整对象
     private TriggerRewardSelection(): void {
         print("[SimpleDungeon] Triggering reward selection!");
 
         const playerId = this.playerId;
-        if (!playerId) return;
+        if (! playerId) return;
 
         this.currentRewards = this.GenerateRewards();
         print(`[SimpleDungeon] Generated rewards: ${this.currentRewards.map(r => r.name).join(", ")}`);
@@ -468,7 +540,7 @@ vault.forEach((item) => {
                 player,
                 "show_reward_selection",
                 { 
-                    rewards: this.currentRewards  // ⭐ 直接发送完整对象，包含 stats 数组
+                    rewards: this.currentRewards
                 }
             );
             print("[SimpleDungeon] ✓ Sent reward data to client");
@@ -507,7 +579,6 @@ vault.forEach((item) => {
                 
                 print(`[SimpleDungeon] ✓ 已保存奖励：${selectedReward.name}`);
                 
-                // ⭐ 修复：使用 stats 数组
                 const statsText = selectedReward.stats.map(s => `${s.attribute} +${s.value}`).join(", ");
                 GameRules.SendCustomMessage(
                     `<font color='#FF6EC7'>💾 已保存装备：${selectedReward.name} (${statsText})</font>`,
@@ -529,7 +600,7 @@ vault.forEach((item) => {
         const index = this.monsters.indexOf(killedUnit as CDOTA_BaseNPC);
         if (index !== -1) {
             this.monsters.splice(index, 1);
-            print(`[SimpleDungeon] Monster killed!  Remaining: ${this.monsters.length}`);
+            print(`[SimpleDungeon] Monster killed!   Remaining: ${this.monsters.length}`);
 
             if (this.monsters.length === 0) {
                 print(`[SimpleDungeon] 所有怪物已被击杀，房间 ${this.currentRoom} 清空`);
@@ -613,14 +684,14 @@ vault.forEach((item) => {
 
     private OnComplete(): void {
         print("=".repeat(50));
-        print("[SimpleDungeon] 🎉 DUNGEON COMPLETE! 🎉");
+        print("[SimpleDungeon] 🎉 DUNGEON COMPLETE!  🎉");
         print("=".repeat(50));
         
         if (this.playerId !== undefined) {
             LootSystem.GiveCompletionReward(this.playerId, this.currentDifficulty);
 
             Timers.CreateTimer(5.0, () => {
-                const hero = PlayerResource.GetSelectedHeroEntity(this.playerId! );
+                const hero = PlayerResource.GetSelectedHeroEntity(this.playerId!);
                 if (hero) {
                     FindClearSpaceForUnit(hero, SPAWN_POINT, true);
                     GameRules.SendCustomMessage(

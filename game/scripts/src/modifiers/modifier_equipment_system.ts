@@ -34,9 +34,8 @@ export class modifier_equipment_system extends BaseModifier {
         print("[modifier_equipment_system] Modifier created");
         
         if (IsServer()) {
-            // 从 parent 获取 playerId
             const parent = this.GetParent();
-            if (! parent) {
+            if (!  parent) {
                 print("[modifier_equipment_system] 无法获取 Parent");
                 return;
             }
@@ -48,7 +47,7 @@ export class modifier_equipment_system extends BaseModifier {
             }
             
             // 从全局表读取属性
-            const globalStats = _G. EquipmentStats ?  _G.EquipmentStats[playerId] : null;
+            const globalStats = _G. EquipmentStats ?   _G.EquipmentStats[playerId] : null;
             
             if (globalStats) {
                 this. stats = {
@@ -67,9 +66,16 @@ export class modifier_equipment_system extends BaseModifier {
                 print("[modifier_equipment_system] 属性已加载:");
                 print("  力量: +" + this.stats.strength);
                 print("  敏捷: +" + this.stats.agility);
-                print("  攻击力: +" + this.stats. attack_damage);
-                print("  攻击速度: +" + this. stats.attack_speed);
+                print("  智力: +" + this.stats.intelligence);
+                print("  护甲: +" + this.stats.armor);
+                print("  生命: +" + this.stats.health);
+                print("  魔法: +" + this.stats.mana);
+                print("  攻击力: +" + this. stats.attack_damage);
+                print("  攻击速度: +" + this.stats. attack_speed);
+                print("  移动速度: +" + this.stats.move_speed);
+                print("  魔抗: +" + this.stats.magic_resistance);
                 
+                // ⭐ 使用 attack_speed 作为 StackCount（客户端同步）
                 this.SetStackCount(this.stats.attack_speed);
                 
                 const hero = parent as CDOTA_BaseNPC_Hero;
@@ -84,21 +90,22 @@ export class modifier_equipment_system extends BaseModifier {
 
     DeclareFunctions(): ModifierFunction[] {
         return [
-            ModifierFunction.STATS_STRENGTH_BONUS,
+            ModifierFunction. STATS_STRENGTH_BONUS,
             ModifierFunction.STATS_AGILITY_BONUS,
             ModifierFunction.STATS_INTELLECT_BONUS,
-            ModifierFunction.HEALTH_BONUS,
+            ModifierFunction.PHYSICAL_ARMOR_BONUS,           // ⭐ 添加护甲
+            ModifierFunction. HEALTH_BONUS,
             ModifierFunction.MANA_BONUS,
             ModifierFunction. PREATTACK_BONUS_DAMAGE,
-            ModifierFunction. BASEATTACK_BONUSDAMAGE,
+            ModifierFunction.BASEATTACK_BONUSDAMAGE,
             ModifierFunction.ATTACKSPEED_BONUS_CONSTANT,
-            ModifierFunction. MOVESPEED_BONUS_CONSTANT,
-            ModifierFunction. MAGICAL_RESISTANCE_BONUS,
+            ModifierFunction.MOVESPEED_BONUS_CONSTANT,
+            ModifierFunction.MAGICAL_RESISTANCE_BONUS,
         ];
     }
 
     GetModifierBonusStats_Strength(): number {
-        return this.stats.strength || 0;
+        return this. stats.strength || 0;
     }
 
     GetModifierBonusStats_Agility(): number {
@@ -109,12 +116,17 @@ export class modifier_equipment_system extends BaseModifier {
         return this.stats.intelligence || 0;
     }
 
+    // ⭐ 添加护甲加成
+    GetModifierPhysicalArmorBonus(): number {
+        return this.stats.armor || 0;
+    }
+
     GetModifierHealthBonus(): number {
         return this.stats.health || 0;
     }
 
     GetModifierManaBonus(): number {
-        return this.stats.mana || 0;
+        return this. stats.mana || 0;
     }
 
     GetModifierPreAttack_BonusDamage(): number {
@@ -129,12 +141,13 @@ export class modifier_equipment_system extends BaseModifier {
         if (IsServer()) {
             return this.stats.attack_speed || 0;
         } else {
+            // 客户端从 StackCount 读取
             return this.GetStackCount();
         }
     }
 
     GetModifierMoveSpeedBonus_Constant(): number {
-        return this.stats.move_speed || 0;
+        return this.stats. move_speed || 0;
     }
 
     GetModifierMagicalResistanceBonus(): number {

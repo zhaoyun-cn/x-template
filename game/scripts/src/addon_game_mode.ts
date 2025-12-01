@@ -168,6 +168,7 @@ function ListenToDungeonSelection() {
         }
     });
 
+// ⭐ 修复：request_vault_data
 CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: any) => {
     const playerId = event.PlayerID as PlayerID;
     
@@ -177,17 +178,8 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
     const serializedItems: any[] = [];
     
     vault.forEach((item, index) => {
-        // ⭐ 调试：打印每件装备的信息
         print(`[GameMode] === 装备 ${index}: ${item.name} ===`);
         print(`[GameMode]   rarity: ${item.rarity}`);
-        print(`[GameMode]   affixDetails 存在: ${item.affixDetails !== undefined}`);
-        
-        if (item.affixDetails) {
-            print(`[GameMode]   affixDetails 长度: ${item. affixDetails.length}`);
-            item.affixDetails.forEach((affix, idx) => {
-                print(`[GameMode]     [${idx}] ${affix.name} (T${affix.tier}): ${affix.description}`);
-            });
-        }
         
         const serialized: any = {
             name: item.name,
@@ -197,25 +189,32 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
             rarity: item.rarity,
         };
         
-        // ⭐ 修复：手动构建 affixDetails 数组
-        if (item.affixDetails && item.affixDetails.length > 0) {
+        // ⭐ 修复：使用 Object.entries 安全遍历
+        if (item.affixDetails) {
+            print(`[GameMode]   affixDetails 存在`);
             const affixArray: any[] = [];
-            for (let i = 0; i < item.affixDetails.length; i++) {
-                const affix = item.affixDetails[i];
-                affixArray. push({
-                    position: affix.position,
-                    tier: affix.tier,
-                    name: affix.name,
-                    description: affix. description,
-                    color: affix.color,
-                });
-            }
-            serialized. affixDetails = affixArray;
+            const entries = Object.entries(item.affixDetails as any);
             
-            print(`[GameMode]   序列化后 affixDetails: true`);
-            print(`[GameMode]   序列化后长度: ${affixArray.length}`);
+            for (let i = 0; i < entries.length; i++) {
+                const [_, affix] = entries[i];
+                if (affix && typeof affix === 'object') {
+                    print(`[GameMode]     [${i}] ${(affix as any).name} (T${(affix as any).tier}): ${(affix as any).description}`);
+                    affixArray.push({
+                        position: (affix as any).position || 'prefix',
+                        tier: (affix as any).tier || 1,
+                        name: (affix as any).name || '',
+                        description: (affix as any).description || '',
+                        color: (affix as any).color || '#ffffff',
+                    });
+                }
+            }
+            
+            if (affixArray.length > 0) {
+                serialized. affixDetails = affixArray;
+                print(`[GameMode]   序列化后长度: ${affixArray.length}`);
+            }
         } else {
-            print(`[GameMode]   序列化后 affixDetails: false`);
+            print(`[GameMode]   无 affixDetails`);
         }
         
         serializedItems.push(serialized);
@@ -232,7 +231,8 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
     }
 });
 
-  CustomGameEventManager.RegisterListener("request_equipment_data", (userId, event: any) => {
+// ⭐ 修复：request_equipment_data
+CustomGameEventManager. RegisterListener("request_equipment_data", (userId, event: any) => {
     const playerId = event.PlayerID as PlayerID;
     
     print(`[SimpleDungeon] 响应装备界面数据请求：${playerId}`);
@@ -243,7 +243,7 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
     for (const slot in equipment) {
         const item = equipment[slot];
         if (item) {
-            serializedEquipment[slot] = {
+            const itemData: any = {
                 name: item.name,
                 type: item.type,
                 icon: item.icon,
@@ -252,15 +252,32 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
                     value: stat.value
                 })),
                 rarity: item.rarity,
-                // ⭐ 序列化 affixDetails
-                affixDetails: item.affixDetails ? item.affixDetails.map(affix => ({
-                    position: affix.position,
-                    tier: affix.tier,
-                    name: affix.name,
-                    description: affix.description,
-                    color: affix.color,
-                })) : undefined,
             };
+            
+            // ⭐ 修复：使用 Object.entries 安全遍历
+            if (item.affixDetails) {
+                const affixArray: any[] = [];
+                const entries = Object.entries(item.affixDetails as any);
+                
+                for (let i = 0; i < entries.length; i++) {
+                    const [_, affix] = entries[i];
+                    if (affix && typeof affix === 'object') {
+                        affixArray.push({
+                            position: (affix as any).position || 'prefix',
+                            tier: (affix as any).tier || 1,
+                            name: (affix as any).name || '',
+                            description: (affix as any).description || '',
+                            color: (affix as any).color || '#ffffff',
+                        });
+                    }
+                }
+                
+                if (affixArray.length > 0) {
+                    itemData.affixDetails = affixArray;
+                }
+            }
+            
+            serializedEquipment[slot] = itemData;
         } else {
             serializedEquipment[slot] = null;
         }
@@ -275,7 +292,8 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
     }
 });
 
-  CustomGameEventManager.RegisterListener("unequip_item", (userId, event: any) => {
+// ⭐ 修复：unequip_item
+CustomGameEventManager.RegisterListener("unequip_item", (userId, event: any) => {
     const playerId = event.PlayerID as PlayerID;
     const slot = event.slot as string;
     
@@ -284,46 +302,82 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
     if (EquipmentVaultSystem.UnequipItem(playerId, slot)) {
         const player = PlayerResource.GetPlayer(playerId);
         if (player) {
+            // 序列化仓库数据
             const vault = EquipmentVaultSystem.GetVault(playerId);
             const serializedVault: any[] = [];
             vault.forEach((item) => {
-                serializedVault.push({
+                const serialized: any = {
                     name: item.name,
-                    type: item. type,
+                    type: item.type,
                     icon: item.icon,
                     stats: item.stats,
-                    rarity: item.rarity,
-                    // ⭐ 序列化 affixDetails
-                    affixDetails: item.affixDetails ? item.affixDetails.map(affix => ({
-                        position: affix.position,
-                        tier: affix.tier,
-                        name: affix.name,
-                        description: affix.description,
-                        color: affix.color,
-                    })) : undefined,
-                });
+                    rarity: item. rarity,
+                };
+                
+                // ⭐ 修复：使用 Object.entries 安全遍历
+                if (item.affixDetails) {
+                    const affixArray: any[] = [];
+                    const entries = Object.entries(item. affixDetails as any);
+                    
+                    for (let i = 0; i < entries. length; i++) {
+                        const [_, affix] = entries[i];
+                        if (affix && typeof affix === 'object') {
+                            affixArray.push({
+                                position: (affix as any). position || 'prefix',
+                                tier: (affix as any).tier || 1,
+                                name: (affix as any).name || '',
+                                description: (affix as any).description || '',
+                                color: (affix as any).color || '#ffffff',
+                            });
+                        }
+                    }
+                    
+                    if (affixArray.length > 0) {
+                        serialized.affixDetails = affixArray;
+                    }
+                }
+                
+                serializedVault.push(serialized);
             });
             
+            // 序列化装备数据
             const equipment = EquipmentVaultSystem.GetEquipment(playerId);
             const serializedEquipment: any = {};
             for (const slot in equipment) {
                 const item = equipment[slot];
                 if (item) {
-                    serializedEquipment[slot] = {
+                    const itemData: any = {
                         name: item.name,
                         type: item.type,
                         icon: item.icon,
                         stats: item.stats,
                         rarity: item. rarity,
-                        // ⭐ 序列化 affixDetails
-                        affixDetails: item.affixDetails ? item.affixDetails.map(affix => ({
-                            position: affix.position,
-                            tier: affix.tier,
-                            name: affix.name,
-                            description: affix.description,
-                            color: affix.color,
-                        })) : undefined,
                     };
+                    
+                    // ⭐ 修复：使用 Object.entries 安全遍历
+                    if (item.affixDetails) {
+                        const affixArray: any[] = [];
+                        const entries = Object.entries(item.affixDetails as any);
+                        
+                        for (let i = 0; i < entries.length; i++) {
+                            const [_, affix] = entries[i];
+                            if (affix && typeof affix === 'object') {
+                                affixArray.push({
+                                    position: (affix as any). position || 'prefix',
+                                    tier: (affix as any).tier || 1,
+                                    name: (affix as any).name || '',
+                                    description: (affix as any).description || '',
+                                    color: (affix as any).color || '#ffffff',
+                                });
+                            }
+                        }
+                        
+                        if (affixArray.length > 0) {
+                            itemData.affixDetails = affixArray;
+                        }
+                    }
+                    
+                    serializedEquipment[slot] = itemData;
                 } else {
                     serializedEquipment[slot] = null;
                 }
