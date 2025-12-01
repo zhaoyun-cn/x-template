@@ -246,18 +246,20 @@ const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any
         return null;
     };
 
-    const handleMouseOver = (index: number, item: ExternalRewardItem, row: number, col: number) => {
-        // ⭐ 取消之前的隐藏计划
-        if (hoverScheduleHandle.current !== null) {
-            $.CancelScheduled(hoverScheduleHandle.current);
-            hoverScheduleHandle.current = null;
-        }
-        
-        setHoveredItem(index);
-        setHoveredPosition({ row, col });
-        const equipped = findEquippedItemByType(item.type);
-        setCompareEquipment(equipped);
-    };
+const handleMouseOver = (index: number, item: ExternalRewardItem, row: number, col: number) => {
+    // ⭐ 取消之前的隐藏计划
+    if (hoverScheduleHandle. current !== null) {
+        $. CancelScheduled(hoverScheduleHandle.current);
+        hoverScheduleHandle.current = null;
+    }
+    
+    setHoveredItem(index);
+    setHoveredPosition({ row, col });
+    
+    // ⭐ 简单地设置对比装备，不做任何处理
+    const equipped = findEquippedItemByType(item.type);
+    setCompareEquipment(equipped);
+};
 
     const handleMouseOut = () => {
         // ⭐ 取消之前的计划
@@ -281,26 +283,51 @@ const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any
         }
     };
 
-    // ==================== 获取物品品质颜色 ====================
-    const getQualityColor = (item: ExternalRewardItem): string => {
-        if (item.rarity !== undefined) {
-            const rarityColors: Record<number, string> = {
-                0: '#c8c8c8',  // 普通 - 灰白色
-                1: '#8888ff',  // 魔法 - 蓝色
-                2: '#ffff77',  // 稀有 - 黄色
-                3: '#ff8800',  // 传说 - 橙色
-            };
-            return rarityColors[item.rarity] || '#9d9d9d';
+// ==================== 获取物品品质颜色 ====================
+const getQualityColor = (item: ExternalRewardItem): string => {
+    if (! item) return '#9d9d9d';
+    
+    if (item.rarity !== undefined) {
+        const rarityColors: Record<number, string> = {
+            0: '#c8c8c8',  // 普通 - 灰白色
+            1: '#8888ff',  // 魔法 - 蓝色
+            2: '#ffff77',  // 稀有 - 黄色
+            3: '#ff8800',  // 传说 - 橙色
+        };
+        return rarityColors[item.rarity] || '#9d9d9d';
+    }
+    
+    // ⭐⭐⭐ 安全处理 stats
+    let totalValue = 0;
+    try {
+        const statsData = item.stats as any;
+        if (statsData) {
+            if (Array. isArray(statsData)) {
+                for (let i = 0; i < statsData. length; i++) {
+                    const stat = statsData[i];
+                    if (stat && stat. value) {
+                        totalValue += stat.value;
+                    }
+                }
+            } else if (typeof statsData === 'object') {
+                for (const key in statsData) {
+                    const stat = statsData[key];
+                    if (stat && stat.value) {
+                        totalValue += stat.value;
+                    }
+                }
+            }
         }
-        
-        const totalValue = item.stats.reduce((sum, stat) => sum + stat.value, 0);
-        
-        if (totalValue >= 50) return '#ff8000';
-        if (totalValue >= 35) return '#a335ee';
-        if (totalValue >= 20) return '#0070dd';
-        if (totalValue >= 10) return '#1eff00';
-        return '#9d9d9d';
-    };
+    } catch (e) {
+        // 忽略错误
+    }
+    
+    if (totalValue >= 50) return '#ff8000';
+    if (totalValue >= 35) return '#a335ee';
+    if (totalValue >= 20) return '#0070dd';
+    if (totalValue >= 10) return '#1eff00';
+    return '#9d9d9d';
+};
 
     if (!visible) return null;
 
