@@ -64,7 +64,7 @@ export class SimpleDungeon {
         }, this);
         
 CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event: any) => {
-    const playerId = event. PlayerID as PlayerID;
+    const playerId = event.PlayerID as PlayerID;
     const index = event.index as number;
     
     print(`[SimpleDungeon] 玩家${playerId}从 UI 装备索引${index}的物品`);
@@ -73,35 +73,27 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
         const player = PlayerResource.GetPlayer(playerId);
         if (player) {
             // ⭐ 发送仓库数据
-            const vault = EquipmentVaultSystem. GetVault(playerId);
+            const vault = EquipmentVaultSystem.GetVault(playerId);
             const serializedVault = this.SerializeItems(vault);
             
             (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_vault_ui', {
                 items: serializedVault
             });
             
-            // ⭐⭐⭐ 发送简化的装备数据（不包含 affixDetails）
+            // ⭐⭐⭐ 使用 SerializeItem 来正确处理装备数据（包含 affixDetails）
             const equipment = EquipmentVaultSystem.GetEquipment(playerId);
             const serializedEquipment: any = {};
             
             for (const slot in equipment) {
                 const item = equipment[slot];
                 if (item) {
-                    // ⭐ 只发送基础字段，不发送 affixDetails
-                    serializedEquipment[slot] = {
-                        name: item.name,
-                        type: item.type,
-                        icon: item.icon,
-                        stats: item.stats,
-                        rarity: item.rarity,
-                        // affixDetails: 不发送
-                    };
+                    serializedEquipment[slot] = this.SerializeItem(item);
                 } else {
                     serializedEquipment[slot] = null;
                 }
             }
             
-            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
+            (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
                 equipment: serializedEquipment
             });
             
@@ -114,7 +106,56 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
             print(`[SimpleDungeon] 装备成功，已推送更新数据`);
         }
     } else {
-        GameRules. SendCustomMessage(
+        GameRules.SendCustomMessage(
+            "❌ 装备失败！",
+            playerId,
+            0
+        );
+    }
+});CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event: any) => {
+    const playerId = event.PlayerID as PlayerID;
+    const index = event.index as number;
+    
+    print(`[SimpleDungeon] 玩家${playerId}从 UI 装备索引${index}的物品`);
+    
+    if (EquipmentVaultSystem. EquipItem(playerId, index)) {
+        const player = PlayerResource.GetPlayer(playerId);
+        if (player) {
+            // ⭐ 发送仓库数据
+            const vault = EquipmentVaultSystem.GetVault(playerId);
+            const serializedVault = this.SerializeItems(vault);
+            
+            (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+                items: serializedVault
+            });
+            
+            // ⭐⭐⭐ 使用 SerializeItem 来正确处理装备数据（包含 affixDetails）
+            const equipment = EquipmentVaultSystem.GetEquipment(playerId);
+            const serializedEquipment: any = {};
+            
+            for (const slot in equipment) {
+                const item = equipment[slot];
+                if (item) {
+                    serializedEquipment[slot] = this.SerializeItem(item);
+                } else {
+                    serializedEquipment[slot] = null;
+                }
+            }
+            
+            (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
+                equipment: serializedEquipment
+            });
+            
+            GameRules.SendCustomMessage(
+                "✅ 装备成功！",
+                playerId,
+                0
+            );
+            
+            print(`[SimpleDungeon] 装备成功，已推送更新数据`);
+        }
+    } else {
+        GameRules.SendCustomMessage(
             "❌ 装备失败！",
             playerId,
             0

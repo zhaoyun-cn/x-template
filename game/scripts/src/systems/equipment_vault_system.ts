@@ -231,11 +231,74 @@ export class EquipmentVaultSystem {
         return true;
     }
 
-// ⭐⭐⭐ 刷新装备属性（完全防御版本）
-// ⭐⭐⭐ 刷新装备属性（空函数测试）
+// ⭐⭐⭐ 刷新装备属性（完整版）
 private static RefreshEquipmentStats(playerId: PlayerID): void {
-    // 什么都不做，只打印日志
-    print(`[EquipmentVaultSystem] RefreshEquipmentStats 被调用，playerId: ${playerId}`);
+    if (! IsServer()) return;
+    
+    if (this.isRefreshing[playerId]) {
+        return;
+    }
+    this.isRefreshing[playerId] = true;
+    
+    const totalStats: { [key: string]: number } = {
+        strength: 0,
+        agility: 0,
+        intelligence: 0,
+        armor: 0,
+        health: 0,
+        mana: 0,
+        attack_damage: 0,
+        attack_speed: 0,
+        move_speed: 0,
+        magic_resistance: 0,
+    };
+    
+    const equipment = this.playerEquipment[playerId];
+    if (equipment) {
+        const slots = ['helmet', 'necklace', 'ring', 'trinket', 'weapon', 'armor', 'belt', 'boots'];
+        
+        for (let s = 0; s < slots.length; s++) {
+            const slot = slots[s];
+            const item = equipment[slot];
+            
+            if (item && item.stats) {
+                const statsData = item.stats as any;
+                
+                if (statsData.length !== undefined && statsData.length > 0) {
+                    for (let i = 0; i < statsData.length; i++) {
+                        const stat = statsData[i];
+                        if (stat && stat.attribute && stat.value !== undefined) {
+                            const key = this.AttributeToKey(stat.attribute);
+                            if (key) {
+                                totalStats[key] = (totalStats[key] || 0) + (stat.value || 0);
+                            }
+                        }
+                    }
+                } else {
+                    for (let i = 0; i < 10; i++) {
+                        const stat = statsData[i] || statsData[i. toString()];
+                        if (stat && stat.attribute && stat.value !== undefined) {
+                            const key = this.AttributeToKey(stat.attribute);
+                            if (key) {
+                                totalStats[key] = (totalStats[key] || 0) + (stat.value || 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    _G. EquipmentStats[playerId] = totalStats;
+    
+    const hero = PlayerResource.GetSelectedHeroEntity(playerId) as CDOTA_BaseNPC_Hero;
+    if (hero && ! hero.IsNull()) {
+        const baseArmor = this.playerBaseArmor[playerId] || 0;
+        const newArmor = baseArmor + totalStats.armor;
+        hero.SetPhysicalArmorBaseValue(newArmor);
+    }
+    
+    this.isRefreshing[playerId] = false;
 }
 
     // 属性名称转换为键名
