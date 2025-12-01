@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// 装备属性接口
 interface EquipmentStat {
     attribute: string;
     value: number;
 }
 
-// 词缀详情接口
 interface AffixDetail {
     position: 'prefix' | 'suffix';
     tier: number;
@@ -15,7 +13,6 @@ interface AffixDetail {
     color?: string;
 }
 
-// 装备物品接口
 interface ExternalRewardItem {
     name: string;
     type: string;
@@ -30,6 +27,19 @@ interface VaultUIProps {
     onClose: () => void;
 }
 
+// 安全字符串函数
+const safeText = (value: any, defaultValue: string = ''): string => {
+    if (value === undefined || value === null) return defaultValue;
+    return String(value);
+};
+
+// 安全数字函数
+const safeNumber = (value: any, defaultValue: number = 0): number => {
+    if (value === undefined || value === null) return defaultValue;
+    const num = Number(value);
+    return isNaN(num) ? defaultValue : num;
+};
+
 export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     const [vaultItems, setVaultItems] = useState<ExternalRewardItem[]>([]);
     const [selectedItem, setSelectedItem] = useState<number | null>(null);
@@ -41,61 +51,56 @@ export const VaultUI: React.FC<VaultUIProps> = ({ visible, onClose }) => {
     const [selectedPosition, setSelectedPosition] = useState<{ row: number; col: number } | null>(null);
     const [hoveredPosition, setHoveredPosition] = useState<{ row: number; col: number } | null>(null);
 
-    // ⭐ 使用 Panorama 的 Schedule 而不是 setTimeout
     const hoverScheduleHandle = useRef<ScheduleID | null>(null);
     const equipScheduleHandle = useRef<ScheduleID | null>(null);
+    const mouseOverScheduleHandle = useRef<ScheduleID | null>(null);
     
-    // ⭐ 清理所有计划任务
     useEffect(() => {
         return () => {
             if (hoverScheduleHandle.current !== null) {
                 $.CancelScheduled(hoverScheduleHandle.current);
-                hoverScheduleHandle.current = null;
             }
             if (equipScheduleHandle.current !== null) {
                 $.CancelScheduled(equipScheduleHandle.current);
-                equipScheduleHandle.current = null;
+            }
+            if (mouseOverScheduleHandle.current !== null) {
+                $.CancelScheduled(mouseOverScheduleHandle.current);
             }
         };
     }, []);
     
-// ==================== 辅助函数：提取前后缀（最终修复版）====================
-const extractAffixes = (affixDetails: any) => {
-    const prefixes: any[] = [];
-    const suffixes: any[] = [];
-    
-    if (! affixDetails) {
-        return { prefixes, suffixes };
-    }
-    
-    try {
-        for (const key in affixDetails) {
-            const affix = affixDetails[key];
-            if (affix && typeof affix === 'object' && affix.name) {
-                // ⭐⭐⭐ 确保所有字段都有默认值
-                const safeAffix = {
-                    position: affix.position || 'prefix',
-                    tier: affix.tier || 1,
-                    name: String(affix.name || ''),
-                    description: String(affix.description || ''),
-                    color: affix.color || '#ffffff',
-                };
-                
-                if (safeAffix.position === 'prefix') {
-                    prefixes.push(safeAffix);
-                } else if (safeAffix.position === 'suffix') {
-                    suffixes.push(safeAffix);
+    const extractAffixes = (affixDetails: any) => {
+        const prefixes: any[] = [];
+        const suffixes: any[] = [];
+        
+        if (! affixDetails) return { prefixes, suffixes };
+        
+        try {
+            for (const key in affixDetails) {
+                const affix = affixDetails[key];
+                if (affix && typeof affix === 'object' && affix.name) {
+                    const safeAffix = {
+                        position: affix.position || 'prefix',
+                        tier: safeNumber(affix.tier, 1),
+                        name: safeText(affix.name, '未知'),
+                        description: safeText(affix.description, ''),
+                        color: affix.color || '#ffffff',
+                    };
+                    
+                    if (safeAffix.position === 'prefix') {
+                        prefixes.push(safeAffix);
+                    } else {
+                        suffixes.push(safeAffix);
+                    }
                 }
             }
+        } catch (e) {
+            $.Msg('[VaultUI] extractAffixes error');
         }
-    } catch (e) {
-        // 忽略错误
-    }
+        
+        return { prefixes, suffixes };
+    };
     
-    return { prefixes, suffixes };
-};
-    
-    // ==================== 数据加载逻辑 ====================
     useEffect(() => {
         if (!visible) return;
 
@@ -108,96 +113,57 @@ const extractAffixes = (affixDetails: any) => {
         });
 
         const vaultListener = GameEvents.Subscribe('update_vault_ui', (data: any) => {
-            const items: ExternalRewardItem[] = [];
-            if (data.items) {
-                if (Array.isArray(data.items)) {
-                    items.push(...data.items.map((item: any) => ({
-                        ...item,
-                        stats: Array.isArray(item.stats) ? item.stats : Object.values(item.stats || {})
-                    })));
-                } else if (typeof data.items === 'object') {
-                    for (const key in data.items) {
-                        const item = data.items[key];
+            try {
+                const items: ExternalRewardItem[] = [];
+                if (data.items) {
+                    const itemsData = Array.isArray(data.items) ? data.items : Object.values(data.items);
+                    for (let i = 0; i < itemsData.length; i++) {
+                        const item = itemsData[i];
                         if (item) {
-                            const statsArray = Array.isArray(item.stats) 
-                                ? item.stats 
-                                : Object.values(item.stats || {});
                             items.push({
-                                ...item,
-                                stats: statsArray
+                                name: safeText(item.name, '未知物品'),
+                                type: safeText(item.type, '未知类型'),
+                                icon: safeText(item.icon, ''),
+                                stats: Array.isArray(item.stats) ? item.stats : Object.values(item.stats || {}),
+                                rarity: item.rarity,
+                                affixDetails: item.affixDetails,
                             });
                         }
                     }
                 }
+                setVaultItems(items);
+            } catch (e) {
+                $.Msg('[VaultUI] update_vault_ui error');
             }
-            setVaultItems(items);
         });
 
-const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
-    const processedEquipment: Record<string, ExternalRewardItem | null> = {};
-    
-    for (const slot in data. equipment) {
-        const item = data. equipment[slot];
-        
-        if (item) {
-            const statsArray = Array.isArray(item.stats) 
-                ? item.stats 
-                : Object.values(item. stats || {});
-            
-            // ⭐⭐⭐ 安全处理 affixDetails
-            let safeAffixDetails: AffixDetail[] | undefined = undefined;
-            if (item.affixDetails) {
-                const tempArr: AffixDetail[] = [];
-                const affixData = item.affixDetails;
+        const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
+            try {
+                const processedEquipment: Record<string, ExternalRewardItem | null> = {};
                 
-                if (Array.isArray(affixData)) {
-                    for (let i = 0; i < affixData.length; i++) {
-                        const affix = affixData[i];
-                        if (affix && affix.name) {
-                            tempArr.push({
-                                position: affix.position || 'prefix',
-                                tier: affix.tier || 1,
-                                name: String(affix.name || ''),
-                                description: String(affix.description || ''),
-                                color: affix.color || '#ffffff',
-                            });
-                        }
-                    }
-                } else if (typeof affixData === 'object') {
-                    for (const key in affixData) {
-                        const affix = affixData[key];
-                        if (affix && affix. name) {
-                            tempArr.push({
-                                position: affix.position || 'prefix',
-                                tier: affix.tier || 1,
-                                name: String(affix.name || ''),
-                                description: String(affix.description || ''),
-                                color: affix.color || '#ffffff',
-                            });
+                if (data.equipment) {
+                    for (const slot in data.equipment) {
+                        const item = data.equipment[slot];
+                        if (item) {
+                            processedEquipment[slot] = {
+                                name: safeText(item.name, '未知装备'),
+                                type: safeText(item.type, '未知类型'),
+                                icon: safeText(item.icon, ''),
+                                stats: Array.isArray(item.stats) ? item.stats : Object.values(item.stats || {}),
+                                rarity: item.rarity,
+                                affixDetails: item.affixDetails,
+                            };
+                        } else {
+                            processedEquipment[slot] = null;
                         }
                     }
                 }
                 
-                if (tempArr.length > 0) {
-                    safeAffixDetails = tempArr;
-                }
+                setEquippedItems(processedEquipment);
+            } catch (e) {
+                $.Msg('[VaultUI] update_equipment_ui error');
             }
-            
-            processedEquipment[slot] = {
-                name: item.name,
-                type: item.type,
-                icon: item.icon,
-                stats: statsArray,
-                rarity: item.rarity,
-                affixDetails: safeAffixDetails,
-            };
-        } else {
-            processedEquipment[slot] = null;
-        }
-    }
-    
-    setEquippedItems(processedEquipment);
-});
+        });
 
         return () => {
             GameEvents.Unsubscribe(vaultListener);
@@ -205,7 +171,6 @@ const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any
         };
     }, [visible]);
 
-    // ==================== 装备物品逻辑 ====================
     const onEquipItem = (index: number) => {
         if (isEquipping) return;
         
@@ -224,12 +189,10 @@ const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any
         setHoveredPosition(null);
         setCompareEquipment(null);
         
-        // ⭐ 取消之前的计划
         if (equipScheduleHandle.current !== null) {
             $.CancelScheduled(equipScheduleHandle.current);
         }
         
-        // ⭐ 使用 $.Schedule 代替 setTimeout
         equipScheduleHandle.current = $.Schedule(1.5, () => {
             setIsEquipping(false);
             equipScheduleHandle.current = null;
@@ -237,6 +200,7 @@ const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any
     };
 
     const findEquippedItemByType = (itemType: string): ExternalRewardItem | null => {
+        if (!itemType) return null;
         for (const slot in equippedItems) {
             const equipped = equippedItems[slot];
             if (equipped && equipped.type === itemType) {
@@ -246,28 +210,54 @@ const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any
         return null;
     };
 
-const handleMouseOver = (index: number, item: ExternalRewardItem, row: number, col: number) => {
-    // ⭐ 取消之前的隐藏计划
-    if (hoverScheduleHandle. current !== null) {
-        $. CancelScheduled(hoverScheduleHandle.current);
-        hoverScheduleHandle.current = null;
-    }
-    
-    setHoveredItem(index);
-    setHoveredPosition({ row, col });
-    
-    // ⭐ 简单地设置对比装备，不做任何处理
-    const equipped = findEquippedItemByType(item.type);
-    setCompareEquipment(equipped);
-};
+    // ⭐⭐⭐ 核心修复：使用 Schedule 延迟状态更新
+    const handleMouseOver = (index: number, item: ExternalRewardItem, row: number, col: number) => {
+        // 取消之前的隐藏计划
+        if (hoverScheduleHandle.current !== null) {
+            $.CancelScheduled(hoverScheduleHandle.current);
+            hoverScheduleHandle.current = null;
+        }
+        
+        // 取消之前的 mouseover schedule
+        if (mouseOverScheduleHandle.current !== null) {
+            $.CancelScheduled(mouseOverScheduleHandle.current);
+            mouseOverScheduleHandle.current = null;
+        }
+        
+        // 防止重复触发
+        if (hoveredItem === index) return;
+        
+        // 安全检查
+        if (!item) return;
+        
+        // ⭐ 延迟执行状态更新，避免在事件回调中直接触发可能导致崩溃的渲染
+        mouseOverScheduleHandle.current = $.Schedule(0.01, () => {
+            mouseOverScheduleHandle.current = null;
+            
+            setHoveredItem(index);
+            setHoveredPosition({ row: safeNumber(row, 0), col: safeNumber(col, 0) });
+            
+            const itemType = safeText(item.type, '');
+            if (itemType) {
+                const equipped = findEquippedItemByType(itemType);
+                setCompareEquipment(equipped);
+            } else {
+                setCompareEquipment(null);
+            }
+        });
+    };
 
     const handleMouseOut = () => {
-        // ⭐ 取消之前的计划
+        // 取消 mouseover schedule
+        if (mouseOverScheduleHandle.current !== null) {
+            $.CancelScheduled(mouseOverScheduleHandle.current);
+            mouseOverScheduleHandle.current = null;
+        }
+        
         if (hoverScheduleHandle.current !== null) {
             $.CancelScheduled(hoverScheduleHandle.current);
         }
         
-        // ⭐ 使用 $.Schedule 代替 setTimeout
         hoverScheduleHandle.current = $.Schedule(0.3, () => {
             setHoveredItem(null);
             setHoveredPosition(null);
@@ -283,67 +273,58 @@ const handleMouseOver = (index: number, item: ExternalRewardItem, row: number, c
         }
     };
 
-// ==================== 获取物品品质颜色 ====================
-const getQualityColor = (item: ExternalRewardItem): string => {
-    if (! item) return '#9d9d9d';
-    
-    if (item.rarity !== undefined) {
-        const rarityColors: Record<number, string> = {
-            0: '#c8c8c8',  // 普通 - 灰白色
-            1: '#8888ff',  // 魔法 - 蓝色
-            2: '#ffff77',  // 稀有 - 黄色
-            3: '#ff8800',  // 传说 - 橙色
-        };
-        return rarityColors[item.rarity] || '#9d9d9d';
-    }
-    
-    // ⭐⭐⭐ 安全处理 stats
-    let totalValue = 0;
-    try {
-        const statsData = item.stats as any;
-        if (statsData) {
-            if (Array. isArray(statsData)) {
-                for (let i = 0; i < statsData. length; i++) {
+    const getQualityColor = (item: ExternalRewardItem | null): string => {
+        if (!item) return '#9d9d9d';
+        
+        if (item.rarity !== undefined && item.rarity !== null) {
+            const rarityColors: Record<number, string> = {
+                0: '#c8c8c8',
+                1: '#8888ff',
+                2: '#ffff77',
+                3: '#ff8800',
+            };
+            return rarityColors[item.rarity] || '#9d9d9d';
+        }
+        
+        let totalValue = 0;
+        try {
+            const statsData = item.stats;
+            if (statsData && Array.isArray(statsData)) {
+                for (let i = 0; i < statsData.length; i++) {
                     const stat = statsData[i];
-                    if (stat && stat. value) {
-                        totalValue += stat.value;
-                    }
-                }
-            } else if (typeof statsData === 'object') {
-                for (const key in statsData) {
-                    const stat = statsData[key];
-                    if (stat && stat.value) {
+                    if (stat && typeof stat.value === 'number') {
                         totalValue += stat.value;
                     }
                 }
             }
-        }
-    } catch (e) {
-        // 忽略错误
-    }
-    
-    if (totalValue >= 50) return '#ff8000';
-    if (totalValue >= 35) return '#a335ee';
-    if (totalValue >= 20) return '#0070dd';
-    if (totalValue >= 10) return '#1eff00';
-    return '#9d9d9d';
-};
+        } catch (e) {}
+        
+        if (totalValue >= 50) return '#ff8000';
+        if (totalValue >= 35) return '#a335ee';
+        if (totalValue >= 20) return '#0070dd';
+        if (totalValue >= 10) return '#1eff00';
+        return '#9d9d9d';
+    };
 
     if (!visible) return null;
 
     const COLUMNS = 8;
     const ROWS = 5;
     const TOTAL_SLOTS = COLUMNS * ROWS;
-    const emptySlots = TOTAL_SLOTS - vaultItems.length;
+    const emptySlots = Math.max(0, TOTAL_SLOTS - vaultItems.length);
     
     const SLOT_SIZE = 80;
     const SLOT_MARGIN = 2;
     const GRID_PADDING = 15;
 
+    // ⭐⭐⭐ 安全的位置计算，确保永远返回有效值
     const getPopupPosition = (position: { row: number; col: number } | null, popupWidth: number) => {
-        if (!position) return { marginLeft: '0px', marginTop: '0px' };
+        const defaultPos = { marginLeft: '0px', marginTop: '0px' };
         
-        const { row, col } = position;
+        if (! position) return defaultPos;
+        
+        const row = safeNumber(position.row, 0);
+        const col = safeNumber(position.col, 0);
         
         const slotX = GRID_PADDING + col * (SLOT_SIZE + SLOT_MARGIN * 2);
         const slotY = 60 + GRID_PADDING + row * (SLOT_SIZE + SLOT_MARGIN * 2);
@@ -360,14 +341,52 @@ const getQualityColor = (item: ExternalRewardItem): string => {
         }
         
         return {
-            marginLeft: `${popupX}px`,
-            marginTop: `${popupY}px`,
+            marginLeft: safeNumber(popupX, 0) + 'px',
+            marginTop: safeNumber(popupY, 0) + 'px',
         };
     };
 
-    const hoveredItemData = hoveredItem !== null && hoveredItem < vaultItems.length 
+    const hoveredItemData = (hoveredItem !== null && hoveredItem >= 0 && hoveredItem < vaultItems.length)
         ? vaultItems[hoveredItem] 
         : null;
+
+    // ⭐ 渲染词缀的辅助函数
+    const renderAffixes = (prefixes: any[], suffixes: any[], keyPrefix: string) => {
+        return (
+            <>
+                {prefixes.length > 0 && (
+                    <>
+                        <Label 
+                            text={`━━ 前缀 (${prefixes.length}) ━━`}
+                            style={{ fontSize: '11px', color: '#8888ff', marginBottom: '3px', fontWeight: 'bold' }}
+                        />
+                        {prefixes.map((affix: any, idx: number) => (
+                            <Label 
+                                key={`${keyPrefix}-prefix-${idx}`}
+                                text={`[T${safeNumber(affix.tier, 1)}] ${safeText(affix.name, '')} ${safeText(affix.description, '')}`}
+                                style={{ fontSize: '11px', color: '#8888ff', marginBottom: '2px' }}
+                            />
+                        ))}
+                    </>
+                )}
+                {suffixes.length > 0 && (
+                    <>
+                        <Label 
+                            text={`━━ 后缀 (${suffixes.length}) ━━`}
+                            style={{ fontSize: '11px', color: '#ffff77', marginTop: '5px', marginBottom: '3px', fontWeight: 'bold' }}
+                        />
+                        {suffixes.map((affix: any, idx: number) => (
+                            <Label 
+                                key={`${keyPrefix}-suffix-${idx}`}
+                                text={`[T${safeNumber(affix.tier, 1)}] ${safeText(affix.name, '')} ${safeText(affix.description, '')}`}
+                                style={{ fontSize: '11px', color: '#ffff77', marginBottom: '2px' }}
+                            />
+                        ))}
+                    </>
+                )}
+            </>
+        );
+    };
 
     return (
         <Panel
@@ -392,36 +411,18 @@ const getQualityColor = (item: ExternalRewardItem): string => {
             }}>
                 <Label 
                     text="⚔️ 装备仓库" 
-                    style={{
-                        fontSize: '32px',
-                        color: '#ffd700',
-                        fontWeight: 'bold',
-                    }}
+                    style={{ fontSize: '32px', color: '#ffd700', fontWeight: 'bold' }}
                 />
                 <Label 
                     text={`${vaultItems.length} / ${TOTAL_SLOTS}`}
-                    style={{
-                        fontSize: '24px',
-                        color: '#cccccc',
-                        marginLeft: '20px',
-                        marginTop: '4px',
-                    }}
+                    style={{ fontSize: '24px', color: '#cccccc', marginLeft: '20px', marginTop: '4px' }}
                 />
                 <Panel style={{ width: 'fill-parent-flow(1)', height: '1px' }} />
                 <Button 
                     onactivate={onClose}
-                    style={{
-                        width: '40px',
-                        height: '40px',
-                        backgroundColor: '#8b0000',
-                        border: '2px solid #ff0000',
-                    }}
-                    onmouseover={(panel) => {
-                        panel.style.backgroundColor = '#b22222';
-                    }}
-                    onmouseout={(panel) => {
-                        panel.style.backgroundColor = '#8b0000';
-                    }}
+                    style={{ width: '40px', height: '40px', backgroundColor: '#8b0000', border: '2px solid #ff0000' }}
+                    onmouseover={(panel) => { panel.style.backgroundColor = '#b22222'; }}
+                    onmouseout={(panel) => { panel.style.backgroundColor = '#8b0000'; }}
                 >
                     <Label text="✕" style={{ fontSize: '28px', color: 'white', textAlign: 'center' }} />
                 </Button>
@@ -435,9 +436,9 @@ const getQualityColor = (item: ExternalRewardItem): string => {
                 flowChildren: 'right-wrap',
             }}>
                 {vaultItems.map((item, index) => {
+                    if (!item) return null;
+                    
                     const qualityColor = getQualityColor(item);
-                    const normalBorder = `3px solid ${qualityColor}`;
-                    const hoverBorder = `4px solid ${qualityColor}`;
                     const isHovered = hoveredItem === index;
                     
                     const row = Math.floor(index / COLUMNS);
@@ -451,8 +452,8 @@ const getQualityColor = (item: ExternalRewardItem): string => {
                                 height: '80px',
                                 margin: '2px',
                                 backgroundColor: isHovered ? '#1a1a1a' : '#0a0a0a',
-                                border: isHovered ?  hoverBorder : normalBorder,
-                                backgroundImage: `url("${item.icon}")`,
+                                border: isHovered ? `4px solid ${qualityColor}` : `3px solid ${qualityColor}`,
+                                backgroundImage: `url("${safeText(item.icon, '')}")`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
                             }}
@@ -465,16 +466,10 @@ const getQualityColor = (item: ExternalRewardItem): string => {
                                 handleMouseOver(index, item, row, col);
                                 Game.EmitSound('ui.button_over');
                             }}
-                            onmouseout={() => {
-                                handleMouseOut();
-                            }}
+                            onmouseout={handleMouseOut}
                         >
                             {selectedItem === index && (
-                                <Panel style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    backgroundColor: '#ffffff40',
-                                }} />
+                                <Panel style={{ width: '100%', height: '100%', backgroundColor: '#ffffff40' }} />
                             )}
                         </Panel>
                     );
@@ -494,20 +489,18 @@ const getQualityColor = (item: ExternalRewardItem): string => {
                 ))}
             </Panel>
 
-            {/* ⭐ 装备悬停对比面板 */}
+            {/* 悬停对比面板 */}
             {hoveredItem !== null && hoveredItemData && hoveredPosition && selectedItem === null && (() => {
                 const hoverPos = getPopupPosition(hoveredPosition, 350);
                 const { prefixes, suffixes } = extractAffixes(hoveredItemData.affixDetails);
                 
                 return (
-                    <Panel hittest={false}
-                        style={{
-                            width: '740px',
-                            height: '520px',
-                            marginTop: '-520px',
-                        }}
+                    <Panel 
+                        hittest={false}
+                        style={{ width: '740px', height: '520px', marginTop: '-520px' }}
                     >
-                        <Panel hittest={false}
+                        <Panel 
+                            hittest={false}
                             style={{
                                 width: '350px',
                                 maxHeight: '480px',
@@ -524,13 +517,7 @@ const getQualityColor = (item: ExternalRewardItem): string => {
                         >
                             <Label 
                                 text="📊 装备对比"
-                                style={{
-                                    fontSize: '20px',
-                                    color: '#ffd700',
-                                    textAlign: 'center',
-                                    marginBottom: '10px',
-                                    fontWeight: 'bold',
-                                }}
+                                style={{ fontSize: '20px', color: '#ffd700', textAlign: 'center', marginBottom: '10px', fontWeight: 'bold' }}
                             />
 
                             {/* 待装备物品 */}
@@ -542,221 +529,91 @@ const getQualityColor = (item: ExternalRewardItem): string => {
                                 marginBottom: '10px',
                                 flowChildren: 'down',
                             }}>
-                                <Label 
-                                    text="【待装备】"
-                                    style={{ fontSize: '12px', color: '#00ff00', marginBottom: '5px' }}
-                                />
+                                <Label text="【待装备】" style={{ fontSize: '12px', color: '#00ff00', marginBottom: '5px' }} />
                                 <Panel style={{ width: '100%', flowChildren: 'right', marginBottom: '5px' }}>
                                     <Panel style={{
                                         width: '50px',
                                         height: '50px',
-                                        backgroundImage: `url("${hoveredItemData.icon}")`,
+                                        backgroundImage: `url("${safeText(hoveredItemData.icon, '')}")`,
                                         backgroundSize: 'cover',
                                         marginRight: '10px',
                                     }} />
                                     <Panel style={{ flowChildren: 'down' }}>
                                         <Label 
-                                            text={hoveredItemData.name}
-                                            style={{
-                                                fontSize: '16px',
-                                                color: getQualityColor(hoveredItemData),
-                                                fontWeight: 'bold',
-                                                marginBottom: '3px',
-                                            }}
+                                            text={safeText(hoveredItemData.name, '未知物品')}
+                                            style={{ fontSize: '16px', color: getQualityColor(hoveredItemData), fontWeight: 'bold', marginBottom: '3px' }}
                                         />
                                         <Label 
-                                            text={hoveredItemData.type}
+                                            text={safeText(hoveredItemData.type, '未知类型')}
                                             style={{ fontSize: '12px', color: '#ffd700', marginBottom: '8px' }}
                                         />
-                                        
-                                        {/* 前缀显示 */}
-                                        {prefixes.length > 0 && (
-                                            <>
-                                                <Label 
-                                                    text={`━━ 前缀 (${prefixes.length}) ━━`}
-                                                    style={{ fontSize: '11px', color: '#8888ff', marginBottom: '3px', fontWeight: 'bold' }}
-                                                />
-                                                {prefixes.map((affix: any, idx: number) => (
-                                                    <Label 
-                                                        key={`prefix-${idx}`}
-                                                        text={`[T${affix.tier}] ${affix.name} ${affix.description}`}
-                                                        style={{ 
-                                                            fontSize: '11px', 
-                                                            color: '#8888ff',
-                                                            marginBottom: '2px',
-                                                        }}
-                                                    />
-                                                ))}
-                                            </>
-                                        )}
-                                        
-                                        {/* 后缀显示 */}
-                                        {suffixes.length > 0 && (
-                                            <>
-                                                <Label 
-                                                    text={`━━ 后缀 (${suffixes.length}) ━━`}
-                                                    style={{ fontSize: '11px', color: '#ffff77', marginTop: '5px', marginBottom: '3px', fontWeight: 'bold' }}
-                                                />
-                                                {suffixes.map((affix: any, idx: number) => (
-                                                    <Label 
-                                                        key={`suffix-${idx}`}
-                                                        text={`[T${affix.tier}] ${affix.name} ${affix.description}`}
-                                                        style={{ 
-                                                            fontSize: '11px', 
-                                                            color: '#ffff77',
-                                                            marginBottom: '2px',
-                                                        }}
-                                                    />
-                                                ))}
-                                            </>
-                                        )}
+                                        {renderAffixes(prefixes, suffixes, 'hover')}
                                     </Panel>
                                 </Panel>
                             </Panel>
 
-                            {/* 分隔线 */}
-                            <Panel style={{
-                                width: '100%',
-                                height: '2px',
-                                backgroundColor: '#555555',
-                                marginBottom: '10px',
-                            }} />
+                            <Panel style={{ width: '100%', height: '2px', backgroundColor: '#555555', marginBottom: '10px' }} />
 
-  {/* 当前已装备 */}
-{compareEquipment ?  (() => {
-    // ⭐⭐⭐ 安全提取当前装备的词缀
-    let currPrefixes: any[] = [];
-    let currSuffixes: any[] = [];
-    
-    try {
-        if (compareEquipment.affixDetails) {
-            const result = extractAffixes(compareEquipment.affixDetails);
-            currPrefixes = result.prefixes || [];
-            currSuffixes = result. suffixes || [];
-        }
-    } catch (e) {
-        // 忽略错误
-        currPrefixes = [];
-        currSuffixes = [];
-    }
-    
-    return (
-        <Panel style={{
-            width: '100%',
-            backgroundColor: '#0a0a0a',
-            border: `2px solid ${getQualityColor(compareEquipment)}`,
-            padding: '10px',
-            flowChildren: 'down',
-        }}>
-            <Label 
-                text="【当前装备】"
-                style={{ fontSize: '12px', color: '#888888', marginBottom: '5px' }}
-            />
-            <Panel style={{ width: '100%', flowChildren: 'right', marginBottom: '5px' }}>
-                <Panel style={{
-                    width: '50px',
-                    height: '50px',
-                    backgroundImage: `url("${compareEquipment.icon || ''}")`,
-                    backgroundSize: 'cover',
-                    marginRight: '10px',
-                }} />
-                <Panel style={{ flowChildren: 'down' }}>
-                    <Label 
-                        text={String(compareEquipment.name || '未知装备')}
-                        style={{
-                            fontSize: '16px',
-                            color: getQualityColor(compareEquipment),
-                            fontWeight: 'bold',
-                            marginBottom: '3px',
-                        }}
-                    />
-                    <Label 
-                        text={String(compareEquipment.type || '')}
-                        style={{ fontSize: '12px', color: '#ffd700', marginBottom: '8px' }}
-                    />
-                    
-                    {/* 当前装备前缀 */}
-                    {currPrefixes.length > 0 && (
-                        <>
-                            <Label 
-                                text={`━━ 前缀 (${currPrefixes.length}) ━━`}
-                                style={{ fontSize: '11px', color: '#8888ff', marginBottom: '3px', fontWeight: 'bold' }}
-                            />
-                            {currPrefixes. map((affix: any, idx: number) => (
-                                <Label 
-                                    key={`curr-prefix-${idx}`}
-                                    text={`[T${affix.tier || 1}] ${String(affix.name || '')} ${String(affix. description || '')}`}
-                                    style={{ 
-                                        fontSize: '11px', 
-                                        color: '#8888ff',
-                                        marginBottom: '2px',
-                                    }}
-                                />
-                            ))}
-                        </>
-                    )}
-                    
-                    {/* 当前装备后缀 */}
-                    {currSuffixes.length > 0 && (
-                        <>
-                            <Label 
-                                text={`━━ 后缀 (${currSuffixes. length}) ━━`}
-                                style={{ fontSize: '11px', color: '#ffff77', marginTop: '5px', marginBottom: '3px', fontWeight: 'bold' }}
-                            />
-                            {currSuffixes.map((affix: any, idx: number) => (
-                                <Label 
-                                    key={`curr-suffix-${idx}`}
-                                    text={`[T${affix.tier || 1}] ${String(affix. name || '')} ${String(affix. description || '')}`}
-                                    style={{ 
-                                        fontSize: '11px', 
-                                        color: '#ffff77',
-                                        marginBottom: '2px',
-                                    }}
-                                />
-                            ))}
-                        </>
-                    )}
-                </Panel>
-            </Panel>
-        </Panel>
-    );
-})() : (
-    <Panel style={{
-        width: '100%',
-        backgroundColor: '#2a2a2a',
-        padding: '15px',
-        flowChildren: 'down',
-    }}>
-        <Label 
-            text="✨ 当前未装备同类型装备"
-            style={{
-                fontSize: '14px',
-                color: '#888888',
-                textAlign: 'center',
-            }}
-        />
-    </Panel>
-)}
+                            {/* 当前已装备 */}
+                            {compareEquipment ?  (() => {
+                                const { prefixes: currPrefixes, suffixes: currSuffixes } = extractAffixes(compareEquipment.affixDetails);
+                                
+                                return (
+                                    <Panel style={{
+                                        width: '100%',
+                                        backgroundColor: '#0a0a0a',
+                                        border: `2px solid ${getQualityColor(compareEquipment)}`,
+                                        padding: '10px',
+                                        flowChildren: 'down',
+                                    }}>
+                                        <Label text="【当前装备】" style={{ fontSize: '12px', color: '#888888', marginBottom: '5px' }} />
+                                        <Panel style={{ width: '100%', flowChildren: 'right', marginBottom: '5px' }}>
+                                            <Panel style={{
+                                                width: '50px',
+                                                height: '50px',
+                                                backgroundImage: `url("${safeText(compareEquipment.icon, '')}")`,
+                                                backgroundSize: 'cover',
+                                                marginRight: '10px',
+                                            }} />
+                                            <Panel style={{ flowChildren: 'down' }}>
+                                                <Label 
+                                                    text={safeText(compareEquipment.name, '未知装备')}
+                                                    style={{ fontSize: '16px', color: getQualityColor(compareEquipment), fontWeight: 'bold', marginBottom: '3px' }}
+                                                />
+                                                <Label 
+                                                    text={safeText(compareEquipment.type, '')}
+                                                    style={{ fontSize: '12px', color: '#ffd700', marginBottom: '8px' }}
+                                                />
+                                                {renderAffixes(currPrefixes, currSuffixes, 'curr')}
+                                            </Panel>
+                                        </Panel>
+                                    </Panel>
+                                );
+                            })() : (
+                                <Panel style={{ width: '100%', backgroundColor: '#2a2a2a', padding: '15px', flowChildren: 'down' }}>
+                                    <Label 
+                                        text="✨ 当前未装备同类型装备"
+                                        style={{ fontSize: '14px', color: '#888888', textAlign: 'center' }}
+                                    />
+                                </Panel>
+                            )}
                         </Panel>
                     </Panel>
                 );
             })()}
 
-            {/* ⭐ 装备确认面板 */}
-            {selectedItem !== null && selectedItem < vaultItems.length && vaultItems[selectedItem] && selectedPosition && (() => {
+            {/* 装备确认面板 */}
+            {selectedItem !== null && selectedItem >= 0 && selectedItem < vaultItems.length && vaultItems[selectedItem] && selectedPosition && (() => {
                 const item = vaultItems[selectedItem];
+                if (! item) return null;
+                
                 const qualityColor = getQualityColor(item);
                 const popupPos = getPopupPosition(selectedPosition, 320);
                 const { prefixes, suffixes } = extractAffixes(item.affixDetails);
                 
                 return (
                     <Panel 
-                        style={{
-                            width: '740px',
-                            height: '520px',
-                            backgroundColor: '#00000055',
-                            marginTop: '-520px',
-                        }}
+                        style={{ width: '740px', height: '520px', backgroundColor: '#00000055', marginTop: '-520px' }}
                         onactivate={() => setSelectedItem(null)}
                     >
                         <Panel 
@@ -773,16 +630,9 @@ const getQualityColor = (item: ExternalRewardItem): string => {
                         >
                             <Label 
                                 text="装备这件物品？"
-                                style={{
-                                    fontSize: '20px',
-                                    color: '#ffd700',
-                                    textAlign: 'center',
-                                    marginBottom: '10px',
-                                    fontWeight: 'bold',
-                                }}
+                                style={{ fontSize: '20px', color: '#ffd700', textAlign: 'center', marginBottom: '10px', fontWeight: 'bold' }}
                             />
                             
-                            {/* 装备信息 */}
                             <Panel style={{
                                 width: '100%',
                                 backgroundColor: '#0a0a0a',
@@ -792,81 +642,23 @@ const getQualityColor = (item: ExternalRewardItem): string => {
                                 flowChildren: 'right',
                             }}>
                                 <Image 
-                                    src={item.icon}
-                                    style={{
-                                        width: '50px',
-                                        height: '50px',
-                                        marginRight: '10px',
-                                    }}
+                                    src={safeText(item.icon, '')}
+                                    style={{ width: '50px', height: '50px', marginRight: '10px' }}
                                 />
                                 <Panel style={{ flowChildren: 'down' }}>
                                     <Label 
-                                        text={item.name}
-                                        style={{
-                                            fontSize: '16px',
-                                            color: qualityColor,
-                                            fontWeight: 'bold',
-                                            marginBottom: '3px',
-                                        }}
+                                        text={safeText(item.name, '未知物品')}
+                                        style={{ fontSize: '16px', color: qualityColor, fontWeight: 'bold', marginBottom: '3px' }}
                                     />
                                     <Label 
-                                        text={item.type}
-                                        style={{
-                                            fontSize: '12px',
-                                            color: '#ffd700',
-                                            marginBottom: '8px',
-                                        }}
+                                        text={safeText(item.type, '未知类型')}
+                                        style={{ fontSize: '12px', color: '#ffd700', marginBottom: '8px' }}
                                     />
-                                    
-                                    {/* 确认面板前缀 */}
-                                    {prefixes.length > 0 && (
-                                        <>
-                                            <Label 
-                                                text={`━━ 前缀 (${prefixes.length}) ━━`}
-                                                style={{ fontSize: '11px', color: '#8888ff', marginBottom: '3px', fontWeight: 'bold' }}
-                                            />
-                                            {prefixes.map((affix: any, idx: number) => (
-                                                <Label 
-                                                    key={`confirm-prefix-${idx}`}
-                                                    text={`[T${affix.tier}] ${affix.name} ${affix.description}`}
-                                                    style={{ 
-                                                        fontSize: '11px', 
-                                                        color: '#8888ff',
-                                                        marginBottom: '2px',
-                                                    }}
-                                                />
-                                            ))}
-                                        </>
-                                    )}
-                                    
-                                    {/* 确认面板后缀 */}
-                                    {suffixes.length > 0 && (
-                                        <>
-                                            <Label 
-                                                text={`━━ 后缀 (${suffixes.length}) ━━`}
-                                                style={{ fontSize: '11px', color: '#ffff77', marginTop: '5px', marginBottom: '3px', fontWeight: 'bold' }}
-                                            />
-                                            {suffixes.map((affix: any, idx: number) => (
-                                                <Label 
-                                                    key={`confirm-suffix-${idx}`}
-                                                    text={`[T${affix.tier}] ${affix.name} ${affix.description}`}
-                                                    style={{ 
-                                                        fontSize: '11px', 
-                                                        color: '#ffff77',
-                                                        marginBottom: '2px',
-                                                    }}
-                                                />
-                                            ))}
-                                        </>
-                                    )}
+                                    {renderAffixes(prefixes, suffixes, 'confirm')}
                                 </Panel>
                             </Panel>
                             
-                            {/* 按钮区域 */}
-                            <Panel style={{
-                                width: '100%',
-                                flowChildren: 'right',
-                            }}>
+                            <Panel style={{ width: '100%', flowChildren: 'right' }}>
                                 <Button 
                                     onactivate={() => onEquipItem(selectedItem)}
                                     style={{
@@ -875,16 +667,8 @@ const getQualityColor = (item: ExternalRewardItem): string => {
                                         backgroundColor: isEquipping ? '#888888' : '#4caf50',
                                         marginRight: '10px',
                                     }}
-                                    onmouseover={(panel) => {
-                                        if (! isEquipping) {
-                                            panel.style.backgroundColor = '#66bb6a';
-                                        }
-                                    }}
-                                    onmouseout={(panel) => {
-                                        if (!isEquipping) {
-                                            panel.style.backgroundColor = '#4caf50';
-                                        }
-                                    }}
+                                    onmouseover={(panel) => { if (! isEquipping) panel.style.backgroundColor = '#66bb6a'; }}
+                                    onmouseout={(panel) => { if (! isEquipping) panel.style.backgroundColor = '#4caf50'; }}
                                 >
                                     <Label 
                                         text={isEquipping ? "装备中..." : "✔ 确认"}
@@ -894,17 +678,9 @@ const getQualityColor = (item: ExternalRewardItem): string => {
                                 
                                 <Button 
                                     onactivate={() => setSelectedItem(null)}
-                                    style={{
-                                        width: '140px',
-                                        height: '40px',
-                                        backgroundColor: '#888888',
-                                    }}
-                                    onmouseover={(panel) => {
-                                        panel.style.backgroundColor = '#aaaaaa';
-                                    }}
-                                    onmouseout={(panel) => {
-                                        panel.style.backgroundColor = '#888888';
-                                    }}
+                                    style={{ width: '140px', height: '40px', backgroundColor: '#888888' }}
+                                    onmouseover={(panel) => { panel.style.backgroundColor = '#aaaaaa'; }}
+                                    onmouseout={(panel) => { panel.style.backgroundColor = '#888888'; }}
                                 >
                                     <Label text="✕ 取消" style={{ fontSize: '16px', color: 'white', textAlign: 'center', fontWeight: 'bold' }} />
                                 </Button>
