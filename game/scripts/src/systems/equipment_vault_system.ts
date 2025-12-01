@@ -233,7 +233,7 @@ export class EquipmentVaultSystem {
 
 // ⭐⭐⭐ 刷新装备属性（完整版）
 private static RefreshEquipmentStats(playerId: PlayerID): void {
-    if (! IsServer()) return;
+    if (!IsServer()) return;
     
     if (this.isRefreshing[playerId]) {
         return;
@@ -265,7 +265,7 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
                 const statsData = item.stats as any;
                 
                 if (statsData.length !== undefined && statsData.length > 0) {
-                    for (let i = 0; i < statsData.length; i++) {
+                    for (let i = 0; i < statsData. length; i++) {
                         const stat = statsData[i];
                         if (stat && stat.attribute && stat.value !== undefined) {
                             const key = this.AttributeToKey(stat.attribute);
@@ -299,6 +299,8 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
     }
     
     this.isRefreshing[playerId] = false;
+    
+    print(`[EquipmentVaultSystem] 属性已刷新: 力量+${totalStats.strength}, 敏捷+${totalStats. agility}, 智力+${totalStats. intelligence}`);
 }
 
     // 属性名称转换为键名

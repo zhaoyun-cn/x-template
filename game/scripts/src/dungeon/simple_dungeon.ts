@@ -112,7 +112,8 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
             0
         );
     }
-});CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event: any) => {
+});
+CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event: any) => {
     const playerId = event.PlayerID as PlayerID;
     const index = event.index as number;
     
@@ -121,7 +122,7 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
     if (EquipmentVaultSystem. EquipItem(playerId, index)) {
         const player = PlayerResource.GetPlayer(playerId);
         if (player) {
-            // ⭐ 发送仓库数据
+            // ⭐⭐⭐ 使用 SerializeItems 序列化仓库数据（包含 affixDetails）
             const vault = EquipmentVaultSystem.GetVault(playerId);
             const serializedVault = this.SerializeItems(vault);
             
@@ -129,7 +130,7 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
                 items: serializedVault
             });
             
-            // ⭐⭐⭐ 使用 SerializeItem 来正确处理装备数据（包含 affixDetails）
+            // ⭐⭐⭐ 使用 SerializeItem 序列化装备数据（包含 affixDetails）
             const equipment = EquipmentVaultSystem.GetEquipment(playerId);
             const serializedEquipment: any = {};
             
@@ -146,20 +147,11 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
                 equipment: serializedEquipment
             });
             
-            GameRules.SendCustomMessage(
-                "✅ 装备成功！",
-                playerId,
-                0
-            );
-            
+            GameRules.SendCustomMessage("✅ 装备成功！", playerId, 0);
             print(`[SimpleDungeon] 装备成功，已推送更新数据`);
         }
     } else {
-        GameRules.SendCustomMessage(
-            "❌ 装备失败！",
-            playerId,
-            0
-        );
+        GameRules.SendCustomMessage("❌ 装备失败！", playerId, 0);
     }
 });
         print("[SimpleDungeon] Chat listener registered");

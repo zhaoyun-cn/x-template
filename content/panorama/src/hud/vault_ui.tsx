@@ -84,7 +84,7 @@ const extractAffixes = (affixDetails: any) => {
                 if (safeAffix.position === 'prefix') {
                     prefixes.push(safeAffix);
                 } else if (safeAffix.position === 'suffix') {
-                    suffixes. push(safeAffix);
+                    suffixes.push(safeAffix);
                 }
             }
         }
@@ -133,28 +133,71 @@ const extractAffixes = (affixDetails: any) => {
             setVaultItems(items);
         });
 
-        const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
-            const processedEquipment: Record<string, ExternalRewardItem | null> = {};
+const equipmentListener = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
+    const processedEquipment: Record<string, ExternalRewardItem | null> = {};
+    
+    for (const slot in data. equipment) {
+        const item = data. equipment[slot];
+        
+        if (item) {
+            const statsArray = Array.isArray(item.stats) 
+                ? item.stats 
+                : Object.values(item. stats || {});
             
-            for (const slot in data.equipment) {
-                const item = data.equipment[slot];
+            // ⭐⭐⭐ 安全处理 affixDetails
+            let safeAffixDetails: AffixDetail[] | undefined = undefined;
+            if (item.affixDetails) {
+                const tempArr: AffixDetail[] = [];
+                const affixData = item.affixDetails;
                 
-                if (item) {
-                    const statsArray = Array.isArray(item.stats) 
-                        ? item.stats 
-                        : Object.values(item.stats || {});
-                    
-                    processedEquipment[slot] = {
-                        ...item,
-                        stats: statsArray
-                    };
-                } else {
-                    processedEquipment[slot] = null;
+                if (Array.isArray(affixData)) {
+                    for (let i = 0; i < affixData.length; i++) {
+                        const affix = affixData[i];
+                        if (affix && affix.name) {
+                            tempArr.push({
+                                position: affix.position || 'prefix',
+                                tier: affix.tier || 1,
+                                name: String(affix.name || ''),
+                                description: String(affix.description || ''),
+                                color: affix.color || '#ffffff',
+                            });
+                        }
+                    }
+                } else if (typeof affixData === 'object') {
+                    for (const key in affixData) {
+                        const affix = affixData[key];
+                        if (affix && affix. name) {
+                            tempArr.push({
+                                position: affix.position || 'prefix',
+                                tier: affix.tier || 1,
+                                name: String(affix.name || ''),
+                                description: String(affix.description || ''),
+                                color: affix.color || '#ffffff',
+                            });
+                        }
+                    }
+                }
+                
+                if (tempArr.length > 0) {
+                    safeAffixDetails = tempArr;
                 }
             }
             
-            setEquippedItems(processedEquipment);
-        });
+            processedEquipment[slot] = {
+                name: item.name,
+                type: item.type,
+                icon: item.icon,
+                stats: statsArray,
+                rarity: item.rarity,
+                affixDetails: safeAffixDetails,
+            };
+        } else {
+            processedEquipment[slot] = null;
+        }
+    }
+    
+    setEquippedItems(processedEquipment);
+});
 
         return () => {
             GameEvents.Unsubscribe(vaultListener);
@@ -552,107 +595,121 @@ const extractAffixes = (affixDetails: any) => {
                                 marginBottom: '10px',
                             }} />
 
-                            {/* 当前已装备 */}
-                            {compareEquipment ?  (() => {
-                                const { prefixes: currPrefixes, suffixes: currSuffixes } = extractAffixes(compareEquipment.affixDetails);
-                                
-                                return (
-                                    <Panel style={{
-                                        width: '100%',
-                                        backgroundColor: '#0a0a0a',
-                                        border: `2px solid ${getQualityColor(compareEquipment)}`,
-                                        padding: '10px',
-                                        flowChildren: 'down',
-                                    }}>
-                                        <Label 
-                                            text="【当前装备】"
-                                            style={{ fontSize: '12px', color: '#888888', marginBottom: '5px' }}
-                                        />
-                                        <Panel style={{ width: '100%', flowChildren: 'right', marginBottom: '5px' }}>
-                                            <Panel style={{
-                                                width: '50px',
-                                                height: '50px',
-                                                backgroundImage: `url("${compareEquipment.icon}")`,
-                                                backgroundSize: 'cover',
-                                                marginRight: '10px',
-                                            }} />
-                                            <Panel style={{ flowChildren: 'down' }}>
-                                                <Label 
-                                                    text={compareEquipment.name}
-                                                    style={{
-                                                        fontSize: '16px',
-                                                        color: getQualityColor(compareEquipment),
-                                                        fontWeight: 'bold',
-                                                        marginBottom: '3px',
-                                                    }}
-                                                />
-                                                <Label 
-                                                    text={compareEquipment.type}
-                                                    style={{ fontSize: '12px', color: '#ffd700', marginBottom: '8px' }}
-                                                />
-                                                
-                                                {/* 当前装备前缀 */}
-                                                {currPrefixes.length > 0 && (
-                                                    <>
-                                                        <Label 
-                                                            text={`━━ 前缀 (${currPrefixes.length}) ━━`}
-                                                            style={{ fontSize: '11px', color: '#8888ff', marginBottom: '3px', fontWeight: 'bold' }}
-                                                        />
-                                                        {currPrefixes.map((affix: any, idx: number) => (
-                                                            <Label 
-                                                                key={`curr-prefix-${idx}`}
-                                                                text={`[T${affix.tier}] ${affix.name} ${affix.description}`}
-                                                                style={{ 
-                                                                    fontSize: '11px', 
-                                                                    color: '#8888ff',
-                                                                    marginBottom: '2px',
-                                                                }}
-                                                            />
-                                                        ))}
-                                                    </>
-                                                )}
-                                                
-                                                {/* 当前装备后缀 */}
-                                                {currSuffixes.length > 0 && (
-                                                    <>
-                                                        <Label 
-                                                            text={`━━ 后缀 (${currSuffixes.length}) ━━`}
-                                                            style={{ fontSize: '11px', color: '#ffff77', marginTop: '5px', marginBottom: '3px', fontWeight: 'bold' }}
-                                                        />
-                                                        {currSuffixes.map((affix: any, idx: number) => (
-                                                            <Label 
-                                                                key={`curr-suffix-${idx}`}
-                                                                text={`[T${affix.tier}] ${affix.name} ${affix.description}`}
-                                                                style={{ 
-                                                                    fontSize: '11px', 
-                                                                    color: '#ffff77',
-                                                                    marginBottom: '2px',
-                                                                }}
-                                                            />
-                                                        ))}
-                                                    </>
-                                                )}
-                                            </Panel>
-                                        </Panel>
-                                    </Panel>
-                                );
-                            })() : (
-                                <Panel style={{
-                                    width: '100%',
-                                    backgroundColor: '#2a2a2a',
-                                    padding: '15px',
-                                    flowChildren: 'down',
-                                }}>
-                                    <Label 
-                                        text="✨ 当前未装备同类型装备"
-                                        style={{
-                                            fontSize: '14px',
-                                            color: '#888888',
-                                            textAlign: 'center',
-                                        }}
-                                    />
-                                </Panel>
-                            )}
+  {/* 当前已装备 */}
+{compareEquipment ?  (() => {
+    // ⭐⭐⭐ 安全提取当前装备的词缀
+    let currPrefixes: any[] = [];
+    let currSuffixes: any[] = [];
+    
+    try {
+        if (compareEquipment.affixDetails) {
+            const result = extractAffixes(compareEquipment.affixDetails);
+            currPrefixes = result.prefixes || [];
+            currSuffixes = result. suffixes || [];
+        }
+    } catch (e) {
+        // 忽略错误
+        currPrefixes = [];
+        currSuffixes = [];
+    }
+    
+    return (
+        <Panel style={{
+            width: '100%',
+            backgroundColor: '#0a0a0a',
+            border: `2px solid ${getQualityColor(compareEquipment)}`,
+            padding: '10px',
+            flowChildren: 'down',
+        }}>
+            <Label 
+                text="【当前装备】"
+                style={{ fontSize: '12px', color: '#888888', marginBottom: '5px' }}
+            />
+            <Panel style={{ width: '100%', flowChildren: 'right', marginBottom: '5px' }}>
+                <Panel style={{
+                    width: '50px',
+                    height: '50px',
+                    backgroundImage: `url("${compareEquipment.icon || ''}")`,
+                    backgroundSize: 'cover',
+                    marginRight: '10px',
+                }} />
+                <Panel style={{ flowChildren: 'down' }}>
+                    <Label 
+                        text={String(compareEquipment.name || '未知装备')}
+                        style={{
+                            fontSize: '16px',
+                            color: getQualityColor(compareEquipment),
+                            fontWeight: 'bold',
+                            marginBottom: '3px',
+                        }}
+                    />
+                    <Label 
+                        text={String(compareEquipment.type || '')}
+                        style={{ fontSize: '12px', color: '#ffd700', marginBottom: '8px' }}
+                    />
+                    
+                    {/* 当前装备前缀 */}
+                    {currPrefixes.length > 0 && (
+                        <>
+                            <Label 
+                                text={`━━ 前缀 (${currPrefixes.length}) ━━`}
+                                style={{ fontSize: '11px', color: '#8888ff', marginBottom: '3px', fontWeight: 'bold' }}
+                            />
+                            {currPrefixes. map((affix: any, idx: number) => (
+                                <Label 
+                                    key={`curr-prefix-${idx}`}
+                                    text={`[T${affix.tier || 1}] ${String(affix.name || '')} ${String(affix. description || '')}`}
+                                    style={{ 
+                                        fontSize: '11px', 
+                                        color: '#8888ff',
+                                        marginBottom: '2px',
+                                    }}
+                                />
+                            ))}
+                        </>
+                    )}
+                    
+                    {/* 当前装备后缀 */}
+                    {currSuffixes.length > 0 && (
+                        <>
+                            <Label 
+                                text={`━━ 后缀 (${currSuffixes. length}) ━━`}
+                                style={{ fontSize: '11px', color: '#ffff77', marginTop: '5px', marginBottom: '3px', fontWeight: 'bold' }}
+                            />
+                            {currSuffixes.map((affix: any, idx: number) => (
+                                <Label 
+                                    key={`curr-suffix-${idx}`}
+                                    text={`[T${affix.tier || 1}] ${String(affix. name || '')} ${String(affix. description || '')}`}
+                                    style={{ 
+                                        fontSize: '11px', 
+                                        color: '#ffff77',
+                                        marginBottom: '2px',
+                                    }}
+                                />
+                            ))}
+                        </>
+                    )}
+                </Panel>
+            </Panel>
+        </Panel>
+    );
+})() : (
+    <Panel style={{
+        width: '100%',
+        backgroundColor: '#2a2a2a',
+        padding: '15px',
+        flowChildren: 'down',
+    }}>
+        <Label 
+            text="✨ 当前未装备同类型装备"
+            style={{
+                fontSize: '14px',
+                color: '#888888',
+                textAlign: 'center',
+            }}
+        />
+    </Panel>
+)}
                         </Panel>
                     </Panel>
                 );
