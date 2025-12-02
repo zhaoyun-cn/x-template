@@ -181,7 +181,7 @@ export class modifier_equipment_system extends BaseModifier {
     GetModifierEvasion_Constant(): number { return this.stats.evasion; }
 
     // ⭐⭐⭐ 暴击率实现 - 修复版
-    GetModifierPreattack_CriticalStrike(): number {
+    GetModifierPreAttack_CriticalStrike(): number {
         if (! IsServer()) return 0;
         
         const critChance = this.stats.crit_chance || 0;
@@ -207,7 +207,7 @@ export class modifier_equipment_system extends BaseModifier {
 
     // ⭐⭐⭐ 冷却缩减实现
     GetModifierPercentageCooldown(): number {
-        return -(this.stats.cooldown_reduction || 0);
+        return (this.stats.cooldown_reduction || 0);
     }
 
     // ⭐⭐⭐ 元素抗性实现
