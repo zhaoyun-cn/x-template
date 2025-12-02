@@ -209,12 +209,24 @@ export const VaultUI: React.FC<{ visible: boolean; onClose: () => void }> = ({ v
                     </Panel>
                 </Panel>
                 
-                {/* 属性 */}
+                 {/* ⭐ 属性 - 显示完整的 attribute 字符串 */}
                 {statsList.length > 0 && (
                     <Panel style={{ flowChildren: 'down', marginBottom: '8px' }}>
-                        {statsList.map((stat, i) => (
-                            <Label key={'s' + i} text={'+' + (stat.value || 0) + ' ' + (stat.attribute || '')} style={{ fontSize: '12px', color: '#55ff55' }} />
-                        ))}
+                        {statsList.map((stat, i) => {
+                            // ⭐ 如果 attribute 已经包含数值（如 "+32% 物理伤害"），直接显示
+                            // 否则拼接 value
+                            const attrStr = String(stat.attribute || '');
+                            const hasValue = attrStr.indexOf('+') >= 0 || attrStr.indexOf('-') >= 0;
+                            const displayText = hasValue ?  attrStr : ('+' + (stat.value || 0) + ' ' + attrStr);
+                            
+                            return (
+                                <Label 
+                                    key={'s' + i} 
+                                    text={displayText}
+                                    style={{ fontSize: '12px', color: '#55ff55' }} 
+                                />
+                            );
+                        })}
                     </Panel>
                 )}
                 

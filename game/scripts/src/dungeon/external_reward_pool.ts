@@ -25,38 +25,38 @@ export enum ExternalItemType {
     TRINKET = "饰品"
 }
 
-// 装备属性定义（单个属性条目）
+// ⭐ 装备属性定义（修改：attribute 可以是枚举或字符串）
 export interface EquipmentStat {
-    attribute: EquipmentAttribute;  // 属性类型
-    value: number;                  // 属性值
+    attribute: EquipmentAttribute | string;  // ⭐ 允许字符串类型
+    value: number;
 }
 
 // ⭐ 新增：词缀详情接口
 export interface AffixDetail {
-    position: 'prefix' | 'suffix';  // 前缀还是后缀
-    tier: number;                   // 层级（1-4）
-    name: string;                   // 词缀名称（如"锋利的"）
-    description: string;            // 描述（如"+18 攻击伤害"）
-    color?: string;                 // 显示颜色（可选）
+    position: 'prefix' | 'suffix';
+    tier: number;
+    name: string;
+    description: string;
+    color?: string;
 }
 
-// 局外装备定义（完全多属性）
+// 局外装备定义
 export interface ExternalRewardItem {
-    name: string;                   // 装备名称
-    type: ExternalItemType;         // 装备类型
-    icon: string;                   // 图片路径
-    stats: EquipmentStat[];         // 属性列表（必定是数组）
-    rarity?: number;                // 稀有度（可选）
-    description?: string;           // 描述（可选）
-    affixDetails?: AffixDetail[];   // ⭐ 新增：词缀详细信息
+    name: string;
+    type: ExternalItemType;
+    icon: string;
+    stats: EquipmentStat[];
+    rarity?: number;
+    description?: string;
+    affixDetails?: AffixDetail[];
 }
 
-// 局外奖励池 - 所有装备都是多属性
+// 局外奖励池
 export const EXTERNAL_REWARD_POOL: ExternalRewardItem[] = [
     // 武器示例
     { 
         name: "铁剑", 
-        type: ExternalItemType.WEAPON, 
+        type: ExternalItemType. WEAPON, 
         icon: "file://{images}/items/blades_of_attack.png", 
         stats: [
             { attribute: EquipmentAttribute.STRENGTH, value: 5 },
@@ -68,7 +68,7 @@ export const EXTERNAL_REWARD_POOL: ExternalRewardItem[] = [
         type: ExternalItemType.WEAPON, 
         icon: "file://{images}/items/claymore.png", 
         stats: [
-            { attribute: EquipmentAttribute.STRENGTH, value: 8 },
+            { attribute: EquipmentAttribute. STRENGTH, value: 8 },
             { attribute: EquipmentAttribute.ATTACK_DAMAGE, value: 18 }
         ]
     },

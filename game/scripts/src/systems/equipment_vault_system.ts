@@ -31,23 +31,34 @@ export class EquipmentVaultSystem {
     
     static readonly MAX_VAULT_SIZE = 40;
 
-    // ⭐ 初始化玩家装备系统
+     // ⭐ 初始化玩家装备系统
     static InitializePlayer(playerId: PlayerID, hero?: CDOTA_BaseNPC_Hero): void {
         print(`[EquipmentVaultSystem] 初始化玩家${playerId}的仓库和装备`);
         
-        if (! this.playerEquipment[playerId]) {
-            this.playerEquipment[playerId] = {
-                helmet: null,
-                necklace: null,
-                ring: null,
-                trinket: null,
-                weapon: null,
-                armor: null,
-                belt: null,
-                boots: null,
-                gloves: null,
-            };
-        }
+        // ⭐⭐⭐ 强制重置全局属性表
+        _G.EquipmentStats[playerId] = this.CreateEmptyStats();
+        
+        // 初始化装备槽
+        this.playerEquipment[playerId] = {
+            helmet: null,
+            necklace: null,
+            ring: null,
+            trinket: null,
+            weapon: null,
+            armor: null,
+            belt: null,
+            boots: null,
+            gloves: null,
+        };
+        
+        // 初始化仓库
+        this.playerVaults[playerId] = [];
+        
+        // 重置刷新标志
+        this.isRefreshing[playerId] = false;
+        
+        // 从持久化存储加载
+        this.LoadFromPersistentStorage(playerId);
         
         if (! this.playerVaults[playerId]) {
             this.playerVaults[playerId] = [];
@@ -329,7 +340,7 @@ export class EquipmentVaultSystem {
         return true;
     }
 
-    // ⭐⭐⭐ 刷新装备属性
+         // ⭐⭐⭐ 刷新装备属性 - 修复双倍问题
     private static RefreshEquipmentStats(playerId: PlayerID): void {
         if (!IsServer()) return;
         
@@ -350,8 +361,30 @@ export class EquipmentVaultSystem {
                 
                 if (! item) continue;
                 
-                // 方式1：读取 stats 数组
-                if (item.stats) {
+                // ⭐⭐⭐ 只从 affixDetails 读取属性（不要同时从 stats 读取，会导致双倍）
+                if (item.affixDetails) {
+                    const affixData = item.affixDetails as any;
+                    
+                    // 尝试作为数组处理
+                    if (affixData.length !== undefined && affixData.length > 0) {
+                        for (let i = 0; i < affixData.length; i++) {
+                            const affix = affixData[i];
+                            if (affix && affix.description && typeof affix.description === 'string') {
+                                this.ParseAffixDescription(affix.description, totalStats);
+                            }
+                        }
+                    } else {
+                        // 作为对象处理
+                        for (const key in affixData) {
+                            const affix = affixData[key];
+                            if (affix && affix.description && typeof affix.description === 'string') {
+                                this.ParseAffixDescription(affix.description, totalStats);
+                            }
+                        }
+                    }
+                }
+                // ⭐ 如果没有 affixDetails，才从 stats 读取（作为后备）
+                else if (item.stats && item.stats.length > 0) {
                     for (let i = 0; i < item.stats.length; i++) {
                         const stat = item.stats[i];
                         if (stat && stat.attribute && stat.value !== undefined) {
@@ -359,17 +392,6 @@ export class EquipmentVaultSystem {
                             if (key && (totalStats as any)[key] !== undefined) {
                                 (totalStats as any)[key] = ((totalStats as any)[key] || 0) + (stat.value || 0);
                             }
-                        }
-                    }
-                }
-                
-                // 方式2：读取 affixDetails
-                if (item.affixDetails) {
-                    const affixData = item.affixDetails as any;
-                    for (const key in affixData) {
-                        const affix = affixData[key];
-                        if (affix && affix.description && typeof affix.description === 'string') {
-                            this.ParseAffixDescription(affix.description, totalStats);
                         }
                     }
                 }
@@ -385,7 +407,7 @@ export class EquipmentVaultSystem {
             hero.SetPhysicalArmorBaseValue(newArmor);
             
             const modifier = hero.FindModifierByName("modifier_equipment_system");
-            if (modifier && !modifier.IsNull()) {
+            if (modifier && ! modifier.IsNull()) {
                 (modifier as any).OnRefresh({});
                 print(`[EquipmentVaultSystem] ✓ Modifier 已刷新`);
             } else {
@@ -402,39 +424,101 @@ export class EquipmentVaultSystem {
         print(`[EquipmentVaultSystem] 属性已刷新: 力量+${totalStats.strength}, 敏捷+${totalStats.agility}, 智力+${totalStats.intelligence}, 生命+${totalStats.health}`);
     }
 
-    // ⭐ 解析词缀描述
+       // ⭐⭐⭐ 解析词缀描述 - 支持所有词缀类型
     private static ParseAffixDescription(desc: string, totalStats: EquipmentTotalStats): void {
         if (!desc || typeof desc !== 'string') return;
         
-        const rules: Array<{ pattern: string; key: keyof EquipmentTotalStats }> = [
-            { pattern: "(%d+)%s*力量", key: 'strength' },
-            { pattern: "(%d+)%s*敏捷", key: 'agility' },
-            { pattern: "(%d+)%s*智力", key: 'intelligence' },
-            { pattern: "(%d+)%s*护甲", key: 'armor' },
-            { pattern: "(%d+)%s*生命", key: 'health' },
-            { pattern: "(%d+)%s*魔法", key: 'mana' },
-            { pattern: "(%d+)%s*攻击力", key: 'attack_damage' },
-            { pattern: "(%d+)%%? %s*攻击速度", key: 'attack_speed' },
-            { pattern: "(%d+)%s*移动速度", key: 'move_speed' },
-            { pattern: "(%d+)%%?%s*暴击率", key: 'crit_chance' },
-            { pattern: "(%d+)%%?%s*暴击伤害", key: 'crit_multiplier' },
-            { pattern: "(%d+)%%?%s*技能冷却", key: 'cooldown_reduction' },
-            { pattern: "(%d+)%%? %s*火焰抗性", key: 'fire_resistance' },
-            { pattern: "(%d+)%%?%s*冰霜抗性", key: 'cold_resistance' },
-            { pattern: "(%d+)%%?%s*闪电抗性", key: 'lightning_resistance' },
-            { pattern: "(%d+)%%? %s*闪避", key: 'evasion' },
-            { pattern: "(%d+)%%? %s*魔抗", key: 'magic_resistance' },
-        ];
+        let val = 0;
         
-        for (const rule of rules) {
-            const match = string.match(desc, rule.pattern);
+        // ⭐ 通用数值提取函数
+        const extractValue = (pattern: string): number => {
+            const match = string.match(desc, pattern);
             if (match && match[0]) {
-                const value = tonumber(match[0]);
-                if (value && value > 0) {
-                    (totalStats as any)[rule.key] = ((totalStats as any)[rule.key] || 0) + value;
-                }
+                return tonumber(match[0]) || 0;
             }
+            return 0;
+        };
+        
+        // ===== 基础属性 =====
+        
+        // 力量
+        val = extractValue("%+(%d+)%s*力量");
+        if (val > 0) { totalStats.strength += val; return; }
+        
+        // 敏捷
+        val = extractValue("%+(%d+)%s*敏捷");
+        if (val > 0) { totalStats.agility += val; return; }
+        
+        // 智力
+        val = extractValue("%+(%d+)%s*智力");
+        if (val > 0) { totalStats.intelligence += val; return; }
+        
+        // ===== 攻击属性 =====
+        
+        // 固定攻击伤害
+        val = extractValue("%+(%d+)%s*攻击伤害");
+        if (val > 0) { totalStats.attack_damage += val; return; }
+        
+        // 百分比物理伤害 -> 转为攻击力
+        val = extractValue("%+(%d+)%%%s*物理伤害");
+        if (val > 0) { totalStats.attack_damage += val; return; }
+        
+        // 攻击速度
+        val = extractValue("%+(%d+)%%%s*攻击速度");
+        if (val > 0) { totalStats.attack_speed += val; return; }
+        
+        // 暴击率
+        val = extractValue("%+(%d+)%%%s*暴击率");
+        if (val > 0) { totalStats.crit_chance += val; return; }
+        
+        // ===== 防御属性 =====
+        
+        // 固定生命（排除生命偷取、生命回复、最大生命）
+        if (desc.indexOf("偷取") < 0 && desc.indexOf("回复") < 0 && desc.indexOf("最大") < 0) {
+            val = extractValue("%+(%d+)%s*生命");
+            if (val > 0) { totalStats.health += val; return; }
         }
+        
+        // 固定护甲（非百分比）
+        if (desc.indexOf("%") < 0) {
+            val = extractValue("%+(%d+)%s*护甲");
+            if (val > 0) { totalStats.armor += val; return; }
+        }
+        
+        // 百分比护甲
+        val = extractValue("%+(%d+)%%%s*护甲");
+        if (val > 0) { totalStats.armor += Math.floor(val / 5); return; }  // 5%=1护甲
+        
+        // ===== 移动和闪避 =====
+        
+        // 移动速度
+        val = extractValue("%+(%d+)%%%s*移动速度");
+        if (val > 0) { totalStats.move_speed += val; return; }
+        
+        // 闪避率
+        val = extractValue("%+(%d+)%%%s*闪避");
+        if (val > 0) { totalStats.evasion += val; return; }
+        
+        // ===== 抗性 =====
+        
+        // 火焰抗性
+        val = extractValue("%+(%d+)%%%s*火焰抗性");
+        if (val > 0) { totalStats.fire_resistance += val; return; }
+        
+        // 冰霜抗性
+        val = extractValue("%+(%d+)%%%s*冰霜抗性");
+        if (val > 0) { totalStats.cold_resistance += val; return; }
+        
+        // 闪电抗性
+        val = extractValue("%+(%d+)%%%s*闪电抗性");
+        if (val > 0) { totalStats.lightning_resistance += val; return; }
+        
+        // 魔法抗性
+        val = extractValue("%+(%d+)%%%s*魔抗");
+        if (val > 0) { totalStats.magic_resistance += val; return; }
+        
+        // ===== 特殊属性（暂不处理，只打印日志）=====
+        // 生命偷取、生命回复、技能等级等
     }
 
     // 属性名称转换为键名

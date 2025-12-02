@@ -60,13 +60,12 @@ declare interface XNetTableDataJSON {
 
 // ⭐ 装备物品数据结构
 declare interface VaultItemData {
-    id: string;
+       id: string;
     name: string;
     type: string;
     icon: string;
     rarity: number;
-    stats: Array<{ attribute: string; value: number }>;
-    // ⭐ 修改：affixDetails 改为数组类型
+    stats: Array<{ attribute: string; value: number }>;  // ⭐ attribute 是 string
     affixDetails?: AffixDetailData[];
 }
 
