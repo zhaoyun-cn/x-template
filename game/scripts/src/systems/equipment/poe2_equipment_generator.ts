@@ -369,10 +369,11 @@ export class POE2EquipmentGenerator {
     // ==================== 重铸功能 ====================
 
     /**
-     * 使用混沌石：重随所有词缀
+       /**
+     * 使用混沌石：随机重置一条词缀
      */
-    public static RerollAllAffixes(equipment: POE2EquipmentInstance): boolean {
-        if (equipment.rarity !== ItemRarity.RARE && equipment.rarity !== ItemRarity.LEGENDARY) {
+    public static RerollOneAffix(equipment: POE2EquipmentInstance): boolean {
+        if (equipment. rarity !== ItemRarity.RARE && equipment.rarity !== ItemRarity. LEGENDARY) {
             print('[POE2Generator] 只能对稀有/传说装备使用混沌石');
             return false;
         }
@@ -382,20 +383,65 @@ export class POE2EquipmentGenerator {
             return false;
         }
 
-        // 清空现有词缀
-        equipment.prefixes = [];
-        equipment.suffixes = [];
-
-        // 重新生成词缀
-        this.RollAffixes(equipment);
-
-        // 重新生成名称
-        const baseType = GetBaseTypeById(equipment.baseTypeId);
-        if (baseType) {
-            equipment.name = this.GenerateEquipmentName(equipment, baseType.name);
+        // 收集所有词缀
+        const allAffixes: { affix: AffixInstance; isPrefix: boolean; index: number }[] = [];
+        
+        for (let i = 0; i < equipment.prefixes.length; i++) {
+            allAffixes.push({ affix: equipment. prefixes[i], isPrefix: true, index: i });
+        }
+        for (let i = 0; i < equipment. suffixes.length; i++) {
+            allAffixes. push({ affix: equipment.suffixes[i], isPrefix: false, index: i });
         }
 
-        print(`[POE2Generator] 混沌石: ${equipment.name} 重随完成`);
+        if (allAffixes.length === 0) {
+            print('[POE2Generator] 装备没有词缀');
+            return false;
+        }
+
+        // 随机选择一条词缀
+        const selectedIndex = RandomInt(0, allAffixes.length - 1);
+        const selected = allAffixes[selectedIndex];
+        
+        const oldAffixDef = GetAffixById(selected.affix.affixId);
+        const oldAffixName = oldAffixDef ?  oldAffixDef.name : '未知';
+
+        // 获取基底信息
+        const baseType = GetBaseTypeById(equipment.baseTypeId);
+        if (!baseType) return false;
+
+        // 移除选中的词缀
+        if (selected.isPrefix) {
+            equipment.prefixes.splice(selected.index, 1);
+        } else {
+            equipment.suffixes. splice(selected.index, 1);
+        }
+
+        // 生成新词缀（保持相同位置：前缀/后缀）
+        const position = selected.isPrefix ? AffixPosition.PREFIX : AffixPosition.SUFFIX;
+        const newAffix = this.RollOneAffix(equipment, position, baseType. slot);
+
+        if (newAffix) {
+            if (selected.isPrefix) {
+                equipment.prefixes.push(newAffix);
+            } else {
+                equipment.suffixes. push(newAffix);
+            }
+            
+            const newAffixDef = GetAffixById(newAffix.affixId);
+            const newAffixName = newAffixDef ? newAffixDef. name : '未知';
+            
+            print(`[POE2Generator] 混沌石: ${oldAffixName} -> ${newAffixName}`);
+        } else {
+            // 如果没有可用词缀，恢复原词缀
+            if (selected.isPrefix) {
+                equipment.prefixes.push(selected.affix);
+            } else {
+                equipment. suffixes.push(selected.affix);
+            }
+            print('[POE2Generator] 混沌石: 没有可用的新词缀，保持原样');
+            return false;
+        }
+
         return true;
     }
 

@@ -34,7 +34,7 @@ export enum LootType {
     CRAFT_REROLL_AFFIX = "craft_reroll_affix",
     CRAFT_REROLL_STAT = "craft_reroll_stat",
     
-    // ⭐ 新增：POE2 通货
+    // ⭐ POE2 通货
     POE2_CHAOS_ORB = "poe2_chaos_orb",           // 混沌石
     POE2_EXALTED_ORB = "poe2_exalted_orb",       // 崇高石
     POE2_DIVINE_ORB = "poe2_divine_orb",         // 神圣石
@@ -138,7 +138,7 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         usable: false
     },
     
-    // ⭐ 新增：POE2 通货配置
+    // ⭐ POE2 通货配置
     [LootType.POE2_CHAOS_ORB]: {
         type: LootType.POE2_CHAOS_ORB,
         name: "混沌石",
@@ -146,8 +146,8 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         color: "#AA00FF",
         stackable: true,
         category: MaterialCategory.CRAFT,
-        description: "重新随机稀有装备的所有词缀",
-        usable: true  // 可在材料背包中使用
+        description: "随机重置装备的一条词缀",
+        usable: true
     },
     [LootType.POE2_EXALTED_ORB]: {
         type: LootType.POE2_EXALTED_ORB,
@@ -177,7 +177,7 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         stackable: true,
         category: MaterialCategory.CRAFT,
         description: "分解装备获得，可用于合成通货",
-        usable: false  // 碎片本身不可直接使用
+        usable: false
     },
     
     // 门票
@@ -228,7 +228,7 @@ export interface DropEntry {
 export const NORMAL_DROP_TABLE: DropEntry[] = [
     { type: LootType.MATERIAL_COMMON, chance: 0.6, minCount: 1, maxCount: 2 },
     { type: LootType.MATERIAL_FINE, chance: 0.05, minCount: 1, maxCount: 1 },
-    // ⭐ 新增：普通怪小概率掉落碎片
+    // ⭐ 普通怪小概率掉落碎片
     { type: LootType.POE2_SCRAP, chance: 0.15, minCount: 1, maxCount: 2 },
 ];
 
@@ -239,7 +239,7 @@ export const ELITE_DROP_TABLE: DropEntry[] = [
     { type: LootType.MATERIAL_RARE, chance: 0.1, minCount: 1, maxCount: 1 },
     { type: LootType.CRAFT_ADD_AFFIX, chance: 0.15, minCount: 1, maxCount: 1 },
     { type: LootType.CRAFT_REROLL_AFFIX, chance: 0.1, minCount: 1, maxCount: 1 },
-    // ⭐ 新增：POE2 通货掉落
+    // ⭐ POE2 通货掉落
     { type: LootType.POE2_SCRAP, chance: 0.4, minCount: 2, maxCount: 5 },
     { type: LootType.POE2_CHAOS_ORB, chance: 0.08, minCount: 1, maxCount: 1 },
     { type: LootType.TICKET_A, chance: 0.2, minCount: 1, maxCount: 1 },
@@ -254,7 +254,7 @@ export const BOSS_DROP_TABLE: DropEntry[] = [
     { type: LootType.CRAFT_ADD_AFFIX, chance: 0.4, minCount: 1, maxCount: 2 },
     { type: LootType.CRAFT_REROLL_AFFIX, chance: 0.3, minCount: 1, maxCount: 1 },
     { type: LootType.CRAFT_REROLL_STAT, chance: 0.2, minCount: 1, maxCount: 1 },
-    // ⭐ 新增：POE2 通货掉落（Boss掉落更多）
+    // ⭐ POE2 通货掉落（Boss掉落更多）
     { type: LootType.POE2_SCRAP, chance: 0.9, minCount: 5, maxCount: 10 },
     { type: LootType.POE2_CHAOS_ORB, chance: 0.35, minCount: 1, maxCount: 3 },
     { type: LootType.POE2_EXALTED_ORB, chance: 0.18, minCount: 1, maxCount: 2 },
@@ -274,7 +274,7 @@ const playerInventories: Map<PlayerID, PlayerInventory> = new Map();
 
 function GetOrCreateInventory(playerId: PlayerID): PlayerInventory {
     let inventory = playerInventories.get(playerId);
-    if (!inventory) {
+    if (! inventory) {
         inventory = { items: new Map() };
         playerInventories.set(playerId, inventory);
     }
@@ -445,7 +445,7 @@ export class MaterialUseSystem {
         print(`[MaterialUseSystem] 玩家 ${playerId} 尝试使用 ${materialType}`);
         
         const config = LOOT_ITEMS[materialType];
-        if (!config || !config.usable) {
+        if (! config || !config.usable) {
             print(`[MaterialUseSystem] 材料 ${materialType} 不可使用`);
             return;
         }
@@ -456,30 +456,53 @@ export class MaterialUseSystem {
             return;
         }
         
+        // ⭐ POE2 通货特殊处理：不在这里消耗，交给打造系统
+        if (this.IsPOE2Currency(materialType)) {
+            print(`[MaterialUseSystem] 玩家 ${playerId} 使用 ${config.name}`);
+            this.UsePOE2Currency(playerId, materialType);
+            return;
+        }
+        
+        // 其他材料：先消耗再使用
         if (! ZoneLootSystem.ConsumeItem(playerId, materialType, 1)) {
             return;
         }
         
-       switch (materialType) {
-    case LootType.CHEST:
-        this.OpenChest(playerId);
-        break;
-    case LootType.TICKET_A:
-        this.UseTicketA(playerId);
-        break;
-    case LootType.TICKET_B:
-        this.UseTicketB(playerId);
-        break;
-    // ⭐ POE2 通货使用（暂时简化版本）
-    case LootType.POE2_CHAOS_ORB:
-        this.UseChaosOrb(playerId);
-        break;
-    case LootType.POE2_EXALTED_ORB:
-        this.UseExaltedOrb(playerId);
-        break;
-    case LootType.POE2_DIVINE_ORB:
-        this.UseDivineOrb(playerId);
-        break;
+        switch (materialType) {
+            case LootType.CHEST:
+                this.OpenChest(playerId);
+                break;
+            case LootType.TICKET_A:
+                this.UseTicketA(playerId);
+                break;
+            case LootType.TICKET_B:
+                this.UseTicketB(playerId);
+                break;
+        }
+    }
+    
+    /**
+     * 检查是否是 POE2 通货
+     */
+    private static IsPOE2Currency(materialType: LootType): boolean {
+        return materialType === LootType.POE2_CHAOS_ORB ||
+               materialType === LootType.POE2_EXALTED_ORB ||
+               materialType === LootType.POE2_DIVINE_ORB;
+    }
+    
+    /**
+     * 使用 POE2 通货 - 交给打造系统处理
+     */
+    private static UsePOE2Currency(playerId: PlayerID, currencyType: LootType): void {
+        // 动态导入避免循环依赖
+        const { POE2CraftSystem } = require('../systems/equipment/poe2_craft_system');
+        
+        // 打造系统会检查是否选中装备，并处理通货消耗
+        const success = POE2CraftSystem.UseCurrency(playerId, currencyType);
+        
+        if (! success) {
+            // 如果失败，打造系统已经发送了错误提示
+            print(`[MaterialUseSystem] 通货使用失败`);
         }
     }
     
@@ -531,37 +554,6 @@ export class MaterialUseSystem {
         GameRules.SendCustomMessage(message, playerId, 0);
         
         this.SendUseResult(playerId, LootType.TICKET_B, true, message);
-    }
-    
-    // ⭐ 新增：POE2 通货使用函数（占位符，后续会实现完整逻辑）
-    private static UseChaosOrb(playerId: PlayerID): void {
-        print(`[MaterialUseSystem] 玩家 ${playerId} 使用混沌石`);
-        
-        // TODO: 实现混沌石逻辑（需要打开装备界面选择装备）
-        const message = "🔮 混沌石使用成功！（功能开发中）";
-        GameRules.SendCustomMessage(message, playerId, 0);
-        
-        this.SendUseResult(playerId, LootType.POE2_CHAOS_ORB, true, message);
-    }
-    
-    private static UseExaltedOrb(playerId: PlayerID): void {
-        print(`[MaterialUseSystem] 玩家 ${playerId} 使用崇高石`);
-        
-        // TODO: 实现崇高石逻辑
-        const message = "✨ 崇高石使用成功！（功能开发中）";
-        GameRules.SendCustomMessage(message, playerId, 0);
-        
-        this.SendUseResult(playerId, LootType.POE2_EXALTED_ORB, true, message);
-    }
-    
-    private static UseDivineOrb(playerId: PlayerID): void {
-        print(`[MaterialUseSystem] 玩家 ${playerId} 使用神圣石`);
-        
-        // TODO: 实现神圣石逻辑
-        const message = "💎 神圣石使用成功！（功能开发中）";
-        GameRules.SendCustomMessage(message, playerId, 0);
-        
-        this.SendUseResult(playerId, LootType.POE2_DIVINE_ORB, true, message);
     }
     
     private static SendUseResult(playerId: PlayerID, materialType: LootType, success: boolean, message: string): void {
