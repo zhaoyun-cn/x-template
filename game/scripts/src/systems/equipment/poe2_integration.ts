@@ -10,21 +10,19 @@ import { POE2EquipmentGenerator } from './poe2_equipment_generator';
 import { EquipmentVaultSystem } from '../equipment_vault_system';
 import { LootType, ZoneLootSystem } from '../../zone/zone_loot';
 
-// ⭐ 导入现有系统的接口
 import { 
     ExternalRewardItem, 
     ExternalItemType, 
     EquipmentAttribute, 
     EquipmentStat,
-    AffixDetail  // ⭐ 新增
+    AffixDetail
 } from '../../dungeon/external_reward_pool';
-
-// ==================== POE2 装备转换器 ====================
 
 export class POE2Integration {
     
     /**
      * 将 POE2 装备实例转换为仓库系统格式
+     * ⭐ 修改：stats 和 affixDetails 使用相同的描述
      */
     public static ConvertToVaultItem(poe2Item: POE2EquipmentInstance): ExternalRewardItem {
         const baseType = GetBaseTypeById(poe2Item.baseTypeId);
@@ -41,7 +39,7 @@ export class POE2Integration {
         const slotToTypeMap: Record<EquipSlot, ExternalItemType> = {
             [EquipSlot.WEAPON]: ExternalItemType.WEAPON,
             [EquipSlot.HELMET]: ExternalItemType.HELMET,
-            [EquipSlot. ARMOR]: ExternalItemType. ARMOR,
+            [EquipSlot.ARMOR]: ExternalItemType.ARMOR,
             [EquipSlot.GLOVES]: ExternalItemType.TRINKET,
             [EquipSlot.BOOTS]: ExternalItemType.BOOTS,
             [EquipSlot.BELT]: ExternalItemType.BELT,
@@ -50,65 +48,70 @@ export class POE2Integration {
             [EquipSlot.AMULET]: ExternalItemType.NECKLACE,
         };
 
-        // 收集所有属性
+        // ⭐ stats 和 affixDetails 使用相同的描述文本
         const stats: EquipmentStat[] = [];
-        const affixDetails: AffixDetail[] = [];  // ⭐ 新增
+        const affixDetails: AffixDetail[] = [];
 
-        // 添加前缀属性和详情
+        // 添加前缀
         for (const affix of poe2Item.prefixes) {
             const affixDef = GetAffixById(affix.affixId);
             if (affixDef) {
-                const attr = this.AffixTypeToEquipmentAttribute(affix.affixId);
-                if (attr) {
-                    stats.push({
-                        attribute: attr,
-                        value: affix.value,
-                    });
-                }
+                const desc = affixDef.description. replace('{value}', affix. value.toString());
                 
-                // ⭐ 添加词缀详情
-                const desc = affixDef.description.replace('{value}', affix.value.toString());
+                // ⭐ 找到当前层级的数值范围
+                const tierData = affixDef.tiers.find(t => t.tier === affix.tier);
+                
+                stats.push({
+                    attribute: desc,
+                    value: affix.value,
+                });
+                
                 affixDetails.push({
                     position: 'prefix',
                     tier: affix.tier,
                     name: affixDef.name,
                     description: desc,
-                    color: '#8888ff',  // 前缀蓝色
+                    color: '#8888ff',
+                    value: affix. value,                    // ⭐ 当前数值
+                    minValue: tierData?.minValue || 0,     // ⭐ 最小值
+                    maxValue: tierData?.maxValue || 0,     // ⭐ 最大值
                 });
             }
         }
 
-        // 添加后缀属性和详情
+        // 添加后缀
         for (const affix of poe2Item.suffixes) {
             const affixDef = GetAffixById(affix.affixId);
             if (affixDef) {
-                const attr = this.AffixTypeToEquipmentAttribute(affix.affixId);
-                if (attr) {
-                    stats.push({
-                        attribute: attr,
-                        value: affix.value,
-                    });
-                }
+                const desc = affixDef.description. replace('{value}', affix.value.toString());
                 
-                // ⭐ 添加词缀详情
-                const desc = affixDef.description.replace('{value}', affix.value.toString());
-                affixDetails.push({
+                const tierData = affixDef.tiers.find(t => t.tier === affix.tier);
+                
+                stats. push({
+                    attribute: desc,
+                    value: affix.value,
+                });
+                
+                affixDetails. push({
                     position: 'suffix',
                     tier: affix.tier,
                     name: affixDef.name,
                     description: desc,
-                    color: '#ffff77',  // 后缀黄色
+                    color: '#ffff77',
+                    value: affix.value,
+                    minValue: tierData?.minValue || 0,
+                    maxValue: tierData?.maxValue || 0,
                 });
             }
         }
 
         return {
-            name: poe2Item.name,
-            type: slotToTypeMap[baseType.slot] || ExternalItemType.TRINKET,
+            name: poe2Item. name,
+            type: slotToTypeMap[baseType. slot] || ExternalItemType.TRINKET,
             icon: baseType.icon,
             stats: stats,
             rarity: poe2Item.rarity,
-            affixDetails: affixDetails,  // ⭐ 添加词缀详情
+            affixDetails: affixDetails,
         };
     }
 

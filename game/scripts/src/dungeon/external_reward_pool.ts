@@ -38,6 +38,9 @@ export interface AffixDetail {
     name: string;
     description: string;
     color?: string;
+        value?: number;      // ⭐ 当前数值
+    minValue?: number;   // ⭐ 最小值
+    maxValue?: number;   // ⭐ 最大值
 }
 
 // 局外装备定义

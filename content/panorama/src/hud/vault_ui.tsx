@@ -38,9 +38,9 @@ const DEFAULT_STATS: EquipmentTotalStats = {
     evasion: 0,
 };
 
-// ⭐⭐⭐ 安全转换为数组
+// ⭐ 安全转换为数组
 function toArray(data: any): any[] {
-    if (!data) return [];
+    if (! data) return [];
     if (Array.isArray(data)) return data;
     if (typeof data === 'object') {
         return Object.values(data);
@@ -54,6 +54,10 @@ interface AffixInfo {
     tier?: number;
     name?: string;
     description?: string;
+    value?: number;
+    minValue?: number;
+    maxValue?: number;
+    color?: string;
 }
 
 // ⭐ 属性信息接口
@@ -64,7 +68,7 @@ interface StatInfo {
 
 // ========== 主组件 ==========
 export const VaultUI: React.FC<{ visible: boolean; onClose: () => void }> = ({ visible, onClose }) => {
-    // ⭐⭐⭐ 使用 XNetTable Hook 获取数据
+    // ⭐ 使用 XNetTable Hook 获取数据
     const vaultData = useXNetTableKey('equipment_data', 'vault', { items: [], maxSize: 40 });
     const equippedData = useXNetTableKey('equipment_data', 'equipped', {});
     const statsData = useXNetTableKey('equipment_data', 'stats', DEFAULT_STATS);
@@ -75,7 +79,7 @@ export const VaultUI: React.FC<{ visible: boolean; onClose: () => void }> = ({ v
     
     const hoverTimeoutRef = useRef<number | null>(null);
 
-    // ⭐⭐⭐ 安全获取仓库物品
+    // 安全获取仓库物品
     const items: VaultItemData[] = toArray(vaultData?.items);
     const maxSize = vaultData?.maxSize || 40;
 
@@ -157,9 +161,9 @@ export const VaultUI: React.FC<{ visible: boolean; onClose: () => void }> = ({ v
 
     // ========== 渲染物品详情面板 ==========
     const renderItemPanel = (item: VaultItemData | null, title: string, isEquipped: boolean) => {
-        if (! item) {
+        if (!item) {
             return (
-                <Panel style={{ width: '220px', backgroundColor: '#0c0c08', border: '1px solid #333', padding: '10px', flowChildren: 'down' }}>
+                <Panel style={{ width: '240px', backgroundColor: '#0c0c08', border: '1px solid #333', padding: '10px', flowChildren: 'down' }}>
                     <Label text={title} style={{ fontSize: '12px', color: '#555', marginBottom: '10px' }} />
                     <Label text="无" style={{ fontSize: '11px', color: '#444', horizontalAlign: 'center', marginTop: '30px' }} />
                 </Panel>
@@ -169,31 +173,15 @@ export const VaultUI: React.FC<{ visible: boolean; onClose: () => void }> = ({ v
         const color = QCOLOR[item.rarity] || '#9d9d9d';
         const qualityName = QNAME[item.rarity] || '普通';
 
-        // ⭐ 安全处理词缀
-        const prefixes: string[] = [];
-        const suffixes: string[] = [];
-        if (item.affixDetails) {
-            const affixArr: AffixInfo[] = toArray(item.affixDetails);
-            for (let i = 0; i < affixArr.length; i++) {
-                const a = affixArr[i];
-                if (a && a.name) {
-                    const text = '[T' + (a.tier || 1) + '] ' + a.name;
-                    if (a.position === 'suffix') {
-                        suffixes.push(text);
-                    } else {
-                        prefixes.push(text);
-                    }
-                }
-            }
-        }
-
-        // ⭐ 安全处理属性
-        const statsList: StatInfo[] = toArray(item.stats);
+        // ⭐ 从 affixDetails 获取词缀信息
+        const affixList: AffixInfo[] = toArray(item.affixDetails);
+        const prefixes = affixList.filter(a => a.position === 'prefix');
+        const suffixes = affixList.filter(a => a.position === 'suffix');
 
         return (
             <Panel 
                 hittest={true}
-                style={{ width: '220px', backgroundColor: '#1a1a1aee', border: '2px solid ' + color, padding: '12px', flowChildren: 'down' }}
+                style={{ width: '260px', backgroundColor: '#1a1a1aee', border: '2px solid ' + color, padding: '12px', flowChildren: 'down' }}
                 onmouseover={keepHoverPanel}
                 onmouseout={handleItemMouseOut}
             >
@@ -202,45 +190,52 @@ export const VaultUI: React.FC<{ visible: boolean; onClose: () => void }> = ({ v
                 
                 {/* 名称和图标 */}
                 <Panel style={{ flowChildren: 'right', marginBottom: '10px' }}>
-                    <Panel style={{ width: '44px', height: '44px', border: '1px solid ' + color, marginRight: '10px', backgroundImage: item.icon ? 'url("' + item.icon + '")' : 'none', backgroundSize: 'cover' }} />
+                    <Panel style={{ width: '44px', height: '44px', border: '1px solid ' + color, marginRight: '10px', backgroundImage: item.icon ?  'url("' + item.icon + '")' : 'none', backgroundSize: 'cover' }} />
                     <Panel style={{ flowChildren: 'down' }}>
                         <Label text={item.name || '未知'} style={{ fontSize: '14px', color: color, fontWeight: 'bold' }} />
                         <Label text={qualityName + ' ' + (item.type || '')} style={{ fontSize: '10px', color: '#888' }} />
                     </Panel>
                 </Panel>
-                
-                 {/* ⭐ 属性 - 显示完整的 attribute 字符串 */}
-                {statsList.length > 0 && (
-                    <Panel style={{ flowChildren: 'down', marginBottom: '8px' }}>
-                        {statsList.map((stat, i) => {
-                            // ⭐ 如果 attribute 已经包含数值（如 "+32% 物理伤害"），直接显示
-                            // 否则拼接 value
-                            const attrStr = String(stat.attribute || '');
-                            const hasValue = attrStr.indexOf('+') >= 0 || attrStr.indexOf('-') >= 0;
-                            const displayText = hasValue ?  attrStr : ('+' + (stat.value || 0) + ' ' + attrStr);
-                            
-                            return (
-                                <Label 
-                                    key={'s' + i} 
-                                    text={displayText}
-                                    style={{ fontSize: '12px', color: '#55ff55' }} 
-                                />
-                            );
-                        })}
-                    </Panel>
-                )}
-                
-                {/* 词缀 */}
+
+                {/* ⭐ 前缀词缀 */}
                 {prefixes.length > 0 && (
-                    <Panel style={{ flowChildren: 'down', marginBottom: '5px' }}>
-                        <Label text={'前缀(' + prefixes.length + ')'} style={{ fontSize: '10px', color: '#9999ff' }} />
-                        {prefixes.map((t, i) => <Label key={'p' + i} text={t} style={{ fontSize: '10px', color: '#7777dd', marginLeft: '5px' }} />)}
+                    <Panel style={{ flowChildren: 'down', marginBottom: '8px' }}>
+                        <Label text={'前缀(' + prefixes.length + ')'} style={{ fontSize: '10px', color: '#9999ff', marginBottom: '3px' }} />
+                        {prefixes.map((affix, i) => (
+                            <Panel key={'p' + i} style={{ flowChildren: 'down', marginLeft: '5px', marginBottom: '4px' }}>
+                                <Label 
+                                    text={'[T' + (affix.tier || 1) + '] ' + (affix.name || '') + ' ' + (affix.description || '')}
+                                    style={{ fontSize: '11px', color: '#7799ff' }} 
+                                />
+                                {affix.minValue !== undefined && affix.maxValue !== undefined && affix.minValue > 0 && (
+                                    <Label 
+                                        text={'    范围: ' + affix.minValue + ' - ' + affix.maxValue}
+                                        style={{ fontSize: '9px', color: '#555' }} 
+                                    />
+                                )}
+                            </Panel>
+                        ))}
                     </Panel>
                 )}
+                
+                {/* ⭐ 后缀词缀 */}
                 {suffixes.length > 0 && (
-                    <Panel style={{ flowChildren: 'down', marginBottom: '5px' }}>
-                        <Label text={'后缀(' + suffixes.length + ')'} style={{ fontSize: '10px', color: '#ffdd77' }} />
-                        {suffixes.map((t, i) => <Label key={'x' + i} text={t} style={{ fontSize: '10px', color: '#ddaa00', marginLeft: '5px' }} />)}
+                    <Panel style={{ flowChildren: 'down', marginBottom: '8px' }}>
+                        <Label text={'后缀(' + suffixes.length + ')'} style={{ fontSize: '10px', color: '#ffdd77', marginBottom: '3px' }} />
+                        {suffixes.map((affix, i) => (
+                            <Panel key={'x' + i} style={{ flowChildren: 'down', marginLeft: '5px', marginBottom: '4px' }}>
+                                <Label 
+                                    text={'[T' + (affix.tier || 1) + '] ' + (affix.name || '') + ' ' + (affix.description || '')}
+                                    style={{ fontSize: '11px', color: '#ddaa00' }} 
+                                />
+                                {affix.minValue !== undefined && affix.maxValue !== undefined && affix.minValue > 0 && (
+                                    <Label 
+                                        text={'    范围: ' + affix.minValue + ' - ' + affix.maxValue}
+                                        style={{ fontSize: '9px', color: '#555' }} 
+                                    />
+                                )}
+                            </Panel>
+                        ))}
                     </Panel>
                 )}
             </Panel>
@@ -261,11 +256,11 @@ export const VaultUI: React.FC<{ visible: boolean; onClose: () => void }> = ({ v
                 
                 {/* 显示总属性 */}
                 <Label 
-                    text={'力量+' + (statsData?.strength || 0) + ' 敏捷+' + (statsData?.agility || 0) + ' 智力+' + (statsData?.intelligence || 0)} 
+                    text={'力量+' + (statsData?.strength || 0) + ' 敏捷+' + (statsData?.agility || 0) + ' 智力+' + (statsData?.intelligence || 0) + ' 生命+' + (statsData?.health || 0)} 
                     style={{ fontSize: '11px', color: '#0f0', marginLeft: '30px', marginTop: '18px' }} 
                 />
                 
-                <Panel style={{ width: '400px' }} />
+                <Panel style={{ width: '300px' }} />
                 <Label text={selItem ? '已选择: ' + selItem.name : '点击选择装备'} style={{ fontSize: '11px', color: selItem ? '#0f0' : '#666', marginTop: '18px' }} />
             </Panel>
 
@@ -273,7 +268,7 @@ export const VaultUI: React.FC<{ visible: boolean; onClose: () => void }> = ({ v
             <Panel style={{ width: '100%', height: '570px', flowChildren: 'right' }}>
                 
                 {/* 左侧：仓库物品列表 */}
-                <Panel style={{ width: '600px', height: '100%', backgroundColor: '#0a0a0a', padding: '10px', flowChildren: 'down' }}>
+                <Panel style={{ width: '550px', height: '100%', backgroundColor: '#0a0a0a', padding: '10px', flowChildren: 'down' }}>
                     <Label text="仓库物品" style={{ fontSize: '14px', color: '#ffd700', marginBottom: '10px' }} />
                     <Panel style={{ width: '100%', height: '520px', flowChildren: 'right-wrap', overflow: 'scroll' }}>
                         {items.map((item, index) => {
@@ -307,15 +302,20 @@ export const VaultUI: React.FC<{ visible: boolean; onClose: () => void }> = ({ v
                 </Panel>
 
                 {/* 右侧：对比面板 */}
-                <Panel style={{ width: '490px', height: '100%', backgroundColor: '#0c0c08', padding: '15px', flowChildren: 'down' }}>
+                <Panel style={{ width: '540px', height: '100%', backgroundColor: '#0c0c08', padding: '15px', flowChildren: 'down' }}>
                     <Label text="装备对比" style={{ fontSize: '14px', color: '#ffd700', marginBottom: '15px' }} />
                     
-                    {displayItem ? (
+                    {displayItem ?  (
                         <Panel style={{ flowChildren: 'right' }}>
-                            {renderItemPanel(displayItem, hoverItem ? '预览' : '已选择', false)}
-                            <Panel style={{ width: '30px', flowChildren: 'down', marginTop: '80px' }}>
+                            {/* 悬停/选中的物品 */}
+                            {renderItemPanel(displayItem, hoverItem ?  '预览' : '已选择', false)}
+                            
+                            {/* VS */}
+                            <Panel style={{ width: '20px', flowChildren: 'down', marginTop: '80px' }}>
                                 <Label text="VS" style={{ fontSize: '14px', color: '#f80', horizontalAlign: 'center' }} />
                             </Panel>
+                            
+                            {/* 已装备的同类型 */}
                             {renderItemPanel(equippedSameType, '已装备 ' + (SLOT_NAMES[displayItem.type] || displayItem.type), true)}
                         </Panel>
                     ) : (
