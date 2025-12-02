@@ -7,7 +7,7 @@ declare const _G: {
     EquipmentHealthBonus: { [playerId: number]: number };
 };
 
-if (! _G.EquipmentBaseHealth) {
+if (!_G.EquipmentBaseHealth) {
     _G.EquipmentBaseHealth = {};
 }
 if (!_G.EquipmentHealthBonus) {
@@ -22,6 +22,9 @@ export class modifier_equipment_system extends BaseModifier {
         crit_chance: 0, crit_multiplier: 0, cooldown_reduction: 0,
         fire_resistance: 0, cold_resistance: 0, lightning_resistance: 0, evasion: 0,
     };
+    
+    // ⭐ 记录本次攻击是否暴击
+    private isCrit: boolean = false;
 
     IsHidden(): boolean { return true; }
     IsPurgable(): boolean { return false; }
@@ -31,11 +34,13 @@ export class modifier_equipment_system extends BaseModifier {
     OnCreated(): void {
         if (!IsServer()) return;
         
+        print(`[modifier_equipment_system] OnCreated 被调用`);
+        
         const parent = this.GetParent();
         const playerId = parent.GetPlayerOwnerID();
         
         Timers.CreateTimer(0.5, () => {
-            if (!IsValidEntity(parent)) return undefined;
+            if (! IsValidEntity(parent)) return undefined;
             
             if (_G.EquipmentBaseHealth[playerId] === undefined) {
                 _G.EquipmentBaseHealth[playerId] = parent.GetMaxHealth();
@@ -51,6 +56,7 @@ export class modifier_equipment_system extends BaseModifier {
 
     OnRefresh(): void {
         if (!IsServer()) return;
+        print(`[modifier_equipment_system] OnRefresh 被调用`);
         this.LoadStatsFromGlobal();
     }
     
@@ -82,7 +88,7 @@ export class modifier_equipment_system extends BaseModifier {
         const playerId = parent.GetPlayerOwnerID();
         if (playerId === -1) return;
         
-        if (!_G.EquipmentStats) {
+        if (! _G.EquipmentStats) {
             _G.EquipmentStats = {};
         }
         
@@ -102,7 +108,7 @@ export class modifier_equipment_system extends BaseModifier {
                 move_speed: globalStats.move_speed || 0,
                 magic_resistance: globalStats.magic_resistance || 0,
                 crit_chance: globalStats.crit_chance || 0,
-                crit_multiplier: globalStats.crit_multiplier || 150,  // 默认150%暴击伤害
+                crit_multiplier: globalStats.crit_multiplier || 150,
                 cooldown_reduction: globalStats.cooldown_reduction || 0,
                 fire_resistance: globalStats.fire_resistance || 0,
                 cold_resistance: globalStats.cold_resistance || 0,
@@ -116,7 +122,7 @@ export class modifier_equipment_system extends BaseModifier {
                 this.ForceApplyHealth(parent, playerId, this.stats.health);
             }
             
-            print(`[modifier_equipment_system] 加载属性: 暴击=${this.stats.crit_chance}%, 冷却缩减=${this.stats.cooldown_reduction}%, 火抗=${this.stats.fire_resistance}%`);
+            print(`[modifier_equipment_system] 加载属性: 暴击率=${this.stats.crit_chance}%, 暴击伤害=${this.stats.crit_multiplier}%`);
         }
     }
     
@@ -154,12 +160,11 @@ export class modifier_equipment_system extends BaseModifier {
             ModifierFunction.MOVESPEED_BONUS_CONSTANT,
             ModifierFunction.MAGICAL_RESISTANCE_BONUS,
             ModifierFunction.EVASION_CONSTANT,
-            // ⭐ 暴击相关
-            ModifierFunction.PREATTACK_CRITICALSTRIKE,
-            // ⭐ 冷却缩减
             ModifierFunction.COOLDOWN_PERCENTAGE,
-            // ⭐ 监听伤害事件（用于元素抗性）
             ModifierFunction.INCOMING_DAMAGE_PERCENTAGE,
+            // ⭐ 暴击需要这两个函数配合
+            ModifierFunction.PREATTACK_CRITICALSTRIKE,
+            ModifierFunction.TOOLTIP,
         ];
     }
 
@@ -175,8 +180,8 @@ export class modifier_equipment_system extends BaseModifier {
     GetModifierMagicalResistanceBonus(): number { return this.stats.magic_resistance; }
     GetModifierEvasion_Constant(): number { return this.stats.evasion; }
 
-    // ⭐⭐⭐ 暴击率实现
-    GetModifierPreattack_CriticalStrike(event: ModifierAttackEvent): number {
+    // ⭐⭐⭐ 暴击率实现 - 修复版
+    GetModifierPreattack_CriticalStrike(): number {
         if (! IsServer()) return 0;
         
         const critChance = this.stats.crit_chance || 0;
@@ -184,74 +189,52 @@ export class modifier_equipment_system extends BaseModifier {
         
         // 随机判断是否暴击
         const roll = RandomInt(1, 100);
-        if (roll <= critChance) {
-            // 返回暴击伤害倍率（150 = 150% = 1.5倍伤害）
-            const critDamage = this.stats.crit_multiplier || 150;
-            
-            // 显示暴击特效
-            const parent = this.GetParent();
-            if (parent && event.target) {
-                // 创建暴击文字提示
-                const particle = ParticleManager.CreateParticle(
-                    "particles/msg_fx/msg_crit.vpcf",
-                    ParticleAttachment.OVERHEAD_FOLLOW,
-                    event.target
-                );
-                ParticleManager.SetParticleControl(particle, 1, Vector(0, 0, 0));
-                ParticleManager.SetParticleControl(particle, 2, Vector(1, 0, 0));  // 红色
-                ParticleManager.SetParticleControl(particle, 3, Vector(100, 0, 0));  // 显示时间
-                ParticleManager.ReleaseParticleIndex(particle);
-                
-                print(`[modifier_equipment_system] ⚡ 暴击触发！${critChance}% 暴击率，${critDamage}% 暴击伤害`);
-            }
-            
-            return critDamage;
+        this.isCrit = roll <= critChance;
+        
+        if (this.isCrit) {
+            const critDamage = this.stats.crit_multiplier || 200;
+            print(`[modifier_equipment_system] 暴击!  Roll=${roll}, 暴击率=${critChance}%, 暴击伤害=${critDamage}%`);
+            return critDamage;  // 返回暴击伤害百分比 (200 = 200%)
         }
         
-        return 0;  // 未暴击
+        return 0;
+    }
+    
+    // ⭐ Tooltip 用于显示暴击率
+    OnTooltip(): number {
+        return this.stats.crit_chance || 0;
     }
 
     // ⭐⭐⭐ 冷却缩减实现
     GetModifierPercentageCooldown(): number {
-        // 返回负数表示减少冷却时间
-        // 例如：返回 -20 表示冷却时间减少 20%
         return -(this.stats.cooldown_reduction || 0);
     }
 
-    // ⭐⭐⭐ 元素抗性实现（减少对应元素伤害）
+    // ⭐⭐⭐ 元素抗性实现
     GetModifierIncomingDamage_Percentage(event: ModifierAttackEvent): number {
-        if (!IsServer()) return 0;
+        if (! IsServer()) return 0;
         
         const damageType = event.damage_type;
         let reduction = 0;
         
-        // 根据伤害类型应用对应抗性
         if (damageType === DamageTypes.MAGICAL) {
-            // 魔法伤害 - 应用魔法抗性
             reduction = this.stats.magic_resistance || 0;
         }
         
-        // ⭐ 检查是否是元素伤害（通过 damage_flags 或自定义标记）
-        // Dota 2 原版没有区分火/冰/电，需要自定义实现
-        // 这里使用一个简化方案：检查攻击者的技能或 buff
-        
         const attacker = event.attacker;
         if (attacker) {
-            // 检查攻击者是否有火焰相关 modifier
             if (attacker.HasModifier("modifier_fire_damage") || 
                 attacker.HasModifier("modifier_lina_fiery_soul") ||
                 attacker.HasModifier("modifier_phoenix_fire_spirit_burn")) {
                 reduction = Math.max(reduction, this.stats.fire_resistance || 0);
             }
             
-            // 检查攻击者是否有冰霜相关 modifier
             if (attacker.HasModifier("modifier_cold_damage") ||
                 attacker.HasModifier("modifier_lich_frost_armor") ||
                 attacker.HasModifier("modifier_crystal_maiden_frostbite")) {
                 reduction = Math.max(reduction, this.stats.cold_resistance || 0);
             }
             
-            // 检查攻击者是否有闪电相关 modifier
             if (attacker.HasModifier("modifier_lightning_damage") ||
                 attacker.HasModifier("modifier_storm_spirit_overload") ||
                 attacker.HasModifier("modifier_zuus_static_field")) {
@@ -259,7 +242,6 @@ export class modifier_equipment_system extends BaseModifier {
             }
         }
         
-        // 返回负数表示减少伤害
         return -reduction;
     }
 }

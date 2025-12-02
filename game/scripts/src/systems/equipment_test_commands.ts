@@ -1,6 +1,5 @@
 /**
  * 装备系统测试命令
- * 用于测试暴击、元素抗性、冷却缩减等功能
  */
 
 import { EquipmentVaultSystem } from './equipment_vault_system';
@@ -23,36 +22,46 @@ export function InitEquipmentTestCommands(): void {
         
         // ========== 属性测试 ==========
         
-        // 显示当前装备属性
         if (text === '-eqstats') {
             const stats = _G.EquipmentStats ?  _G.EquipmentStats[playerId] : null;
             if (stats) {
-                GameRules.SendCustomMessage(`<font color='#ffd700'>===== 装备属性 =====</font>`, playerId, 0);
-                GameRules.SendCustomMessage(`<font color='#ff6666'>力量: +${stats.strength}</font> | <font color='#66ff66'>敏捷: +${stats.agility}</font> | <font color='#6699ff'>智力: +${stats.intelligence}</font>`, playerId, 0);
-                GameRules.SendCustomMessage(`<font color='#00ff00'>生命: +${stats.health}</font> | <font color='#aaa'>护甲: +${stats.armor}</font> | <font color='#6699ff'>魔法: +${stats.mana}</font>`, playerId, 0);
-                GameRules.SendCustomMessage(`<font color='#ff4444'>暴击率: ${stats.crit_chance}%</font> | <font color='#ff8800'>攻击力: +${stats.attack_damage}</font> | <font color='#ffaa00'>攻速: +${stats.attack_speed}%</font>`, playerId, 0);
-                GameRules.SendCustomMessage(`<font color='#00ccff'>移速: +${stats.move_speed}%</font> | <font color='#aaaaff'>冷却缩减: ${stats.cooldown_reduction}%</font> | <font color='#99ff99'>闪避: ${stats.evasion}%</font>`, playerId, 0);
-                GameRules.SendCustomMessage(`<font color='#ff6600'>火抗: ${stats.fire_resistance}%</font> | <font color='#66ccff'>冰抗: ${stats.cold_resistance}%</font> | <font color='#ffff00'>电抗: ${stats.lightning_resistance}%</font>`, playerId, 0);
+                GameRules.SendCustomMessage(`===== 装备属性 =====`, playerId, 0);
+                GameRules.SendCustomMessage(`力量: +${stats.strength} | 敏捷: +${stats.agility} | 智力: +${stats.intelligence}`, playerId, 0);
+                GameRules.SendCustomMessage(`生命: +${stats.health} | 护甲: +${stats.armor} | 魔法: +${stats.mana}`, playerId, 0);
+                GameRules.SendCustomMessage(`暴击率: ${stats.crit_chance}% | 攻击力: +${stats.attack_damage} | 攻速: +${stats.attack_speed}%`, playerId, 0);
+                GameRules.SendCustomMessage(`移速: +${stats.move_speed}% | 冷却缩减: ${stats.cooldown_reduction}% | 闪避: ${stats.evasion}%`, playerId, 0);
+                GameRules.SendCustomMessage(`火抗: ${stats.fire_resistance}% | 冰抗: ${stats.cold_resistance}% | 电抗: ${stats.lightning_resistance}%`, playerId, 0);
             } else {
-                GameRules.SendCustomMessage(`<font color='#ff0'>暂无装备属性数据</font>`, playerId, 0);
+                GameRules.SendCustomMessage(`暂无装备属性数据`, playerId, 0);
             }
+            
+            // 检查 modifier 状态
+            const hasModifier = hero.HasModifier("modifier_equipment_system");
+            GameRules.SendCustomMessage(`Modifier状态: ${hasModifier ? '已添加' : '未添加'}`, playerId, 0);
         }
         
         // ========== 暴击测试 ==========
         
-        // 设置暴击率
         if (text.startsWith('-setcrit ')) {
             const value = parseInt(text.replace('-setcrit ', ''));
-            if (! isNaN(value) && _G.EquipmentStats && _G.EquipmentStats[playerId]) {
+            if (! isNaN(value)) {
+                ensureStats(playerId);
                 _G.EquipmentStats[playerId].crit_chance = value;
+                _G.EquipmentStats[playerId].crit_multiplier = 200;
+                
+                // ⭐ 确保 modifier 存在
+                ensureModifier(hero);
                 refreshModifier(hero);
-                GameRules.SendCustomMessage(`<font color='#ff4444'>暴击率已设置为 ${value}%</font>`, playerId, 0);
+                
+                GameRules.SendCustomMessage(`暴击率已设置为 ${value}%, 暴击伤害 200%`, playerId, 0);
             }
         }
         
-        // 测试暴击（生成一个假人让你打）
         if (text === '-testcrit') {
-            const pos = hero.GetAbsOrigin() + hero.GetForwardVector() * 200 as Vector;
+            // ⭐ 先确保 modifier 存在
+            ensureModifier(hero);
+            
+            const pos = (hero.GetAbsOrigin() + hero.GetForwardVector() * 300) as Vector;
             const dummy = CreateUnitByName(
                 "npc_dota_creep_badguys_melee",
                 pos,
@@ -63,61 +72,77 @@ export function InitEquipmentTestCommands(): void {
             );
             
             if (dummy) {
-                dummy.SetBaseMaxHealth(10000);
-                dummy.SetMaxHealth(10000);
-                dummy.SetHealth(10000);
-                
-                // 让假人不会动
+                dummy.SetBaseMaxHealth(50000);
+                dummy.SetMaxHealth(50000);
+                dummy.SetHealth(50000);
                 dummy.SetMoveCapability(UnitMoveCapability.NONE);
-                dummy.AddNewModifier(dummy, undefined, "modifier_invulnerable", { duration: -1 });
+                dummy.Stop();
                 
-                // 10秒后移除
-                Timers.CreateTimer(10, () => {
-                    if (IsValidEntity(dummy)) {
-                        dummy.RemoveModifierByName("modifier_invulnerable");
+                // 禁用攻击但不无敌
+                dummy.AddNewModifier(hero, undefined, "modifier_disarmed", { duration: 20 });
+                
+                Timers.CreateTimer(20, () => {
+                    if (IsValidEntity(dummy) && dummy.IsAlive()) {
                         dummy.ForceKill(false);
                     }
                     return undefined;
                 });
                 
-                GameRules.SendCustomMessage(`<font color='#0f0'>已生成测试假人，攻击它测试暴击！(10秒后消失)</font>`, playerId, 0);
-                GameRules.SendCustomMessage(`<font color='#888'>当前暴击率: ${_G.EquipmentStats?.[playerId]?.crit_chance || 0}%</font>`, playerId, 0);
+                const stats = _G.EquipmentStats ?  _G.EquipmentStats[playerId] : null;
+                const critChance = stats ?  (stats.crit_chance || 0) : 0;
+                const critMult = stats ? (stats.crit_multiplier || 150) : 150;
+                const hasModifier = hero.HasModifier("modifier_equipment_system");
+                
+                GameRules.SendCustomMessage(`已生成测试假人 (20秒)，攻击它测试暴击！`, playerId, 0);
+                GameRules.SendCustomMessage(`当前暴击率: ${critChance}%, 暴击伤害: ${critMult}%`, playerId, 0);
+                GameRules.SendCustomMessage(`Modifier状态: ${hasModifier ? '已添加' : '未添加'}`, playerId, 0);
+                
+                if (critChance <= 0) {
+                    GameRules.SendCustomMessage(`警告: 暴击率为0！先用 -setcrit 50 设置暴击率`, playerId, 0);
+                }
+                
+                if (! hasModifier) {
+                    GameRules.SendCustomMessage(`警告: Modifier未添加！正在尝试添加...`, playerId, 0);
+                    ensureModifier(hero);
+                }
             }
         }
         
         // ========== 元素抗性测试 ==========
         
-        // 设置火焰抗性
         if (text.startsWith('-setfire ')) {
             const value = parseInt(text.replace('-setfire ', ''));
-            if (!isNaN(value) && _G.EquipmentStats && _G.EquipmentStats[playerId]) {
+            if (!isNaN(value)) {
+                ensureStats(playerId);
                 _G.EquipmentStats[playerId].fire_resistance = value;
+                ensureModifier(hero);
                 refreshModifier(hero);
-                GameRules.SendCustomMessage(`<font color='#ff6600'>火焰抗性已设置为 ${value}%</font>`, playerId, 0);
+                GameRules.SendCustomMessage(`火焰抗性已设置为 ${value}%`, playerId, 0);
             }
         }
         
-        // 设置冰霜抗性
         if (text.startsWith('-setcold ')) {
             const value = parseInt(text.replace('-setcold ', ''));
-            if (! isNaN(value) && _G.EquipmentStats && _G.EquipmentStats[playerId]) {
+            if (! isNaN(value)) {
+                ensureStats(playerId);
                 _G.EquipmentStats[playerId].cold_resistance = value;
+                ensureModifier(hero);
                 refreshModifier(hero);
-                GameRules.SendCustomMessage(`<font color='#66ccff'>冰霜抗性已设置为 ${value}%</font>`, playerId, 0);
+                GameRules.SendCustomMessage(`冰霜抗性已设置为 ${value}%`, playerId, 0);
             }
         }
         
-        // 设置闪电抗性
         if (text.startsWith('-setlight ')) {
             const value = parseInt(text.replace('-setlight ', ''));
-            if (!isNaN(value) && _G.EquipmentStats && _G.EquipmentStats[playerId]) {
+            if (!isNaN(value)) {
+                ensureStats(playerId);
                 _G.EquipmentStats[playerId].lightning_resistance = value;
+                ensureModifier(hero);
                 refreshModifier(hero);
-                GameRules.SendCustomMessage(`<font color='#ffff00'>闪电抗性已设置为 ${value}%</font>`, playerId, 0);
+                GameRules.SendCustomMessage(`闪电抗性已设置为 ${value}%`, playerId, 0);
             }
         }
         
-        // 测试火焰伤害
         if (text === '-testfire') {
             const damage = 500;
             const reduction = ElementalDamageSystem.CalculateElementalReduction(hero, ElementType.FIRE);
@@ -130,10 +155,9 @@ export function InitEquipmentTestCommands(): void {
                 damage_type: DamageTypes.MAGICAL,
             });
             
-            GameRules.SendCustomMessage(`<font color='#ff6600'>🔥 火焰伤害测试: ${damage} -> ${finalDamage.toFixed(0)} (${reduction}% 抗性)</font>`, playerId, 0);
+            GameRules.SendCustomMessage(`火焰伤害: ${damage} -> ${finalDamage.toFixed(0)} (${reduction}% 抗性)`, playerId, 0);
         }
         
-        // 测试冰霜伤害
         if (text === '-testcold') {
             const damage = 500;
             const reduction = ElementalDamageSystem.CalculateElementalReduction(hero, ElementType.COLD);
@@ -146,10 +170,9 @@ export function InitEquipmentTestCommands(): void {
                 damage_type: DamageTypes.MAGICAL,
             });
             
-            GameRules.SendCustomMessage(`<font color='#66ccff'>❄️ 冰霜伤害测试: ${damage} -> ${finalDamage.toFixed(0)} (${reduction}% 抗性)</font>`, playerId, 0);
+            GameRules.SendCustomMessage(`冰霜伤害: ${damage} -> ${finalDamage.toFixed(0)} (${reduction}% 抗性)`, playerId, 0);
         }
         
-        // 测试闪电伤害
         if (text === '-testlight') {
             const damage = 500;
             const reduction = ElementalDamageSystem.CalculateElementalReduction(hero, ElementType.LIGHTNING);
@@ -162,67 +185,102 @@ export function InitEquipmentTestCommands(): void {
                 damage_type: DamageTypes.MAGICAL,
             });
             
-            GameRules.SendCustomMessage(`<font color='#ffff00'>⚡ 闪电伤害测试: ${damage} -> ${finalDamage.toFixed(0)} (${reduction}% 抗性)</font>`, playerId, 0);
+            GameRules.SendCustomMessage(`闪电伤害: ${damage} -> ${finalDamage.toFixed(0)} (${reduction}% 抗性)`, playerId, 0);
         }
         
         // ========== 冷却缩减测试 ==========
         
-        // 设置冷却缩减
         if (text.startsWith('-setcdr ')) {
             const value = parseInt(text.replace('-setcdr ', ''));
-            if (!isNaN(value) && _G.EquipmentStats && _G.EquipmentStats[playerId]) {
+            if (!isNaN(value)) {
+                ensureStats(playerId);
                 _G.EquipmentStats[playerId].cooldown_reduction = value;
+                ensureModifier(hero);
                 refreshModifier(hero);
-                GameRules.SendCustomMessage(`<font color='#aaaaff'>冷却缩减已设置为 ${value}%</font>`, playerId, 0);
+                GameRules.SendCustomMessage(`冷却缩减已设置为 ${value}%`, playerId, 0);
             }
         }
         
-        // 测试冷却缩减（显示技能实际冷却时间）
         if (text === '-testcdr') {
-            GameRules.SendCustomMessage(`<font color='#aaaaff'>===== 技能冷却时间 =====</font>`, playerId, 0);
+            GameRules.SendCustomMessage(`===== 技能冷却时间 =====`, playerId, 0);
             
             for (let i = 0; i < 6; i++) {
                 const ability = hero.GetAbilityByIndex(i);
-                if (ability && ! ability.IsNull()) {
+                if (ability && ! ability.IsNull() && ability.GetLevel() > 0) {
                     const baseCd = ability.GetCooldown(ability.GetLevel() - 1);
-                    const actualCd = ability.GetCooldownTimeRemaining();
-                    const cdr = _G.EquipmentStats?.[playerId]?.cooldown_reduction || 0;
+                    const stats = _G.EquipmentStats ?  _G.EquipmentStats[playerId] : null;
+                    const cdr = stats ? (stats.cooldown_reduction || 0) : 0;
                     const expectedCd = baseCd * (1 - cdr / 100);
                     
                     GameRules.SendCustomMessage(
-                        `<font color='#fff'>${ability.GetAbilityName()}: 基础=${baseCd.toFixed(1)}s, 预期=${expectedCd.toFixed(1)}s</font>`,
+                        `${ability.GetAbilityName()}: 基础=${baseCd.toFixed(1)}s -> 预期=${expectedCd.toFixed(1)}s`,
                         playerId, 0
                     );
                 }
             }
         }
         
+        // ========== 调试命令 ==========
+        
+        // ⭐ 强制添加 modifier
+        if (text === '-addmod') {
+            ensureModifier(hero);
+            const hasModifier = hero.HasModifier("modifier_equipment_system");
+            GameRules.SendCustomMessage(`Modifier状态: ${hasModifier ? '已添加' : '添加失败'}`, playerId, 0);
+        }
+        
         // ========== 帮助命令 ==========
         
         if (text === '-eqhelp') {
-            GameRules.SendCustomMessage(`<font color='#ffd700'>===== 装备测试命令 =====</font>`, playerId, 0);
-            GameRules.SendCustomMessage(`<font color='#fff'>-eqstats</font> - 显示当前装备属性`, playerId, 0);
-            GameRules.SendCustomMessage(`<font color='#fff'>-setcrit [值]</font> - 设置暴击率`, playerId, 0);
-            GameRules.SendCustomMessage(`<font color='#fff'>-testcrit</font> - 生成假人测试暴击`, playerId, 0);
-            GameRules.SendCustomMessage(`<font color='#fff'>-setfire [值]</font> - 设置火焰抗性`, playerId, 0);
-            GameRules.SendCustomMessage(`<font color='#fff'>-setcold [值]</font> - 设置冰霜抗性`, playerId, 0);
-            GameRules.SendCustomMessage(`<font color='#fff'>-setlight [值]</font> - 设置闪电抗性`, playerId, 0);
-            GameRules.SendCustomMessage(`<font color='#fff'>-testfire</font> - 测试火焰伤害 (500点)`, playerId, 0);
-            GameRules.SendCustomMessage(`<font color='#fff'>-testcold</font> - 测试冰霜伤害 (500点)`, playerId, 0);
-            GameRules.SendCustomMessage(`<font color='#fff'>-testlight</font> - 测试闪电伤害 (500点)`, playerId, 0);
-            GameRules.SendCustomMessage(`<font color='#fff'>-setcdr [值]</font> - 设置冷却缩减`, playerId, 0);
-            GameRules.SendCustomMessage(`<font color='#fff'>-testcdr</font> - 显示技能冷却时间`, playerId, 0);
+            GameRules.SendCustomMessage(`===== 装备测试命令 =====`, playerId, 0);
+            GameRules.SendCustomMessage(`-eqstats - 显示当前装备属性`, playerId, 0);
+            GameRules.SendCustomMessage(`-setcrit [值] - 设置暴击率 (例: -setcrit 50)`, playerId, 0);
+            GameRules.SendCustomMessage(`-testcrit - 生成假人测试暴击`, playerId, 0);
+            GameRules.SendCustomMessage(`-setfire/-setcold/-setlight [值] - 设置抗性`, playerId, 0);
+            GameRules.SendCustomMessage(`-testfire/-testcold/-testlight - 测试元素伤害`, playerId, 0);
+            GameRules.SendCustomMessage(`-setcdr [值] - 设置冷却缩减`, playerId, 0);
+            GameRules.SendCustomMessage(`-testcdr - 显示技能冷却时间`, playerId, 0);
+            GameRules.SendCustomMessage(`-addmod - 强制添加装备Modifier`, playerId, 0);
         }
         
     }, null);
     
-    print('[EquipmentTest] ✓ 测试命令已注册，输入 -eqhelp 查看帮助');
+    print('[EquipmentTest] 测试命令已注册，输入 -eqhelp 查看帮助');
 }
 
-// 刷新 modifier
+function ensureStats(playerId: PlayerID): void {
+    if (!_G.EquipmentStats) {
+        _G.EquipmentStats = {};
+    }
+    if (!_G.EquipmentStats[playerId]) {
+        _G.EquipmentStats[playerId] = {
+            strength: 0, agility: 0, intelligence: 0, armor: 0, health: 0, mana: 0,
+            attack_damage: 0, attack_speed: 0, move_speed: 0, magic_resistance: 0,
+            crit_chance: 0, crit_multiplier: 150, cooldown_reduction: 0,
+            fire_resistance: 0, cold_resistance: 0, lightning_resistance: 0, evasion: 0,
+        };
+    }
+}
+
+// ⭐ 确保 modifier 存在
+function ensureModifier(hero: CDOTA_BaseNPC_Hero): void {
+    if (!hero.HasModifier("modifier_equipment_system")) {
+        const modifier = hero.AddNewModifier(hero, undefined, "modifier_equipment_system", {});
+        if (modifier) {
+            print(`[EquipmentTest] 已添加 modifier_equipment_system`);
+        } else {
+            print(`[EquipmentTest] 添加 modifier 失败！`);
+        }
+    }
+}
+
 function refreshModifier(hero: CDOTA_BaseNPC_Hero): void {
     const modifier = hero.FindModifierByName("modifier_equipment_system");
     if (modifier && ! modifier.IsNull()) {
         (modifier as any).OnRefresh({});
+        print(`[EquipmentTest] Modifier 已刷新`);
+    } else {
+        print(`[EquipmentTest] 未找到 modifier，尝试添加...`);
+        ensureModifier(hero);
     }
 }
