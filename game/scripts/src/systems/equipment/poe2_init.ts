@@ -148,7 +148,7 @@ if (text === '-poe2stats') {
             print(`[POE2] 玩家 ${playerId} 使用 -poe2rare 命令`);
             
             try {
-                POE2Integration.GenerateAndAddToVault(playerId, 25, ItemRarity. RARE);
+                POE2Integration.GenerateAndAddToVault(playerId, 25, ItemRarity.RARE);
                 
                 GameRules.SendCustomMessage(
                     '<font color="#ffff77">⚡ 已生成稀有装备到仓库！</font>',
@@ -173,7 +173,7 @@ if (text === '-poe2stats') {
             try {
                 POE2Integration.GenerateAndAddToVault(playerId, 30, ItemRarity.LEGENDARY);
                 
-                GameRules. SendCustomMessage(
+                GameRules.SendCustomMessage(
                     '<font color="#ff8800">🔥 已生成传说装备到仓库！</font>',
                     playerId,
                     0

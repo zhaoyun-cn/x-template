@@ -43,7 +43,7 @@ class SkillEquipSystemClass {
     };
 
     public Init(): void {
-        if (this.  initialized) return;
+        if (this. initialized) return;
 
         print('[SkillEquipSystem] ========================================');
         print('[SkillEquipSystem] 初始化技能装备系统');
@@ -67,7 +67,7 @@ class SkillEquipSystemClass {
         });
 
         // 监听请求装备数据
-        CustomGameEventManager.  RegisterListener('skill_equip_request_data', (_, data: any) => {
+        CustomGameEventManager. RegisterListener('skill_equip_request_data', (_, data: any) => {
             const playerId = data.PlayerID as PlayerID;
             print('[SkillEquipSystem] 数据请求: 玩家=' + playerId);
             this.sendDataToClient(playerId);
@@ -120,7 +120,7 @@ class SkillEquipSystemClass {
         let data = this.playerData.get(playerId);
         if (!data) {
             this.initPlayer(playerId);
-            data = this.playerData.  get(playerId)!;
+            data = this.playerData. get(playerId)!;
         }
 
         // 检查是否可以装备
@@ -134,7 +134,7 @@ class SkillEquipSystemClass {
         // 检查技能是否已经装备在其他槽位，如果是则先移除
         for (let i = 0; i < 4; i++) {
             if (data.slots[i] === skillId) {
-                data.  slots[i] = null;
+                data. slots[i] = null;
                 print('[SkillEquipSystem] 从槽位 ' + i + ' 移除技能 ' + skillId);
             }
         }
@@ -144,7 +144,7 @@ class SkillEquipSystemClass {
         print('[SkillEquipSystem] 技能 ' + skillId + ' 装备到槽位 ' + slot);
 
         // 更新英雄技能
-        this. updateHeroAbilities(playerId);
+        this.updateHeroAbilities(playerId);
 
         // 发送更新
         this.sendDataToClient(playerId);
@@ -202,7 +202,7 @@ class SkillEquipSystemClass {
 
     // 获取玩家装备数据
     public getPlayerSlots(playerId: PlayerID): (string | null)[] {
-        const data = this.playerData.  get(playerId);
+        const data = this.playerData. get(playerId);
         return data ?   data.slots : [null, null, null, null];
     }
 

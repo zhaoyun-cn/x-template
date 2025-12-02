@@ -7,7 +7,7 @@ export function InitCharacterStatsHandler(): void {
     print('[CharacterStatsHandler] 初始化角色属性请求处理');
     
     CustomGameEventManager.RegisterListener('request_character_stats', (_, data: any) => {
-        const playerId = data. PlayerID as PlayerID;
+        const playerId = data.PlayerID as PlayerID;
         
         print('[CharacterStatsHandler] 收到角色属性请求: ' + playerId);
         

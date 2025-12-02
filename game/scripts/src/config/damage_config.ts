@@ -78,10 +78,10 @@ export enum StatType {
 // ========== 词条归属乘区映射 ==========
 export const STAT_TO_MULTIPLIER: Record<StatType, MultiplierType> = {
     // 增幅类 → 乘区2
-    [StatType.INCREASED_DAMAGE]: MultiplierType. INCREASED,
-    [StatType. INCREASED_PHYSICAL_DAMAGE]: MultiplierType.INCREASED,
-    [StatType. INCREASED_ELEMENTAL_DAMAGE]: MultiplierType.INCREASED,
-    [StatType. INCREASED_FIRE_DAMAGE]: MultiplierType.INCREASED,
+    [StatType.INCREASED_DAMAGE]: MultiplierType.INCREASED,
+    [StatType.INCREASED_PHYSICAL_DAMAGE]: MultiplierType.INCREASED,
+    [StatType.INCREASED_ELEMENTAL_DAMAGE]: MultiplierType.INCREASED,
+    [StatType.INCREASED_FIRE_DAMAGE]: MultiplierType.INCREASED,
     [StatType.INCREASED_COLD_DAMAGE]: MultiplierType.INCREASED,
     [StatType.INCREASED_LIGHTNING_DAMAGE]: MultiplierType.INCREASED,
     
@@ -92,34 +92,34 @@ export const STAT_TO_MULTIPLIER: Record<StatType, MultiplierType> = {
     
     // 暴击类 → 乘区4
     [StatType.CRIT_CHANCE]: MultiplierType.CRITICAL,
-    [StatType.CRIT_MULTIPLIER]: MultiplierType. CRITICAL,
+    [StatType.CRIT_MULTIPLIER]: MultiplierType.CRITICAL,
     
     // 技能类型 → 乘区5
     [StatType.PROJECTILE_DAMAGE]: MultiplierType.SKILL_TYPE,
     [StatType.AREA_DAMAGE]: MultiplierType.SKILL_TYPE,
-    [StatType. MELEE_DAMAGE]: MultiplierType.SKILL_TYPE,
+    [StatType.MELEE_DAMAGE]: MultiplierType.SKILL_TYPE,
     [StatType.SPELL_DAMAGE]: MultiplierType.SKILL_TYPE,
-    [StatType.ATTACK_DAMAGE]: MultiplierType. SKILL_TYPE,
+    [StatType.ATTACK_DAMAGE]: MultiplierType.SKILL_TYPE,
     [StatType.DOT_DAMAGE]: MultiplierType.SKILL_TYPE,
     
     // 其他（不参与伤害乘区）
     [StatType.COOLDOWN_REDUCTION]: MultiplierType.BASE,
-    [StatType. AREA_OF_EFFECT]: MultiplierType.BASE,
-    [StatType.PROJECTILE_SPEED]: MultiplierType. BASE,
-    [StatType. ATTACK_SPEED]: MultiplierType.BASE,
+    [StatType.AREA_OF_EFFECT]: MultiplierType.BASE,
+    [StatType.PROJECTILE_SPEED]: MultiplierType.BASE,
+    [StatType.ATTACK_SPEED]: MultiplierType.BASE,
     [StatType.CAST_SPEED]: MultiplierType.BASE,
-    [StatType.LIFESTEAL]: MultiplierType. BASE,
-    [StatType. LIFE_ON_HIT]: MultiplierType.BASE,
+    [StatType.LIFESTEAL]: MultiplierType.BASE,
+    [StatType.LIFE_ON_HIT]: MultiplierType.BASE,
     [StatType.MANA_COST_REDUCTION]: MultiplierType.BASE,
 };
 
 // ========== 技能类型词条对应的标签 ==========
 export const SKILL_TYPE_STAT_TO_TAG: Partial<Record<StatType, SkillTag>> = {
-    [StatType.PROJECTILE_DAMAGE]: SkillTag. PROJECTILE,
+    [StatType.PROJECTILE_DAMAGE]: SkillTag.PROJECTILE,
     [StatType.AREA_DAMAGE]: SkillTag.AREA,
     [StatType.MELEE_DAMAGE]: SkillTag.MELEE,
-    [StatType.SPELL_DAMAGE]: SkillTag. SPELL,
-    [StatType. ATTACK_DAMAGE]: SkillTag.ATTACK,
+    [StatType.SPELL_DAMAGE]: SkillTag.SPELL,
+    [StatType.ATTACK_DAMAGE]: SkillTag.ATTACK,
     [StatType.DOT_DAMAGE]: SkillTag.DOT,
 };
 
@@ -128,8 +128,8 @@ export const STAT_NAMES: Record<StatType, string> = {
     [StatType.INCREASED_DAMAGE]: '增加伤害',
     [StatType.INCREASED_PHYSICAL_DAMAGE]: '增加物理伤害',
     [StatType.INCREASED_ELEMENTAL_DAMAGE]: '增加元素伤害',
-    [StatType. INCREASED_FIRE_DAMAGE]: '增加火焰伤害',
-    [StatType. INCREASED_COLD_DAMAGE]: '增加冰霜伤害',
+    [StatType.INCREASED_FIRE_DAMAGE]: '增加火焰伤害',
+    [StatType.INCREASED_COLD_DAMAGE]: '增加冰霜伤害',
     [StatType.INCREASED_LIGHTNING_DAMAGE]: '增加闪电伤害',
     
     [StatType.MORE_DAMAGE]: '额外伤害',
@@ -137,23 +137,23 @@ export const STAT_NAMES: Record<StatType, string> = {
     [StatType.MORE_ELEMENTAL_DAMAGE]: '额外元素伤害',
     
     [StatType.CRIT_CHANCE]: '暴击率',
-    [StatType. CRIT_MULTIPLIER]: '暴击伤害',
+    [StatType.CRIT_MULTIPLIER]: '暴击伤害',
     
-    [StatType. PROJECTILE_DAMAGE]: '投射物伤害',
+    [StatType.PROJECTILE_DAMAGE]: '投射物伤害',
     [StatType.AREA_DAMAGE]: '范围伤害',
-    [StatType. MELEE_DAMAGE]: '近战伤害',
+    [StatType.MELEE_DAMAGE]: '近战伤害',
     [StatType.SPELL_DAMAGE]: '法术伤害',
     [StatType.ATTACK_DAMAGE]: '攻击伤害',
     [StatType.DOT_DAMAGE]: '持续伤害',
     
-    [StatType. COOLDOWN_REDUCTION]: '冷却缩减',
+    [StatType.COOLDOWN_REDUCTION]: '冷却缩减',
     [StatType.AREA_OF_EFFECT]: '范围扩大',
     [StatType.PROJECTILE_SPEED]: '投射物速度',
     [StatType.ATTACK_SPEED]: '攻击速度',
-    [StatType. CAST_SPEED]: '施法速度',
+    [StatType.CAST_SPEED]: '施法速度',
     [StatType.LIFESTEAL]: '生命偷取',
     [StatType.LIFE_ON_HIT]: '击中回血',
-    [StatType. MANA_COST_REDUCTION]: '消耗降低',
+    [StatType.MANA_COST_REDUCTION]: '消耗降低',
 };
 
 // ========== 词条稀有度（影响出现概率和数值）==========
@@ -166,37 +166,37 @@ export enum StatRarity {
 
 export const STAT_RARITY: Record<StatType, StatRarity> = {
     // 常见
-    [StatType.INCREASED_DAMAGE]: StatRarity. COMMON,
-    [StatType. INCREASED_PHYSICAL_DAMAGE]: StatRarity.COMMON,
+    [StatType.INCREASED_DAMAGE]: StatRarity.COMMON,
+    [StatType.INCREASED_PHYSICAL_DAMAGE]: StatRarity.COMMON,
     [StatType.INCREASED_ELEMENTAL_DAMAGE]: StatRarity.COMMON,
     [StatType.CRIT_MULTIPLIER]: StatRarity.COMMON,
     [StatType.COOLDOWN_REDUCTION]: StatRarity.COMMON,
     [StatType.ATTACK_SPEED]: StatRarity.COMMON,
-    [StatType.CAST_SPEED]: StatRarity. COMMON,
+    [StatType.CAST_SPEED]: StatRarity.COMMON,
     
     // 较少
-    [StatType. INCREASED_FIRE_DAMAGE]: StatRarity. UNCOMMON,
-    [StatType. INCREASED_COLD_DAMAGE]: StatRarity.UNCOMMON,
-    [StatType. INCREASED_LIGHTNING_DAMAGE]: StatRarity.UNCOMMON,
-    [StatType. PROJECTILE_DAMAGE]: StatRarity.UNCOMMON,
+    [StatType.INCREASED_FIRE_DAMAGE]: StatRarity.UNCOMMON,
+    [StatType.INCREASED_COLD_DAMAGE]: StatRarity.UNCOMMON,
+    [StatType.INCREASED_LIGHTNING_DAMAGE]: StatRarity.UNCOMMON,
+    [StatType.PROJECTILE_DAMAGE]: StatRarity.UNCOMMON,
     [StatType.AREA_DAMAGE]: StatRarity.UNCOMMON,
-    [StatType. MELEE_DAMAGE]: StatRarity.UNCOMMON,
-    [StatType.SPELL_DAMAGE]: StatRarity. UNCOMMON,
+    [StatType.MELEE_DAMAGE]: StatRarity.UNCOMMON,
+    [StatType.SPELL_DAMAGE]: StatRarity.UNCOMMON,
     [StatType.ATTACK_DAMAGE]: StatRarity.UNCOMMON,
-    [StatType.DOT_DAMAGE]: StatRarity. UNCOMMON,
+    [StatType.DOT_DAMAGE]: StatRarity.UNCOMMON,
     [StatType.AREA_OF_EFFECT]: StatRarity.UNCOMMON,
-    [StatType.PROJECTILE_SPEED]: StatRarity. UNCOMMON,
-    [StatType.LIFESTEAL]: StatRarity. UNCOMMON,
+    [StatType.PROJECTILE_SPEED]: StatRarity.UNCOMMON,
+    [StatType.LIFESTEAL]: StatRarity.UNCOMMON,
     [StatType.LIFE_ON_HIT]: StatRarity.UNCOMMON,
-    [StatType. MANA_COST_REDUCTION]: StatRarity.UNCOMMON,
+    [StatType.MANA_COST_REDUCTION]: StatRarity.UNCOMMON,
     
     // 稀有
-    [StatType.CRIT_CHANCE]: StatRarity. RARE,  // 暴击率稀有
-    [StatType. MORE_ELEMENTAL_DAMAGE]: StatRarity.RARE,
+    [StatType.CRIT_CHANCE]: StatRarity.RARE,  // 暴击率稀有
+    [StatType.MORE_ELEMENTAL_DAMAGE]: StatRarity.RARE,
     [StatType.MORE_PHYSICAL_DAMAGE]: StatRarity.RARE,
     
     // 非常稀有
-    [StatType.MORE_DAMAGE]: StatRarity. VERY_RARE,  // 通用额外伤害非常稀有
+    [StatType.MORE_DAMAGE]: StatRarity.VERY_RARE,  // 通用额外伤害非常稀有
 };
 
 // ========== 词条数值范围（按来源不同）==========
@@ -208,16 +208,16 @@ export interface StatValueRange {
 // 护石词条数值范围
 export const RUNE_STAT_VALUES: Partial<Record<StatType, StatValueRange>> = {
     // 增幅类（常见，数值较高）
-    [StatType. INCREASED_DAMAGE]: { min: 5, max: 20 },
-    [StatType. INCREASED_PHYSICAL_DAMAGE]: { min: 8, max: 25 },
+    [StatType.INCREASED_DAMAGE]: { min: 5, max: 20 },
+    [StatType.INCREASED_PHYSICAL_DAMAGE]: { min: 8, max: 25 },
     [StatType.INCREASED_ELEMENTAL_DAMAGE]: { min: 8, max: 25 },
     [StatType.INCREASED_FIRE_DAMAGE]: { min: 10, max: 30 },
     [StatType.INCREASED_COLD_DAMAGE]: { min: 10, max: 30 },
-    [StatType. INCREASED_LIGHTNING_DAMAGE]: { min: 10, max: 30 },
+    [StatType.INCREASED_LIGHTNING_DAMAGE]: { min: 10, max: 30 },
     
     // 额外类（稀有，数值较低）
-    [StatType. MORE_DAMAGE]: { min: 3, max: 10 },
-    [StatType. MORE_PHYSICAL_DAMAGE]: { min: 5, max: 15 },
+    [StatType.MORE_DAMAGE]: { min: 3, max: 10 },
+    [StatType.MORE_PHYSICAL_DAMAGE]: { min: 5, max: 15 },
     [StatType.MORE_ELEMENTAL_DAMAGE]: { min: 5, max: 15 },
     
     // 暴击类
@@ -242,7 +242,7 @@ export const RUNE_STAT_VALUES: Partial<Record<StatType, StatValueRange>> = {
 export const EQUIPMENT_STAT_VALUES: Partial<Record<StatType, StatValueRange>> = {
     [StatType.INCREASED_DAMAGE]: { min: 10, max: 40 },
     [StatType.INCREASED_PHYSICAL_DAMAGE]: { min: 15, max: 50 },
-    [StatType. INCREASED_ELEMENTAL_DAMAGE]: { min: 15, max: 50 },
+    [StatType.INCREASED_ELEMENTAL_DAMAGE]: { min: 15, max: 50 },
     
     [StatType.MORE_DAMAGE]: { min: 5, max: 15 },
     
@@ -250,9 +250,9 @@ export const EQUIPMENT_STAT_VALUES: Partial<Record<StatType, StatValueRange>> = 
     [StatType.CRIT_MULTIPLIER]: { min: 15, max: 50 },
     
     [StatType.PROJECTILE_DAMAGE]: { min: 15, max: 40 },
-    [StatType. AREA_DAMAGE]: { min: 15, max: 40 },
+    [StatType.AREA_DAMAGE]: { min: 15, max: 40 },
     [StatType.MELEE_DAMAGE]: { min: 15, max: 40 },
-    // ...  其他
+    // ... 其他
 };
 
 // 天赋词条数值范围（固定值，不随机）
@@ -312,7 +312,7 @@ export const SKILL_CONFIG: Record<string, SkillConfig> = {
         id: 'warrior_deep_wound',
         name: '重伤',
         icon: 'bloodseeker_rupture',
-        tags: [SkillTag.PHYSICAL, SkillTag.DOT, SkillTag. ATTACK],
+        tags: [SkillTag.PHYSICAL, SkillTag.DOT, SkillTag.ATTACK],
         baseDamage: 30,
         damagePerLevel: 10,
         baseCooldown: 0,
@@ -334,7 +334,7 @@ export const SKILL_CONFIG: Record<string, SkillConfig> = {
         baseCritChance: 5,
         description: '向目标冲锋并造成物理伤害',
     },
-    // ...  添加更多技能
+    // ... 添加更多技能
 };
 
 // ========== 暴击系统配置 ==========
@@ -357,31 +357,31 @@ export enum ItemQuality {
 export const QUALITY_CONFIG = {
     names: {
         [ItemQuality.NORMAL]: '普通',
-        [ItemQuality. MAGIC]: '魔法',
+        [ItemQuality.MAGIC]: '魔法',
         [ItemQuality.RARE]: '稀有',
         [ItemQuality.EPIC]: '史诗',
         [ItemQuality.LEGENDARY]: '传说',
     },
     colors: {
-        [ItemQuality. NORMAL]: '#ffffff',
-        [ItemQuality. MAGIC]: '#00ff00',
+        [ItemQuality.NORMAL]: '#ffffff',
+        [ItemQuality.MAGIC]: '#00ff00',
         [ItemQuality.RARE]: '#0088ff',
         [ItemQuality.EPIC]: '#aa00ff',
         [ItemQuality.LEGENDARY]: '#ff8800',
     },
     // 品质对数值的乘数
     valueMultiplier: {
-        [ItemQuality. NORMAL]: 0.6,
-        [ItemQuality. MAGIC]: 0.8,
-        [ItemQuality. RARE]: 1.0,
-        [ItemQuality. EPIC]: 1.2,
-        [ItemQuality. LEGENDARY]: 1.5,
+        [ItemQuality.NORMAL]: 0.6,
+        [ItemQuality.MAGIC]: 0.8,
+        [ItemQuality.RARE]: 1.0,
+        [ItemQuality.EPIC]: 1.2,
+        [ItemQuality.LEGENDARY]: 1.5,
     },
     // 品质对词条数量的影响（装备）
     affixCount: {
         [ItemQuality.NORMAL]: { min: 1, max: 1 },
         [ItemQuality.MAGIC]: { min: 1, max: 2 },
-        [ItemQuality. RARE]: { min: 2, max: 3 },
+        [ItemQuality.RARE]: { min: 2, max: 3 },
         [ItemQuality.EPIC]: { min: 3, max: 4 },
         [ItemQuality.LEGENDARY]: { min: 4, max: 5 },
     },

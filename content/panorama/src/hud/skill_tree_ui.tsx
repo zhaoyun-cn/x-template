@@ -64,14 +64,14 @@ export const SkillTreeUI: React.FC<{ visible: boolean; onClose: () => void }> = 
 
         const h1 = GameEvents.Subscribe('skill_point_data_update' as never, (d: any) => {
             if (d) {
-                setPoints(d. availablePoints || 0);
+                setPoints(d.availablePoints || 0);
                 setLevels(d.skillLevels || {});
-                setHeroLv(d. playerLevel || 1);
+                setHeroLv(d.playerLevel || 1);
             }
         });
         const h2 = GameEvents.Subscribe('skill_equip_data_update' as never, (d: any) => {
             if (d && d.slots) {
-                setSlots({ q: d.slots.q || '', w: d.slots.w || '', e: d.slots. e || '', r: d.slots.r || '' });
+                setSlots({ q: d.slots.q || '', w: d.slots.w || '', e: d.slots.e || '', r: d.slots.r || '' });
             }
         });
         const h3 = GameEvents.Subscribe('rune_data_update' as never, (d: any) => {
@@ -82,8 +82,8 @@ export const SkillTreeUI: React.FC<{ visible: boolean; onClose: () => void }> = 
                     if (r && r.id) {
                         arr.push({
                             id: r.id + '',
-                            name: r. name + '',
-                            icon: r. icon + '',
+                            name: r.name + '',
+                            icon: r.icon + '',
                             effectTypeName: r.effectTypeName + '',
                             quality: +r.quality || 1,
                             qualityName: r.qualityName + '',
@@ -99,9 +99,9 @@ export const SkillTreeUI: React.FC<{ visible: boolean; onClose: () => void }> = 
 
         return () => {
             GameEvents.Unsubscribe(h1);
-            GameEvents. Unsubscribe(h2);
+            GameEvents.Unsubscribe(h2);
             GameEvents.Unsubscribe(h3);
-            if (hoverTimeoutRef. current) {
+            if (hoverTimeoutRef.current) {
                 clearTimeout(hoverTimeoutRef.current);
             }
         };
@@ -203,9 +203,9 @@ export const SkillTreeUI: React.FC<{ visible: boolean; onClose: () => void }> = 
 
         equippedRunes.forEach(r => {
             const effect = r.effectTypeName;
-            if (effect === '伤害增幅' || effect. includes('伤害')) damageBonus += r.rollValue;
+            if (effect === '伤害增幅' || effect.includes('伤害')) damageBonus += r.rollValue;
             else if (effect === '冷却缩减' || effect.includes('冷却')) cooldownReduction += r.rollValue;
-            else if (effect === '范围扩大' || effect.includes('范围')) rangeBonus += r. rollValue;
+            else if (effect === '范围扩大' || effect.includes('范围')) rangeBonus += r.rollValue;
             else if (effect === '暴击强化' || effect.includes('暴击')) critBonus += r.rollValue;
             else if (effect === '生命汲取' || effect.includes('吸血')) lifestealBonus += r.rollValue;
         });
@@ -222,7 +222,7 @@ export const SkillTreeUI: React.FC<{ visible: boolean; onClose: () => void }> = 
             finalDamage,
             damageBonus,
             baseCooldown,
-            finalCooldown: finalCooldown. toFixed(1),
+            finalCooldown: finalCooldown.toFixed(1),
             cooldownReduction,
             baseRange,
             finalRange,
@@ -235,7 +235,7 @@ export const SkillTreeUI: React.FC<{ visible: boolean; onClose: () => void }> = 
     };
 
     const sk = selSkill ? findSkill(selSkill) : null;
-    const slotStatus = 'Q:' + (slots.q ?  '有' : '-') + ' W:' + (slots.w ? '有' : '-') + ' E:' + (slots. e ? '有' : '-') + ' R:' + (slots.r ? '有' : '-');
+    const slotStatus = 'Q:' + (slots.q ?  '有' : '-') + ' W:' + (slots.w ? '有' : '-') + ' E:' + (slots.e ? '有' : '-') + ' R:' + (slots.r ? '有' : '-');
 
     // ========== 护石悬浮提示 ==========
     const renderRuneTooltip = () => {
@@ -247,7 +247,7 @@ export const SkillTreeUI: React.FC<{ visible: boolean; onClose: () => void }> = 
                 style={{
                     width: '200px',
                     backgroundColor: '#1a1a1aee',
-                    border: '2px solid ' + (QCOLOR[hoverRune. quality] || '#333'),
+                    border: '2px solid ' + (QCOLOR[hoverRune.quality] || '#333'),
                     padding: '12px',
                     flowChildren: 'down',
                 }}
@@ -256,7 +256,7 @@ export const SkillTreeUI: React.FC<{ visible: boolean; onClose: () => void }> = 
             >
                 <Label text={hoverRune.name} style={{ fontSize: '16px', color: QCOLOR[hoverRune.quality] || '#fff', fontWeight: 'bold', marginBottom: '8px' }} />
                 <Panel style={{ width: '100%', height: '1px', backgroundColor: '#555', marginBottom: '8px' }} />
-                <Label text={'品质: ' + (QNAME[hoverRune. quality] || '未知')} style={{ fontSize: '12px', color: QCOLOR[hoverRune. quality] || '#888', marginBottom: '4px' }} />
+                <Label text={'品质: ' + (QNAME[hoverRune.quality] || '未知')} style={{ fontSize: '12px', color: QCOLOR[hoverRune.quality] || '#888', marginBottom: '4px' }} />
                 <Label text={'效果: ' + hoverRune.effectTypeName} style={{ fontSize: '12px', color: '#aaa', marginBottom: '4px' }} />
                 <Label text={'数值: +' + hoverRune.rollValue + '%'} style={{ fontSize: '14px', color: '#0f0', marginBottom: '8px' }} />
                 <Panel style={{ width: '100%', height: '1px', backgroundColor: '#555', marginBottom: '8px' }} />
@@ -320,7 +320,7 @@ const renderDecomposeModal = () => {
 
     // ========== 详情页 ==========
     const renderDetailTab = () => {
-        const learnedSkills = SKILLS.filter(s => s. done && isLearned(s.id));
+        const learnedSkills = SKILLS.filter(s => s.done && isLearned(s.id));
         const stats = detailSkill ? calcSkillStats(detailSkill) : null;
         const skill = detailSkill ? findSkill(detailSkill) : null;
 
@@ -333,10 +333,10 @@ const renderDecomposeModal = () => {
                         {learnedSkills.length === 0 ? (
                             <Label text="暂无已学技能" style={{ fontSize: '11px', color: '#555', marginTop: '50px', horizontalAlign: 'center' }} />
                         ) : (
-                            learnedSkills. map(s => {
+                            learnedSkills.map(s => {
                                 const runeCount = runes.filter(r => r.equippedTo === s.id).length;
                                 return (
-                                    <Panel key={s.id} hittest={true} onactivate={() => setDetailSkill(s. id)} style={{ flowChildren: 'right', height: '50px', marginBottom: '6px', backgroundColor: detailSkill === s.id ? '#3a2a1a' : '#151515', border: detailSkill === s.id ?  '2px solid #fa0' : '1px solid #333', padding: '3px' }}>
+                                    <Panel key={s.id} hittest={true} onactivate={() => setDetailSkill(s.id)} style={{ flowChildren: 'right', height: '50px', marginBottom: '6px', backgroundColor: detailSkill === s.id ? '#3a2a1a' : '#151515', border: detailSkill === s.id ?  '2px solid #fa0' : '1px solid #333', padding: '3px' }}>
                                         <Panel style={{ width: '44px', height: '44px' }}>
                                             <DOTAAbilityImage abilityname={s.icon} style={{ width: '100%', height: '100%' }} />
                                         </Panel>
@@ -362,7 +362,7 @@ const renderDecomposeModal = () => {
                                 </Panel>
                                 <Panel style={{ flowChildren: 'down' }}>
                                     <Label text={skill.name} style={{ fontSize: '22px', color: '#fa0' }} />
-                                    <Label text={'等级 ' + stats.skillLevel + '/' + skill.maxLv + ' | 护石 ' + stats. runeCount + '/5'} style={{ fontSize: '12px', color: '#888', marginTop: '5px' }} />
+                                    <Label text={'等级 ' + stats.skillLevel + '/' + skill.maxLv + ' | 护石 ' + stats.runeCount + '/5'} style={{ fontSize: '12px', color: '#888', marginTop: '5px' }} />
                                     <Label text={skill.desc || ''} style={{ fontSize: '11px', color: '#aaa', marginTop: '5px' }} />
                                 </Panel>
                             </Panel>
@@ -422,7 +422,7 @@ const renderDecomposeModal = () => {
                             {/* 已装备护石 */}
                             <Label text="已装备护石" style={{ fontSize: '14px', color: '#fa0', marginBottom: '10px' }} />
                             <Panel style={{ flowChildren: 'right' }}>
-                                {runes.filter(r => r. equippedTo === detailSkill).length === 0 ?  (
+                                {runes.filter(r => r.equippedTo === detailSkill).length === 0 ?  (
                                     <Label text="未装备护石" style={{ fontSize: '11px', color: '#555' }} />
                                 ) : (
                                     runes.filter(r => r.equippedTo === detailSkill).map(r => (
@@ -482,17 +482,17 @@ const renderDecomposeModal = () => {
                         <Panel style={{ width: '100%', height: '100%', flowChildren: 'right' }}>
                             {/* 技能网格 */}
                             <Panel style={{ width: '600px', height: '100%', backgroundColor: '#0a0a0a', padding: '10px', flowChildren: 'down' }}>
-                                {[0, 1, 2]. map(row => (
+                                {[0, 1, 2].map(row => (
                                     <Panel key={'r' + row} style={{ flowChildren: 'right' }}>
-                                        {SKILLS. slice(row * 5, row * 5 + 5). map(s => {
+                                        {SKILLS.slice(row * 5, row * 5 + 5).map(s => {
                                             const lv = getLv(s.id);
                                             const isSel = selSkill === s.id;
-                                            const isEquipped = slots. q === s.id || slots.w === s.id || slots.e === s.id || slots.r === s.id;
+                                            const isEquipped = slots.q === s.id || slots.w === s.id || slots.e === s.id || slots.r === s.id;
                                             const typeColor = s.type === 'active' ? '#0af' : s.type === 'passive' ?  '#fa0' : '#f0a';
                                             return (
-                                                <Panel key={s.id} hittest={true} onactivate={() => setSelSkill(s. id)} style={{ width: '110px', height: '130px', margin: '3px', backgroundColor: isSel ?  '#1a2a1a' : '#151515', border: '2px solid ' + (isSel ? '#0f0' : isEquipped ? '#0af' : '#333'), flowChildren: 'down' }}>
+                                                <Panel key={s.id} hittest={true} onactivate={() => setSelSkill(s.id)} style={{ width: '110px', height: '130px', margin: '3px', backgroundColor: isSel ?  '#1a2a1a' : '#151515', border: '2px solid ' + (isSel ? '#0f0' : isEquipped ? '#0af' : '#333'), flowChildren: 'down' }}>
                                                     <Panel style={{ width: '60px', height: '60px', marginTop: '6px', marginLeft: '22px', border: '1px solid #333' }}>
-                                                        <DOTAAbilityImage abilityname={s. icon} style={{ width: '100%', height: '100%', opacity: s.done ? '1' : '0.3' }} />
+                                                        <DOTAAbilityImage abilityname={s.icon} style={{ width: '100%', height: '100%', opacity: s.done ? '1' : '0.3' }} />
                                                     </Panel>
                                                     <Label text={s.name} style={{ fontSize: '11px', color: s.done ? '#ccc' : '#555', horizontalAlign: 'center', marginTop: '4px' }} />
                                                     <Label text={lv + '/' + s.maxLv} style={{ fontSize: '10px', color: lv > 0 ? '#0f0' : '#666', horizontalAlign: 'center' }} />
@@ -527,7 +527,7 @@ const renderDecomposeModal = () => {
                                                 <Label
                                                     text={
                                                         slots.q === selSkill ? '已装备到 Q 槽' :
-                                                        slots. w === selSkill ? '已装备到 W 槽' :
+                                                        slots.w === selSkill ? '已装备到 W 槽' :
                                                         slots.e === selSkill ? '已装备到 E 槽' :
                                                         slots.r === selSkill ?  '已装备到 R 槽' :
                                                         '未装备'
@@ -560,7 +560,7 @@ const renderDecomposeModal = () => {
                                                                     {currentSkill ? (
                                                                         <DOTAAbilityImage abilityname={currentSkill.icon} style={{ width: '100%', height: '100%', opacity: '0.7' }} />
                                                                     ) : (
-                                                                        <Label text={k. toUpperCase()} style={{ fontSize: '20px', color: canEquip ? '#0f0' : '#444', horizontalAlign: 'center', verticalAlign: 'center' }} />
+                                                                        <Label text={k.toUpperCase()} style={{ fontSize: '20px', color: canEquip ? '#0f0' : '#444', horizontalAlign: 'center', verticalAlign: 'center' }} />
                                                                     )}
                                                                 </Panel>
                                                                 <Label text={currentSkill ?  currentSkill.name : '空'} style={{ fontSize: '9px', color: '#888', horizontalAlign: 'center', marginTop: '3px' }} />
@@ -584,8 +584,8 @@ const renderDecomposeModal = () => {
                             <Panel style={{ width: '180px', height: '100%', backgroundColor: '#0a0a0a', padding: '10px', flowChildren: 'down' }}>
                                 <Label text="已学技能" style={{ fontSize: '14px', color: '#ffd700', marginBottom: '10px' }} />
                                 <Panel style={{ flowChildren: 'down', height: '520px', overflow: 'scroll' }}>
-                                    {SKILLS.filter(s => s.done && isLearned(s.id)). map(s => {
-                                        const cnt = runes.filter(r => r. equippedTo === s.id).length;
+                                    {SKILLS.filter(s => s.done && isLearned(s.id)).map(s => {
+                                        const cnt = runes.filter(r => r.equippedTo === s.id).length;
                                         return (
                                             <Panel key={s.id} hittest={true} onactivate={() => { setRuneSkill(s.id); setSelRune(''); }} style={{ flowChildren: 'right', height: '50px', marginBottom: '5px', backgroundColor: runeSkill === s.id ?  '#1a2a1a' : '#0c0c0c', border: runeSkill === s.id ?  '2px solid #0f0' : '1px solid #333', padding: '3px' }}>
                                                 <Panel style={{ width: '44px', height: '44px' }}>
@@ -608,7 +608,7 @@ const renderDecomposeModal = () => {
                                         <Label text={(findSkill(runeSkill)?.name || '') + ' 护石'} style={{ fontSize: '16px', color: '#ffd700', marginBottom: '15px' }} />
                                         <Label text="槽位(3开+2锁)" style={{ fontSize: '11px', color: '#888', marginBottom: '10px' }} />
                                         <Panel style={{ flowChildren: 'right', marginBottom: '15px' }}>
-                                            {[0, 1, 2, 3, 4]. map(i => {
+                                            {[0, 1, 2, 3, 4].map(i => {
                                                 const locked = i >= 3;
                                                 const inSlot = runes.find(r => r.equippedTo === runeSkill && r.slotIndex === i);
                                                 const canDrop = !locked && !inSlot && selRune;
@@ -627,7 +627,7 @@ const renderDecomposeModal = () => {
                                         </Panel>
                                         <Label text="已装备:" style={{ fontSize: '12px', color: '#a0f', marginBottom: '8px' }} />
                                         <Panel style={{ flowChildren: 'down', height: '280px', overflow: 'scroll' }}>
-                                            {runes.filter(r => r. equippedTo === runeSkill).map(r => (
+                                            {runes.filter(r => r.equippedTo === runeSkill).map(r => (
                                                 <Panel key={r.id} style={{ flowChildren: 'right', height: '40px', marginBottom: '4px', backgroundColor: '#1a1a1a', border: '1px solid ' + (QCOLOR[r.quality] || '#333'), padding: '3px' }}>
                                                     <DOTAItemImage itemname={r.icon} style={{ width: '34px', height: '34px' }} />
                                                     <Panel style={{ flowChildren: 'down', marginLeft: '8px', width: '150px' }}>
@@ -669,9 +669,9 @@ const renderDecomposeModal = () => {
                                         >
                                             <DOTAItemImage itemname={r.icon} style={{ width: '44px', height: '44px' }} />
                                             <Panel style={{ flowChildren: 'down', marginLeft: '8px', width: '140px' }}>
-                                                <Label text={r.name} style={{ fontSize: '11px', color: QCOLOR[r. quality] || '#fff' }} />
+                                                <Label text={r.name} style={{ fontSize: '11px', color: QCOLOR[r.quality] || '#fff' }} />
                                                 <Label text={r.qualityName} style={{ fontSize: '9px', color: '#888' }} />
-                                                <Label text={r.effectTypeName + ' +' + r. rollValue + '%'} style={{ fontSize: '9px', color: '#0f0' }} />
+                                                <Label text={r.effectTypeName + ' +' + r.rollValue + '%'} style={{ fontSize: '9px', color: '#0f0' }} />
                                             </Panel>
                                             <Panel hittest={true} onactivate={() => { setDecomposeRune(r); setShowDecompose(true); }} style={{ width: '32px', height: '24px', backgroundColor: '#2a1a1a', marginTop: '10px' }}>
                                                 <Label text="分解" style={{ fontSize: '9px', color: '#f80', horizontalAlign: 'center', marginTop: '5px' }} />

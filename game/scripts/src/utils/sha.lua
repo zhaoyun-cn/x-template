@@ -75,12 +75,12 @@ assert(Lua_has_int64 or Lua_has_int32 or not Lua_has_integers, "Lua integers mus
 --       Lua 5.1/5.2    with "int64"               will not work.
 --       Lua 5.1/5.2    with "int128"              will not work.
 --       Lua 5.1/5.2    with "float"               will not work.
---       Lua 5.1/5.2    with "double"              is OK.       (default config for Lua 5.1, Lua 5.2, LuaJIT)
+--       Lua 5.1/5.2    with "double"              is OK.      (default config for Lua 5.1, Lua 5.2, LuaJIT)
 --       Lua 5.3/5.4    with "int32"  + "float"    will not work.
 --       Lua 5.3/5.4    with "int64"  + "float"    will not work.
 --       Lua 5.3/5.4    with "int128" + "float"    will not work.
---       Lua 5.3/5.4    with "int32"  + "double"   is OK.       (config used by Fengari)
---       Lua 5.3/5.4    with "int64"  + "double"   is OK.       (default config for Lua 5.3, Lua 5.4)
+--       Lua 5.3/5.4    with "int32"  + "double"   is OK.      (config used by Fengari)
+--       Lua 5.3/5.4    with "int64"  + "double"   is OK.      (default config for Lua 5.3, Lua 5.4)
 --       Lua 5.3/5.4    with "int128" + "double"   will not work.
 --   Using floating point numbers better than "double" instead of "double" is OK (non-IEEE-754 floating point implementation are allowed).
 --   Using "int128" instead of "int64" is not OK: "int128" would require different branch of implementation for optimized SHA512.

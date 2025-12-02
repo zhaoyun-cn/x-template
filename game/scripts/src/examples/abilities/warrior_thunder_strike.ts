@@ -24,8 +24,8 @@ export class warrior_thunder_strike extends BaseAbility {
         
         if (! result) return;
         
-        print(`[ThunderStrike] 最终伤害: ${result. finalDamage}`);
-        print(`[ThunderStrike] 增幅乘区: ${result.breakdown.increasedMultiplier. toFixed(2)}`);
+        print(`[ThunderStrike] 最终伤害: ${result.finalDamage}`);
+        print(`[ThunderStrike] 增幅乘区: ${result.breakdown.increasedMultiplier.toFixed(2)}`);
         print(`[ThunderStrike] 额外乘区: ${result.breakdown.moreMultiplier.toFixed(2)}`);
         print(`[ThunderStrike] 暴击期望: ${result.breakdown.critMultiplier.toFixed(2)}`);
         print(`[ThunderStrike] 技能类型: ${result.breakdown.skillTypeMultiplier.toFixed(2)}`);
@@ -41,7 +41,7 @@ export class warrior_thunder_strike extends BaseAbility {
             undefined,
             radius,
             UnitTargetTeam.ENEMY,
-            UnitTargetType. HERO + UnitTargetType.BASIC,
+            UnitTargetType.HERO + UnitTargetType.BASIC,
             UnitTargetFlags.NONE,
             FindOrder.ANY,
             false
@@ -94,7 +94,7 @@ export class warrior_thunder_strike extends BaseAbility {
         );
         
         // 播放音效
-        EmitSoundOnLocationWithCaster(targetPoint, "Hero_Zuus. ArcLightning.Target", caster);
+        EmitSoundOnLocationWithCaster(targetPoint, "Hero_Zuus.ArcLightning.Target", caster);
     }
     
     private ShowCritEffect(target: CDOTA_BaseNPC): void {

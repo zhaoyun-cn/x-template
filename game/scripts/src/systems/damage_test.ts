@@ -56,17 +56,17 @@ function TestDamageCalculation(playerId: PlayerID): void {
     print('');
     print('--- 乘区分解 ---');
     print('基础伤害: ' + result.breakdown.baseDamage);
-    print('增幅乘区(Increased): x' + result.breakdown.increasedMultiplier. toFixed(3));
-    print('额外乘区(More): x' + result.breakdown. moreMultiplier.toFixed(3));
+    print('增幅乘区(Increased): x' + result.breakdown.increasedMultiplier.toFixed(3));
+    print('额外乘区(More): x' + result.breakdown.moreMultiplier.toFixed(3));
     print('暴击乘区(期望): x' + result.breakdown.critMultiplier.toFixed(3));
     print('技能类型乘区: x' + result.breakdown.skillTypeMultiplier.toFixed(3));
     print('总乘数: x' + result.breakdown.totalMultiplier.toFixed(3));
     print('');
     print('--- 最终结果 ---');
     print('最终伤害: ' + result.finalDamage);
-    print('冷却时间: ' + result.cooldown. toFixed(1) + 's');
+    print('冷却时间: ' + result.cooldown.toFixed(1) + 's');
     print('DPS: ' + result.dps);
-    print('暴击率: ' + result. critInfo.chance + '%');
+    print('暴击率: ' + result.critInfo.chance + '%');
     print('暴击伤害: ' + result.critInfo.multiplier + '%');
     print('========================================');
     print('');
@@ -83,12 +83,12 @@ function TestDamageCalculation(playerId: PlayerID): void {
         0
     );
     GameRules.SendCustomMessage(
-        `<font color='#0f0'>基础伤害: ${result. breakdown.baseDamage}</font>`,
+        `<font color='#0f0'>基础伤害: ${result.breakdown.baseDamage}</font>`,
         playerId,
         0
     );
     GameRules.SendCustomMessage(
-        `<font color='#0af'>增幅: x${result.breakdown.increasedMultiplier.toFixed(2)} | 额外: x${result.breakdown. moreMultiplier.toFixed(2)}</font>`,
+        `<font color='#0af'>增幅: x${result.breakdown.increasedMultiplier.toFixed(2)} | 额外: x${result.breakdown.moreMultiplier.toFixed(2)}</font>`,
         playerId,
         0
     );
@@ -98,7 +98,7 @@ function TestDamageCalculation(playerId: PlayerID): void {
         0
     );
     GameRules.SendCustomMessage(
-        `<font color='#f80'>最终伤害: ${result. finalDamage} | DPS: ${result.dps}</font>`,
+        `<font color='#f80'>最终伤害: ${result.finalDamage} | DPS: ${result.dps}</font>`,
         playerId,
         0
     );
@@ -123,9 +123,9 @@ function TestStatsCollection(playerId: PlayerID): void {
     print('闪电增伤: ' + stats.increasedLightningDamage + '%');
     print('');
     print('--- 额外类(More) ---');
-    print('额外伤害数量: ' + stats.moreDamage. length);
-    if (stats.moreDamage. length > 0) {
-        print('额外伤害值: ' + stats.moreDamage. join(', ') + '%');
+    print('额外伤害数量: ' + stats.moreDamage.length);
+    if (stats.moreDamage.length > 0) {
+        print('额外伤害值: ' + stats.moreDamage.join(', ') + '%');
     }
     print('');
     print('--- 暴击类 ---');
@@ -182,7 +182,7 @@ function TestAllSkills(playerId: PlayerID): void {
         const result = DamageCalculator.Calculate(skillId, 3, stats);  // 假设3级
         
         if (result) {
-            const tags = skill.tags. join(', ');
+            const tags = skill.tags.join(', ');
             print(`${skill.name}: 伤害=${result.finalDamage} DPS=${result.dps} 标签=[${tags}]`);
             
             GameRules.SendCustomMessage(

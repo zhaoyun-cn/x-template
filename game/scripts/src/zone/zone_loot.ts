@@ -71,7 +71,7 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         icon: "item_branches",
         color: "#FFFFFF",
         stackable: true,
-        category: MaterialCategory. EXCHANGE,
+        category: MaterialCategory.EXCHANGE,
         description: "基础兑换材料，可在商店兑换物品",
         usable: false
     },
@@ -91,7 +91,7 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         icon: "item_point_booster",
         color: "#0088FF",
         stackable: true,
-        category: MaterialCategory. EXCHANGE,
+        category: MaterialCategory.EXCHANGE,
         description: "稀有兑换材料，可兑换稀有物品",
         usable: false
     },
@@ -101,7 +101,7 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         icon: "item_reaver",
         color: "#FF8800",
         stackable: true,
-        category: MaterialCategory. EXCHANGE,
+        category: MaterialCategory.EXCHANGE,
         description: "传说兑换材料，可兑换传说物品",
         usable: false
     },
@@ -113,7 +113,7 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         icon: "item_recipe",
         color: "#FF00FF",
         stackable: true,
-        category: MaterialCategory. CRAFT,
+        category: MaterialCategory.CRAFT,
         description: "为装备添加一条随机词条",
         usable: false
     },
@@ -123,7 +123,7 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         icon: "item_recipe",
         color: "#AA00FF",
         stackable: true,
-        category: MaterialCategory. CRAFT,
+        category: MaterialCategory.CRAFT,
         description: "重新随机装备的所有词条类型",
         usable: false
     },
@@ -133,13 +133,13 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         icon: "item_recipe",
         color: "#FF00AA",
         stackable: true,
-        category: MaterialCategory. CRAFT,
+        category: MaterialCategory.CRAFT,
         description: "重新随机装备词条的数值",
         usable: false
     },
     
     // ⭐ 新增：POE2 通货配置
-    [LootType. POE2_CHAOS_ORB]: {
+    [LootType.POE2_CHAOS_ORB]: {
         type: LootType.POE2_CHAOS_ORB,
         name: "混沌石",
         icon: "item_octarine_core",
@@ -175,7 +175,7 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         icon: "item_branches",
         color: "#888888",
         stackable: true,
-        category: MaterialCategory. CRAFT,
+        category: MaterialCategory.CRAFT,
         description: "分解装备获得，可用于合成通货",
         usable: false  // 碎片本身不可直接使用
     },
@@ -192,7 +192,7 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         usable: true
     },
     [LootType.TICKET_B]: {
-        type: LootType. TICKET_B,
+        type: LootType.TICKET_B,
         name: "副本票",
         icon: "item_refresher_shard",
         color: "#00FFFF",
@@ -209,7 +209,7 @@ export const LOOT_ITEMS: Record<LootType, LootItemConfig> = {
         icon: "item_present",
         color: "#FFD700",
         stackable: false,
-        category: MaterialCategory. CHEST,
+        category: MaterialCategory.CHEST,
         description: "打开后随机获得稀有材料或装备",
         usable: true
     }
@@ -226,7 +226,7 @@ export interface DropEntry {
 
 // 普通怪掉落表
 export const NORMAL_DROP_TABLE: DropEntry[] = [
-    { type: LootType. MATERIAL_COMMON, chance: 0.6, minCount: 1, maxCount: 2 },
+    { type: LootType.MATERIAL_COMMON, chance: 0.6, minCount: 1, maxCount: 2 },
     { type: LootType.MATERIAL_FINE, chance: 0.05, minCount: 1, maxCount: 1 },
     // ⭐ 新增：普通怪小概率掉落碎片
     { type: LootType.POE2_SCRAP, chance: 0.15, minCount: 1, maxCount: 2 },
@@ -234,15 +234,15 @@ export const NORMAL_DROP_TABLE: DropEntry[] = [
 
 // 精英怪掉落表
 export const ELITE_DROP_TABLE: DropEntry[] = [
-    { type: LootType. MATERIAL_COMMON, chance: 1.0, minCount: 2, maxCount: 4 },
+    { type: LootType.MATERIAL_COMMON, chance: 1.0, minCount: 2, maxCount: 4 },
     { type: LootType.MATERIAL_FINE, chance: 0.5, minCount: 1, maxCount: 2 },
-    { type: LootType. MATERIAL_RARE, chance: 0.1, minCount: 1, maxCount: 1 },
+    { type: LootType.MATERIAL_RARE, chance: 0.1, minCount: 1, maxCount: 1 },
     { type: LootType.CRAFT_ADD_AFFIX, chance: 0.15, minCount: 1, maxCount: 1 },
     { type: LootType.CRAFT_REROLL_AFFIX, chance: 0.1, minCount: 1, maxCount: 1 },
     // ⭐ 新增：POE2 通货掉落
     { type: LootType.POE2_SCRAP, chance: 0.4, minCount: 2, maxCount: 5 },
     { type: LootType.POE2_CHAOS_ORB, chance: 0.08, minCount: 1, maxCount: 1 },
-    { type: LootType. TICKET_A, chance: 0.2, minCount: 1, maxCount: 1 },
+    { type: LootType.TICKET_A, chance: 0.2, minCount: 1, maxCount: 1 },
     { type: LootType.TICKET_B, chance: 0.05, minCount: 1, maxCount: 1 },
 ];
 
@@ -261,7 +261,7 @@ export const BOSS_DROP_TABLE: DropEntry[] = [
     { type: LootType.POE2_DIVINE_ORB, chance: 0.12, minCount: 1, maxCount: 1 },
     { type: LootType.TICKET_A, chance: 0.5, minCount: 1, maxCount: 2 },
     { type: LootType.TICKET_B, chance: 0.2, minCount: 1, maxCount: 1 },
-    { type: LootType. CHEST, chance: 0.3, minCount: 1, maxCount: 1 },
+    { type: LootType.CHEST, chance: 0.3, minCount: 1, maxCount: 1 },
 ];
 
 // ==================== 玩家背包系统 ====================
@@ -320,7 +320,7 @@ export class ZoneLootSystem {
             
             if (RandomFloat(0, 1) <= adjustedChance) {
                 const count = RandomInt(entry.minCount, entry.maxCount);
-                drops.push({ type: entry. type, count });
+                drops.push({ type: entry.type, count });
             }
         }
         
@@ -334,7 +334,7 @@ export class ZoneLootSystem {
             const currentCount = inventory.items.get(drop.type) || 0;
             inventory.items.set(drop.type, currentCount + drop.count);
             
-            print(`[ZoneLoot] 玩家${playerId} 获得 ${LOOT_ITEMS[drop. type].name} x${drop.count}`);
+            print(`[ZoneLoot] 玩家${playerId} 获得 ${LOOT_ITEMS[drop.type].name} x${drop.count}`);
             this.SyncMaterialsToNetTable(playerId);
         }
     }
@@ -405,7 +405,7 @@ export class ZoneLootSystem {
                     items.push({
                         type: itemType,
                         name: config.name,
-                        icon: `s2r://panorama/images/items/${config.icon}_png. vtex`,
+                        icon: `s2r://panorama/images/items/${config.icon}_png.vtex`,
                         color: config.color,
                         count: count,
                         category: config.category,
@@ -416,7 +416,7 @@ export class ZoneLootSystem {
             }
         });
         
-        CustomNetTables.SetTableValue('player_materials', playerId. toString(), {
+        CustomNetTables.SetTableValue('player_materials', playerId.toString(), {
             items: items,
             timestamp: GameRules.GetGameTime()
         });
@@ -461,10 +461,10 @@ export class MaterialUseSystem {
         }
         
        switch (materialType) {
-    case LootType. CHEST:
+    case LootType.CHEST:
         this.OpenChest(playerId);
         break;
-    case LootType. TICKET_A:
+    case LootType.TICKET_A:
         this.UseTicketA(playerId);
         break;
     case LootType.TICKET_B:
@@ -474,7 +474,7 @@ export class MaterialUseSystem {
     case LootType.POE2_CHAOS_ORB:
         this.UseChaosOrb(playerId);
         break;
-    case LootType. POE2_EXALTED_ORB:
+    case LootType.POE2_EXALTED_ORB:
         this.UseExaltedOrb(playerId);
         break;
     case LootType.POE2_DIVINE_ORB:
@@ -488,7 +488,7 @@ export class MaterialUseSystem {
         
         const rewards = [
             { type: LootType.MATERIAL_RARE, min: 2, max: 5 },
-            { type: LootType. MATERIAL_LEGENDARY, min: 1, max: 2 },
+            { type: LootType.MATERIAL_LEGENDARY, min: 1, max: 2 },
             { type: LootType.CRAFT_ADD_AFFIX, min: 1, max: 3 },
             { type: LootType.CRAFT_REROLL_AFFIX, min: 1, max: 2 },
             { type: LootType.CRAFT_REROLL_STAT, min: 1, max: 2 },
@@ -541,7 +541,7 @@ export class MaterialUseSystem {
         const message = "🔮 混沌石使用成功！（功能开发中）";
         GameRules.SendCustomMessage(message, playerId, 0);
         
-        this.SendUseResult(playerId, LootType. POE2_CHAOS_ORB, true, message);
+        this.SendUseResult(playerId, LootType.POE2_CHAOS_ORB, true, message);
     }
     
     private static UseExaltedOrb(playerId: PlayerID): void {
@@ -551,7 +551,7 @@ export class MaterialUseSystem {
         const message = "✨ 崇高石使用成功！（功能开发中）";
         GameRules.SendCustomMessage(message, playerId, 0);
         
-        this.SendUseResult(playerId, LootType. POE2_EXALTED_ORB, true, message);
+        this.SendUseResult(playerId, LootType.POE2_EXALTED_ORB, true, message);
     }
     
     private static UseDivineOrb(playerId: PlayerID): void {

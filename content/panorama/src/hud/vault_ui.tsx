@@ -1,450 +1,352 @@
-import React, { useState, useEffect, useRef, FC } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-interface EquipmentStat {
-    attribute: string;
-    value: number;
-}
-
-interface AffixDetail {
-    position: 'prefix' | 'suffix';
-    tier: number;
-    name: string;
-    description: string;
-}
-
-interface ExternalRewardItem {
+// ========== 类型定义 ==========
+interface VaultItem {
+    id: string;
     name: string;
     type: string;
     icon: string;
-    stats: EquipmentStat[];
-    rarity?: number;
-    affixDetails?: AffixDetail[];
-    forgeLevel?: number;
+    rarity: number;
+    stats: Array<{ attribute: string; value: number }>;
+    affixDetails?: any;
 }
 
-interface VaultUIProps {
-    visible: boolean;
-    onClose: () => void;
+interface EquippedItems {
+    weapon?: VaultItem;
+    armor?: VaultItem;
+    helmet?: VaultItem;
+    boots?: VaultItem;
+    gloves?: VaultItem;
+    belt?: VaultItem;
+    necklace?: VaultItem;
+    ring?: VaultItem;
 }
 
-const safeStr = (v: any, d: string = ''): string => {
-    if (v === undefined || v === null) return d;
-    return String(v);
+// ========== 常量 ==========
+const QCOLOR: Record<number, string> = { 0: '#9d9d9d', 1: '#4169E1', 2: '#ffd700', 3: '#ff8c00' };
+const QNAME: Record<number, string> = { 0: '普通', 1: '魔法', 2: '稀有', 3: '传说' };
+
+const SLOT_NAMES: Record<string, string> = {
+    weapon: '武器',
+    armor: '护甲',
+    helmet: '头盔',
+    boots: '鞋子',
+    gloves: '手套',
+    belt: '腰带',
+    necklace: '项链',
+    ring: '戒指',
 };
 
-const safeNum = (v: any, d: number = 0): number => {
-    if (v === undefined || v === null) return d;
-    const n = Number(v);
-    return isNaN(n) ?  d : n;
-};
-
-const QUALITY_COLORS: Record<number, string> = {
-    0: '#c8c8c8',
-    1: '#8888ff',
-    2: '#ffff77',
-    3: '#ff8800',
-};
-
-const QUALITY_NAMES: Record<number, string> = {
-    0: '普通',
-    1: '魔法',
-    2: '稀有',
-    3: '传说',
-};
-
-export const VaultUI: FC<VaultUIProps> = ({ visible, onClose }) => {
-    const [vaultItems, setVaultItems] = useState<ExternalRewardItem[]>([]);
-    const [selectedItem, setSelectedItem] = useState<number | null>(null);
-    const [hoveredItem, setHoveredItem] = useState<number | null>(null);
-    const [equippedItems, setEquippedItems] = useState<Record<string, ExternalRewardItem | null>>({});
-    const [isEquipping, setIsEquipping] = useState(false);
+// ========== 主组件 ==========
+export const VaultUI: React.FC<{ visible: boolean; onClose: () => void }> = ({ visible, onClose }) => {
+    const [items, setItems] = useState<VaultItem[]>([]);
+    const [equipped, setEquipped] = useState<EquippedItems>({});
+    const [selItem, setSelItem] = useState<VaultItem | null>(null);
+    const [hoverItem, setHoverItem] = useState<VaultItem | null>(null);
+    const [equipping, setEquipping] = useState(false);
     
-    const equipTimeoutRef = useRef<ScheduleID | null>(null);
-    const hoverTimeoutRef = useRef<ScheduleID | null>(null);
-    const mountedRef = useRef(true);
-    
+    const hoverTimeoutRef = useRef<number | null>(null);
+
+    // ========== 数据订阅 ==========
     useEffect(() => {
-        mountedRef.current = true;
-        return () => {
-            mountedRef.current = false;
-            if (equipTimeoutRef.current) $.CancelScheduled(equipTimeoutRef.current);
-            if (hoverTimeoutRef.current) $.CancelScheduled(hoverTimeoutRef.current);
-        };
-    }, []);
-    
-    const extractAffixes = (affixDetails: any) => {
-        const prefixes: AffixDetail[] = [];
-        const suffixes: AffixDetail[] = [];
-        if (! affixDetails) return { prefixes, suffixes };
-        try {
-            for (const key in affixDetails) {
-                const a = affixDetails[key];
-                if (a && typeof a === 'object' && a.name) {
-                    const safe: AffixDetail = {
-                        position: a.position === 'suffix' ? 'suffix' : 'prefix',
-                        tier: safeNum(a.tier, 1),
-                        name: safeStr(a.name, '未知'),
-                        description: safeStr(a.description, ''),
-                    };
-                    if (safe.position === 'prefix') prefixes.push(safe);
-                    else suffixes.push(safe);
+        if (!visible) return;
+        
+        GameEvents.SendCustomGameEventToServer('request_vault_data' as never, { PlayerID: Players.GetLocalPlayer() } as never);
+        GameEvents.SendCustomGameEventToServer('request_equipment_data' as never, { PlayerID: Players.GetLocalPlayer() } as never);
+        
+        const h1 = GameEvents.Subscribe('update_vault_ui' as never, (data: any) => {
+            const arr: VaultItem[] = [];
+            if (data && data.items) {
+                const rawArr = Array.isArray(data.items) ? data.items : Object.values(data.items || {});
+                for (let i = 0; i < rawArr.length; i++) {
+                    const raw = rawArr[i];
+                    if (raw && raw.name) {
+                        const stats: Array<{ attribute: string; value: number }> = [];
+                        if (raw.stats) {
+                            const rawStats = Array.isArray(raw.stats) ? raw.stats : Object.values(raw.stats || {});
+                            for (const s of rawStats) {
+                                if (s && s.attribute) {
+                                    stats.push({ attribute: s.attribute + '', value: +s.value || 0 });
+                                }
+                            }
+                        }
+                        arr.push({
+                            id: 'item_' + i,
+                            name: raw.name + '',
+                            type: raw.type + '',
+                            icon: raw.icon + '',
+                            rarity: +raw.rarity || 0,
+                            stats: stats,
+                            affixDetails: raw.affixDetails,
+                        });
+                    }
                 }
             }
-        } catch (e) {
-            $.Msg('[VaultUI] extractAffixes error');
+            setItems(arr);
+        });
+        
+        const h2 = GameEvents.Subscribe('update_equipment_ui' as never, (data: any) => {
+            if (data && data.equipment) {
+                const eq: EquippedItems = {};
+                for (const slot in data.equipment) {
+                    const raw = data.equipment[slot];
+                    if (raw && raw.name) {
+                        const stats: Array<{ attribute: string; value: number }> = [];
+                        if (raw.stats) {
+                            const rawStats = Array.isArray(raw.stats) ? raw.stats : Object.values(raw.stats || {});
+                            for (const s of rawStats) {
+                                if (s && s.attribute) {
+                                    stats.push({ attribute: s.attribute + '', value: +s.value || 0 });
+                                }
+                            }
+                        }
+                        (eq as any)[slot] = {
+                            id: 'eq_' + slot,
+                            name: raw.name + '',
+                            type: raw.type + '',
+                            icon: raw.icon + '',
+                            rarity: +raw.rarity || 0,
+                            stats: stats,
+                            affixDetails: raw.affixDetails,
+                        };
+                    }
+                }
+                setEquipped(eq);
+            }
+        });
+        
+        return () => {
+            GameEvents.Unsubscribe(h1);
+            GameEvents.Unsubscribe(h2);
+            if (hoverTimeoutRef.current) {
+                clearTimeout(hoverTimeoutRef.current);
+            }
+        };
+    }, [visible]);
+
+    if (!visible) return null;
+
+    // ========== 悬停处理 ==========
+    const handleItemMouseOver = (item: VaultItem) => {
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = null;
         }
-        return { prefixes, suffixes };
+        setHoverItem(item);
     };
 
-    const getColor = (item: ExternalRewardItem | null): string => {
-        if (!item) return '#9d9d9d';
-        const rarity = safeNum(item.rarity, 0);
-        return QUALITY_COLORS[rarity] || '#9d9d9d';
+    const handleItemMouseOut = () => {
+        hoverTimeoutRef.current = setTimeout(() => {
+            setHoverItem(null);
+        }, 200) as any;
     };
 
-    const getQualityName = (rarity: any): string => {
-        const r = safeNum(rarity, 0);
-        return QUALITY_NAMES[r] || '普通';
+    const keepHoverPanel = () => {
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = null;
+        }
     };
 
-    const findEquipped = (type: string): ExternalRewardItem | null => {
-        if (!type) return null;
-        for (const slot in equippedItems) {
-            const eq = equippedItems[slot];
-            if (eq && eq.type === type) return eq;
+    // ========== 装备操作 ==========
+    const handleEquip = () => {
+        if (equipping || !selItem) return;
+        setEquipping(true);
+        
+        const idx = items.findIndex(i => i.id === selItem.id);
+        if (idx >= 0) {
+            GameEvents.SendCustomGameEventToServer('equip_item_from_vault' as never, {
+                PlayerID: Players.GetLocalPlayer(),
+                index: idx
+            } as never);
+        }
+        
+        Game.EmitSound('ui.crafting_gem_create');
+        setSelItem(null);
+        setTimeout(() => setEquipping(false), 1500);
+    };
+
+    // ========== 获取已装备的同类型物品 ==========
+    const getEquippedByType = (type: string): VaultItem | null => {
+        for (const slot in equipped) {
+            const item = (equipped as any)[slot];
+            if (item && item.type === type) {
+                return item;
+            }
         }
         return null;
     };
 
-    const onMouseOver = (idx: number) => {
-        if (hoverTimeoutRef.current) {
-            $.CancelScheduled(hoverTimeoutRef.current);
-            hoverTimeoutRef.current = null;
+    // ========== 渲染物品详情面板 ==========
+    const renderItemPanel = (item: VaultItem | null, title: string, isEquipped: boolean) => {
+        if (!item) {
+            return (
+                <Panel style={{ width: '220px', backgroundColor: '#0c0c08', border: '1px solid #333', padding: '10px', flowChildren: 'down' }}>
+                    <Label text={title} style={{ fontSize: '12px', color: '#555', marginBottom: '10px' }} />
+                    <Label text="无" style={{ fontSize: '11px', color: '#444', horizontalAlign: 'center', marginTop: '30px' }} />
+                </Panel>
+            );
         }
-        if (selectedItem === null && mountedRef.current) {
-            setHoveredItem(idx);
-        }
-    };
 
-    const onMouseOut = () => {
-        if (hoverTimeoutRef.current) {
-            $.CancelScheduled(hoverTimeoutRef.current);
-        }
-        hoverTimeoutRef.current = $.Schedule(0.1, () => {
-            if (mountedRef.current) {
-                setHoveredItem(null);
-            }
-            hoverTimeoutRef.current = null;
-        });
-    };
-    
-    useEffect(() => {
-        if (!visible) return;
-        let active = true;
+        const color = QCOLOR[item.rarity] || '#9d9d9d';
+        const qualityName = QNAME[item.rarity] || '普通';
 
-        (GameEvents.SendCustomGameEventToServer as any)('request_vault_data', { PlayerID: Players.GetLocalPlayer() });
-        (GameEvents.SendCustomGameEventToServer as any)('request_equipment_data', { PlayerID: Players.GetLocalPlayer() });
-
-        const h1 = GameEvents.Subscribe('update_vault_ui', (data: any) => {
-            if (! active || !mountedRef.current) return;
-            try {
-                const items: ExternalRewardItem[] = [];
-                if (data && data.items) {
-                    const arr = Array.isArray(data.items) ? data.items : Object.values(data.items);
-                    for (let i = 0; i < arr.length; i++) {
-                        const item = arr[i];
-                        if (item && typeof item === 'object') {
-                            const statsArr: EquipmentStat[] = [];
-                            if (item.stats) {
-                                const rawStats = Array.isArray(item.stats) ? item.stats : Object.values(item.stats);
-                                for (let j = 0; j < rawStats.length; j++) {
-                                    const s = rawStats[j];
-                                    if (s && s.attribute !== undefined) {
-                                        statsArr.push({
-                                            attribute: safeStr(s.attribute, ''),
-                                            value: safeNum(s.value, 0),
-                                        });
-                                    }
-                                }
-                            }
-                            items.push({
-                                name: safeStr(item.name, '未知物品'),
-                                type: safeStr(item.type, '未知'),
-                                icon: safeStr(item.icon, ''),
-                                stats: statsArr,
-                                rarity: safeNum(item.rarity, 0),
-                                affixDetails: item.affixDetails || null,
-                                forgeLevel: item.forgeLevel,
-                            });
-                        }
+        // 处理词缀
+        const prefixes: string[] = [];
+        const suffixes: string[] = [];
+        if (item.affixDetails) {
+            for (const k in item.affixDetails) {
+                const a = item.affixDetails[k];
+                if (a && a.name) {
+                    const text = '[T' + (+a.tier || 1) + '] ' + a.name;
+                    if (a.position === 'suffix') {
+                        suffixes.push(text);
+                    } else {
+                        prefixes.push(text);
                     }
                 }
-                setVaultItems(items);
-            } catch (e) {
-                $.Msg('[VaultUI] update_vault_ui error');
             }
-        });
+        }
 
-        const h2 = GameEvents.Subscribe('update_equipment_ui', (data: any) => {
-            if (!active || !mountedRef.current) return;
-            try {
-                const eq: Record<string, ExternalRewardItem | null> = {};
-                if (data && data.equipment) {
-                    for (const slot in data.equipment) {
-                        const item = data.equipment[slot];
-                        if (item && typeof item === 'object' && item.name) {
-                            const statsArr: EquipmentStat[] = [];
-                            if (item.stats) {
-                                const rawStats = Array.isArray(item.stats) ? item.stats : Object.values(item.stats);
-                                for (let j = 0; j < rawStats.length; j++) {
-                                    const s = rawStats[j];
-                                    if (s && s.attribute !== undefined) {
-                                        statsArr.push({
-                                            attribute: safeStr(s.attribute, ''),
-                                            value: safeNum(s.value, 0),
-                                        });
-                                    }
-                                }
-                            }
-                            eq[slot] = {
-                                name: safeStr(item.name, '未知'),
-                                type: safeStr(item.type, '未知'),
-                                icon: safeStr(item.icon, ''),
-                                stats: statsArr,
-                                rarity: safeNum(item.rarity, 0),
-                                affixDetails: item.affixDetails || null,
-                                forgeLevel: item.forgeLevel,
-                            };
-                        } else {
-                            eq[slot] = null;
-                        }
-                    }
-                }
-                setEquippedItems(eq);
-            } catch (e) {
-                $.Msg('[VaultUI] update_equipment_ui error');
-            }
-        });
-
-        return () => {
-            active = false;
-            GameEvents.Unsubscribe(h1);
-            GameEvents.Unsubscribe(h2);
-        };
-    }, [visible]);
-
-    const onEquipItem = (index: number) => {
-        if (isEquipping || !mountedRef.current) return;
-        setIsEquipping(true);
-        setHoveredItem(null);
-        
-        (GameEvents.SendCustomGameEventToServer as any)('equip_item_from_vault', {
-            PlayerID: Players.GetLocalPlayer(),
-            index: index
-        });
-
-        Game.EmitSound('ui.crafting_gem_create');
-        setSelectedItem(null);
-        
-        if (equipTimeoutRef.current) $.CancelScheduled(equipTimeoutRef.current);
-        equipTimeoutRef.current = $.Schedule(1.5, () => {
-            if (mountedRef.current) setIsEquipping(false);
-            equipTimeoutRef.current = null;
-        });
-    };
-
-    if (!visible) return null;
-
-    const TOTAL = 40;
-    const empty = Math.max(0, TOTAL - vaultItems.length);
-    
-    // 当前显示的物品
-    const displayIndex = selectedItem !== null ? selectedItem : hoveredItem;
-    const displayItem = displayIndex !== null && displayIndex >= 0 && displayIndex < vaultItems.length 
-        ? vaultItems[displayIndex] 
-        : null;
-    const isHoverMode = selectedItem === null && hoveredItem !== null;
-
-    // 渲染物品详情
-    const renderItemDetail = (item: ExternalRewardItem) => {
-        if (!item) return null;
-        
-        const { prefixes, suffixes } = extractAffixes(item.affixDetails);
-        const qualityColor = getColor(item);
-        const compare = findEquipped(safeStr(item.type, ''));
-        
         return (
-            <Panel className="vault_detail" style={{ border: `2px solid ${qualityColor}` }}>
-                {/* 标签 */}
-                <Label 
-                    text={isHoverMode ? "预览" : "已选择"} 
-                    style={{ 
-                        fontSize: '14px', 
-                        color: isHoverMode ? '#888888' : '#ffd700', 
-                        marginBottom: '8px' 
-                    }} 
-                />
+            <Panel 
+                hittest={true}
+                style={{ width: '220px', backgroundColor: '#1a1a1aee', border: '2px solid ' + color, padding: '12px', flowChildren: 'down' }}
+                onmouseover={keepHoverPanel}
+                onmouseout={handleItemMouseOut}
+            >
+                <Label text={title} style={{ fontSize: '11px', color: isEquipped ? '#888' : '#ffd700', marginBottom: '8px' }} />
+                <Panel style={{ width: '100%', height: '1px', backgroundColor: '#444', marginBottom: '10px' }} />
                 
-                {/* 物品信息 */}
+                {/* 名称和图标 */}
                 <Panel style={{ flowChildren: 'right', marginBottom: '10px' }}>
-                    <Panel 
-                        style={{
-                            width: '50px', 
-                            height: '50px',
-                            backgroundImage: `url("${safeStr(item.icon, '')}")`,
-                            backgroundSize: 'cover',
-                            border: `2px solid ${qualityColor}`,
-                            marginRight: '10px',
-                        }} 
-                    />
+                    <Panel style={{ width: '44px', height: '44px', border: '1px solid ' + color, marginRight: '10px', backgroundImage: item.icon ?  'url("' + item.icon + '")' : 'none', backgroundSize: 'cover' }} />
                     <Panel style={{ flowChildren: 'down' }}>
-                        <Label text={safeStr(item.name, '未知')} style={{ fontSize: '18px', color: qualityColor, fontWeight: 'bold' }} />
-                        <Panel style={{ flowChildren: 'right' }}>
-                            <Label text={getQualityName(item.rarity)} style={{ fontSize: '12px', color: qualityColor, marginRight: '8px' }} />
-                            <Label text={safeStr(item.type, '')} style={{ fontSize: '12px', color: '#aaaaaa' }} />
-                        </Panel>
+                        <Label text={item.name} style={{ fontSize: '14px', color: color, fontWeight: 'bold' }} />
+                        <Label text={qualityName + ' ' + item.type} style={{ fontSize: '10px', color: '#888' }} />
                     </Panel>
                 </Panel>
-
+                
                 {/* 属性 */}
-                {item.stats && item.stats.length > 0 && (
+                {item.stats.length > 0 && (
                     <Panel style={{ flowChildren: 'down', marginBottom: '8px' }}>
                         {item.stats.map((stat, i) => (
-                            <Label 
-                                key={`stat-${i}`} 
-                                text={`+${safeNum(stat.value, 0)} ${safeStr(stat.attribute, '')}`} 
-                                style={{ fontSize: '13px', color: '#55ff55' }} 
-                            />
+                            <Label key={'s' + i} text={'+' + stat.value + ' ' + stat.attribute} style={{ fontSize: '12px', color: '#55ff55' }} />
                         ))}
                     </Panel>
                 )}
-
+                
                 {/* 词缀 */}
                 {prefixes.length > 0 && (
                     <Panel style={{ flowChildren: 'down', marginBottom: '5px' }}>
-                        <Label text={`前缀 (${prefixes.length})`} style={{ fontSize: '13px', color: '#9999ff', fontWeight: 'bold' }} />
-                        {prefixes.map((a, i) => (
-                            <Label 
-                                key={`p-${i}`} 
-                                text={`  [T${safeNum(a.tier, 1)}] ${safeStr(a.name, '')}`} 
-                                style={{ fontSize: '12px', color: '#8888ff' }} 
-                            />
-                        ))}
+                        <Label text={'前缀(' + prefixes.length + ')'} style={{ fontSize: '10px', color: '#9999ff' }} />
+                        {prefixes.map((t, i) => <Label key={'p' + i} text={t} style={{ fontSize: '10px', color: '#7777dd', marginLeft: '5px' }} />)}
                     </Panel>
                 )}
                 {suffixes.length > 0 && (
                     <Panel style={{ flowChildren: 'down', marginBottom: '5px' }}>
-                        <Label text={`后缀 (${suffixes.length})`} style={{ fontSize: '13px', color: '#ffdd77', fontWeight: 'bold' }} />
-                        {suffixes.map((a, i) => (
-                            <Label 
-                                key={`s-${i}`} 
-                                text={`  [T${safeNum(a.tier, 1)}] ${safeStr(a.name, '')}`} 
-                                style={{ fontSize: '12px', color: '#ddaa00' }} 
-                            />
-                        ))}
-                    </Panel>
-                )}
-
-                {/* 对比已装备 */}
-                {compare && (
-                    <Panel style={{ 
-                        width: '100%', 
-                        padding: '8px', 
-                        backgroundColor: '#00000066', 
-                        marginTop: '8px',
-                        flowChildren: 'down',
-                    }}>
-                        <Label text="已装备同类型" style={{ fontSize: '12px', color: '#888888', marginBottom: '5px' }} />
-                        <Panel style={{ flowChildren: 'right' }}>
-                            <Panel style={{
-                                width: '30px', 
-                                height: '30px',
-                                backgroundImage: `url("${safeStr(compare.icon, '')}")`,
-                                backgroundSize: 'cover',
-                                marginRight: '8px',
-                            }} />
-                            <Label text={safeStr(compare.name, '未知')} style={{ fontSize: '14px', color: getColor(compare) }} />
-                        </Panel>
-                    </Panel>
-                )}
-
-                {/* 装备按钮（仅选中模式） */}
-                {!isHoverMode && displayIndex !== null && (
-                    <Panel style={{ flowChildren: 'right', marginTop: '10px' }}>
-                        <Button 
-                            className="vault_btn_equip"
-                            onactivate={() => onEquipItem(displayIndex)}
-                            style={{ backgroundColor: isEquipping ?  '#444444' : '#1a5a1a' }}
-                        >
-                            <Label text={isEquipping ? "装备中..." : "装备"} />
-                        </Button>
-                        <Button className="vault_btn_cancel" onactivate={() => setSelectedItem(null)}>
-                            <Label text="取消" />
-                        </Button>
+                        <Label text={'后缀(' + suffixes.length + ')'} style={{ fontSize: '10px', color: '#ffdd77' }} />
+                        {suffixes.map((t, i) => <Label key={'x' + i} text={t} style={{ fontSize: '10px', color: '#ddaa00', marginLeft: '5px' }} />)}
                     </Panel>
                 )}
             </Panel>
         );
     };
 
+    // ========== 当前显示的物品（悬停优先，选中次之）==========
+    const displayItem = hoverItem || selItem;
+    const equippedSameType = displayItem ? getEquippedByType(displayItem.type) : null;
+
     return (
-        <Panel className="vault_window">
-            {/* 标题栏 */}
-            <Panel className="vault_title_bar">
-                <Label className="vault_title" text="装备仓库" />
-                <Label className="vault_count" text={`${vaultItems.length} / ${TOTAL}`} />
-                <Panel className="vault_spacer" />
-                <Button className="vault_close_btn" onactivate={onClose}>
-                    <Label text="X" />
-                </Button>
-            </Panel>
+        <Panel style={{ width: '100%', height: '100%', backgroundColor: '#000000cc' }}>
+            <Panel style={{ width: '1100px', height: '680px', backgroundColor: '#111', border: '3px solid #8b6914', horizontalAlign: 'center', verticalAlign: 'center', flowChildren: 'down' }}>
 
-            {/* 主内容区 */}
-            <Panel className="vault_main">
-                {/* 左侧：物品网格 */}
-                <Panel className="vault_grid">
-                    {vaultItems.map((item, idx) => {
-                        if (!item) return null;
-                        const c = getColor(item);
-                        const isSelected = selectedItem === idx;
-                        const isHovered = hoveredItem === idx;
-                        
-                        return (
-                            <Panel
-                                key={`item-${idx}`}
-                                className="vault_slot"
-                                hittest={true}
-                                style={{
-                                    border: (isSelected || isHovered) ? `4px solid ${c}` : `3px solid ${c}`,
-                                    backgroundImage: `url("${safeStr(item.icon, '')}")`,
-                                    backgroundColor: isSelected ?  '#2a2a2a' : (isHovered ? '#1a1a1a' : '#0a0a0a'),
-                                }}
-                                onactivate={() => { 
-                                    Game.EmitSound('ui.button_click');
-                                    setHoveredItem(null);
-                                    setSelectedItem(selectedItem === idx ? null : idx);
-                                }}
-                                onmouseover={() => onMouseOver(idx)}
-                                onmouseout={onMouseOut}
-                            >
-                                {isSelected && <Panel style={{ width: '100%', height: '100%', backgroundColor: '#ffffff30' }} />}
-                            </Panel>
-                        );
-                    })}
-                    {Array.from({ length: empty }, (_, i) => (
-                        <Panel key={`empty-${i}`} className="vault_slot_empty" />
-                    ))}
+                {/* ========== 标题栏 ========== */}
+                <Panel style={{ width: '100%', height: '50px', backgroundColor: '#1a1a15', borderBottom: '2px solid #8b6914', flowChildren: 'right' }}>
+                    <Label text="装备仓库" style={{ fontSize: '18px', color: '#ffd700', marginLeft: '20px', marginTop: '13px' }} />
+                    <Label text={'仓库: ' + items.length + '/40'} style={{ fontSize: '12px', color: '#888', marginLeft: '20px', marginTop: '17px' }} />
+                    <Panel style={{ width: '750px' }} />
+                    <Label text={selItem ? '已选择: ' + selItem.name : '点击选择装备'} style={{ fontSize: '11px', color: selItem ? '#0f0' : '#666', marginTop: '18px' }} />
                 </Panel>
 
-                {/* 右侧：物品详情 */}
-                <Panel className="vault_info_panel">
-                    {displayItem ?  renderItemDetail(displayItem) : (
-                        <Panel className="vault_empty_info">
-                            <Label text="悬停查看详情" style={{ fontSize: '14px', color: '#666666', textAlign: 'center' }} />
-                            <Label text="点击选择装备" style={{ fontSize: '12px', color: '#555555', textAlign: 'center', marginTop: '5px' }} />
+                {/* ========== 内容区域 ========== */}
+                <Panel style={{ width: '100%', height: '570px', flowChildren: 'right' }}>
+                    
+                    {/* 左侧：仓库物品列表 */}
+                    <Panel style={{ width: '600px', height: '100%', backgroundColor: '#0a0a0a', padding: '10px', flowChildren: 'down' }}>
+                        <Label text="仓库物品" style={{ fontSize: '14px', color: '#ffd700', marginBottom: '10px' }} />
+                        <Panel style={{ width: '100%', height: '520px', flowChildren: 'right-wrap', overflow: 'scroll' }}>
+                            {items.map((item) => {
+                                const color = QCOLOR[item.rarity] || '#9d9d9d';
+                                const isSel = selItem?.id === item.id;
+                                return (
+                                    <Panel
+                                        key={item.id}
+                                        hittest={true}
+                                        onactivate={() => setSelItem(isSel ? null : item)}
+                                        onmouseover={() => handleItemMouseOver(item)}
+                                        onmouseout={handleItemMouseOut}
+                                        style={{
+                                            width: '64px',
+                                            height: '64px',
+                                            margin: '4px',
+                                            backgroundColor: isSel ? '#2a3a2a' : '#151515',
+                                            border: (isSel ?  '3px' : '2px') + ' solid ' + color,
+                                            backgroundImage: item.icon ? 'url("' + item.icon + '")' : 'none',
+                                            backgroundSize: 'cover',
+                                        }}
+                                    />
+                                );
+                            })}
+                            {/* 空格子 */}
+                            {Array.from({ length: Math.max(0, 40 - items.length) }).map((_, i) => (
+                                <Panel key={'e' + i} style={{ width: '64px', height: '64px', margin: '4px', backgroundColor: '#0c0c0c', border: '1px solid #333' }} />
+                            ))}
                         </Panel>
-                    )}
+                    </Panel>
+
+                    {/* 右侧：对比面板 */}
+                    <Panel style={{ width: '490px', height: '100%', backgroundColor: '#0c0c08', padding: '15px', flowChildren: 'down' }}>
+                        <Label text="装备对比" style={{ fontSize: '14px', color: '#ffd700', marginBottom: '15px' }} />
+                        
+                        {displayItem ?  (
+                            <Panel style={{ flowChildren: 'right' }}>
+                                {/* 悬停/选中的物品 */}
+                                {renderItemPanel(displayItem, hoverItem ?  '预览' : '已选择', false)}
+                                
+                                {/* VS */}
+                                <Panel style={{ width: '30px', flowChildren: 'down', marginTop: '80px' }}>
+                                    <Label text="VS" style={{ fontSize: '14px', color: '#f80', horizontalAlign: 'center' }} />
+                                </Panel>
+                                
+                                {/* 已装备的同类型 */}
+                                {renderItemPanel(equippedSameType, '已装备 ' + (SLOT_NAMES[displayItem.type] || displayItem.type), true)}
+                            </Panel>
+                        ) : (
+                            <Label text="← 悬停或选择物品查看详情" style={{ fontSize: '12px', color: '#555', marginTop: '150px', horizontalAlign: 'center' }} />
+                        )}
+                        
+                        {/* 装备按钮 */}
+                        {selItem && ! hoverItem && (
+                            <Panel style={{ flowChildren: 'right', marginTop: '20px' }}>
+                                <Panel hittest={true} onactivate={handleEquip} style={{ width: '100px', height: '36px', backgroundColor: equipping ? '#333' : '#1a4a1a', border: '2px solid #2a8a2a', marginRight: '15px' }}>
+                                    <Label text={equipping ? '装备中...' : '装备'} style={{ fontSize: '14px', color: equipping ? '#888' : '#0f0', horizontalAlign: 'center', marginTop: '8px' }} />
+                                </Panel>
+                                <Panel hittest={true} onactivate={() => setSelItem(null)} style={{ width: '80px', height: '36px', backgroundColor: '#1a1a1a', border: '2px solid #666' }}>
+                                    <Label text="取消" style={{ fontSize: '14px', color: '#ccc', horizontalAlign: 'center', marginTop: '8px' }} />
+                                </Panel>
+                            </Panel>
+                        )}
+                    </Panel>
                 </Panel>
+
+                {/* ========== 底部按钮 ========== */}
+                <Panel style={{ width: '100%', height: '60px', backgroundColor: '#101010', borderTop: '2px solid #3a3020', flowChildren: 'right', horizontalAlign: 'center' }}>
+                    <Panel hittest={true} onactivate={onClose} style={{ width: '100px', height: '34px', backgroundColor: '#1a1a1a', border: '2px solid #666', marginTop: '13px' }}>
+                        <Label text="关闭(B)" style={{ fontSize: '12px', color: '#ccc', horizontalAlign: 'center', marginTop: '8px' }} />
+                    </Panel>
+                </Panel>
+
             </Panel>
         </Panel>
     );

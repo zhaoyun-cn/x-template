@@ -69,14 +69,14 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
     
     print(`[SimpleDungeon] 玩家${playerId}从 UI 装备索引${index}的物品`);
     
-    if (EquipmentVaultSystem. EquipItem(playerId, index)) {
+    if (EquipmentVaultSystem.EquipItem(playerId, index)) {
         const player = PlayerResource.GetPlayer(playerId);
         if (player) {
             // ⭐ 发送仓库数据
             const vault = EquipmentVaultSystem.GetVault(playerId);
             const serializedVault = this.SerializeItems(vault);
             
-            (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
                 items: serializedVault
             });
             
@@ -93,7 +93,7 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
                 }
             }
             
-            (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
+            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
                 equipment: serializedEquipment
             });
             
@@ -119,14 +119,14 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
     
     print(`[SimpleDungeon] 玩家${playerId}从 UI 装备索引${index}的物品`);
     
-    if (EquipmentVaultSystem. EquipItem(playerId, index)) {
+    if (EquipmentVaultSystem.EquipItem(playerId, index)) {
         const player = PlayerResource.GetPlayer(playerId);
         if (player) {
             // ⭐⭐⭐ 使用 SerializeItems 序列化仓库数据（包含 affixDetails）
             const vault = EquipmentVaultSystem.GetVault(playerId);
             const serializedVault = this.SerializeItems(vault);
             
-            (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
                 items: serializedVault
             });
             
@@ -143,7 +143,7 @@ CustomGameEventManager.RegisterListener("equip_item_from_vault", (userId, event:
                 }
             }
             
-            (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
+            (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
                 equipment: serializedEquipment
             });
             
@@ -163,25 +163,25 @@ private SerializeItem(item: ExternalRewardItem): any {
         name: item.name,
         type: item.type,
         icon: item.icon,
-        stats: item. stats,
+        stats: item.stats,
         rarity: item.rarity,
     };
     
     // ⭐ 安全处理 affixDetails
-    if (item. affixDetails) {
+    if (item.affixDetails) {
         const affixArray: any[] = [];
         const affixData = item.affixDetails as any;
         
         // 尝试作为数组处理
-        if (affixData. length !== undefined && affixData.length > 0) {
-            for (let i = 0; i < affixData. length; i++) {
+        if (affixData.length !== undefined && affixData.length > 0) {
+            for (let i = 0; i < affixData.length; i++) {
                 const affix = affixData[i];
                 if (affix && affix.name) {
                     affixArray.push({
                         position: affix.position || 'prefix',
                         tier: affix.tier || 1,
                         name: affix.name || '',
-                        description: affix. description || '',
+                        description: affix.description || '',
                         color: affix.color || '#ffffff',
                     });
                 }

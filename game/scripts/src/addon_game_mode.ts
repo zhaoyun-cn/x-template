@@ -67,7 +67,7 @@ function SpawnDungeonPortal(): CDOTA_BaseNPC | undefined {
     if (portal) {
         print("[Dungeon Portal] 传送门已生成");
         portal.SetMoveCapability(UnitMoveCapability.NONE);
-        portal. SetForwardVector(Vector(0, 1, 0));
+        portal.SetForwardVector(Vector(0, 1, 0));
     } else {
         print("[Dungeon Portal] 传送门创建失败");
     }
@@ -94,8 +94,8 @@ function MonitorPortalTrigger() {
 
             const portalPos = dungeonPortalInstance.GetAbsOrigin();
             const heroPos = hero.GetAbsOrigin();
-            const dx = portalPos.x - heroPos. x;
-            const dy = portalPos.y - heroPos. y;
+            const dx = portalPos.x - heroPos.x;
+            const dy = portalPos.y - heroPos.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
             if (distance <= 200) {
@@ -210,7 +210,7 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
             }
             
             if (affixArray.length > 0) {
-                serialized. affixDetails = affixArray;
+                serialized.affixDetails = affixArray;
                 print(`[GameMode]   序列化后长度: ${affixArray.length}`);
             }
         } else {
@@ -224,7 +224,7 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
     
     const player = PlayerResource.GetPlayer(playerId);
     if (player) {
-        (CustomGameEventManager. Send_ServerToPlayer as any)(player, 'update_vault_ui', {
+        (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
             items: serializedItems
         });
         print(`[GameMode] ✓ 已发送数据到客户端`);
@@ -232,7 +232,7 @@ CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: an
 });
 
 // ⭐ 修复：request_equipment_data
-CustomGameEventManager. RegisterListener("request_equipment_data", (userId, event: any) => {
+CustomGameEventManager.RegisterListener("request_equipment_data", (userId, event: any) => {
     const playerId = event.PlayerID as PlayerID;
     
     print(`[SimpleDungeon] 响应装备界面数据请求：${playerId}`);
@@ -247,7 +247,7 @@ CustomGameEventManager. RegisterListener("request_equipment_data", (userId, even
                 name: item.name,
                 type: item.type,
                 icon: item.icon,
-                stats: item.stats. map(stat => ({
+                stats: item.stats.map(stat => ({
                     attribute: stat.attribute,
                     value: stat.value
                 })),
@@ -311,19 +311,19 @@ CustomGameEventManager.RegisterListener("unequip_item", (userId, event: any) => 
                     type: item.type,
                     icon: item.icon,
                     stats: item.stats,
-                    rarity: item. rarity,
+                    rarity: item.rarity,
                 };
                 
                 // ⭐ 修复：使用 Object.entries 安全遍历
                 if (item.affixDetails) {
                     const affixArray: any[] = [];
-                    const entries = Object.entries(item. affixDetails as any);
+                    const entries = Object.entries(item.affixDetails as any);
                     
-                    for (let i = 0; i < entries. length; i++) {
+                    for (let i = 0; i < entries.length; i++) {
                         const [_, affix] = entries[i];
                         if (affix && typeof affix === 'object') {
                             affixArray.push({
-                                position: (affix as any). position || 'prefix',
+                                position: (affix as any).position || 'prefix',
                                 tier: (affix as any).tier || 1,
                                 name: (affix as any).name || '',
                                 description: (affix as any).description || '',
@@ -351,7 +351,7 @@ CustomGameEventManager.RegisterListener("unequip_item", (userId, event: any) => 
                         type: item.type,
                         icon: item.icon,
                         stats: item.stats,
-                        rarity: item. rarity,
+                        rarity: item.rarity,
                     };
                     
                     // ⭐ 修复：使用 Object.entries 安全遍历
@@ -363,7 +363,7 @@ CustomGameEventManager.RegisterListener("unequip_item", (userId, event: any) => 
                             const [_, affix] = entries[i];
                             if (affix && typeof affix === 'object') {
                                 affixArray.push({
-                                    position: (affix as any). position || 'prefix',
+                                    position: (affix as any).position || 'prefix',
                                     tier: (affix as any).tier || 1,
                                     name: (affix as any).name || '',
                                     description: (affix as any).description || '',
@@ -403,12 +403,12 @@ CustomGameEventManager.RegisterListener("unequip_item", (userId, event: any) => 
 
 // 添加测试装备到仓库
 function AddTestEquipmentToVault(playerId: PlayerID) {
-    print(`[GameMode] 为玩家${playerId}添加测试装备... `);
+    print(`[GameMode] 为玩家${playerId}添加测试装备...`);
     
     const testEquipments: ExternalRewardItem[] = [
         {
             name: "新手头盔",
-            type: ExternalItemType. HELMET,
+            type: ExternalItemType.HELMET,
             icon: "file://{images}/items/helm_of_iron_will.png",
             stats: [
                 { attribute: EquipmentAttribute.STRENGTH, value: 3 },
@@ -427,8 +427,8 @@ function AddTestEquipmentToVault(playerId: PlayerID) {
         },
         {
             name: "生锈的剑",
-            type: ExternalItemType. WEAPON,
-            icon: "file://{images}/items/lesser_crit. png",
+            type: ExternalItemType.WEAPON,
+            icon: "file://{images}/items/lesser_crit.png",
             stats: [
                 { attribute: EquipmentAttribute.AGILITY, value: 5 },
                 { attribute: EquipmentAttribute.ATTACK_DAMAGE, value: 12 }
@@ -449,7 +449,7 @@ function AddTestEquipmentToVault(playerId: PlayerID) {
             type: ExternalItemType.ARMOR,
             icon: "file://{images}/items/ring_of_protection.png",
             stats: [
-                { attribute: EquipmentAttribute. ARMOR, value: 3 },
+                { attribute: EquipmentAttribute.ARMOR, value: 3 },
                 { attribute: EquipmentAttribute.HEALTH, value: 100 }
             ]
         },
@@ -465,10 +465,10 @@ function AddTestEquipmentToVault(playerId: PlayerID) {
         {
             name: "草鞋",
             type: ExternalItemType.BOOTS,
-            icon: "file://{images}/items/boots. png",
+            icon: "file://{images}/items/boots.png",
             stats: [
                 { attribute: EquipmentAttribute.AGILITY, value: 4 },
-                { attribute: EquipmentAttribute. MOVE_SPEED, value: 25 }
+                { attribute: EquipmentAttribute.MOVE_SPEED, value: 25 }
             ]
         },
     ];
@@ -483,7 +483,7 @@ function AddTestEquipmentToVault(playerId: PlayerID) {
 // ⭐ 聊天命令监听
 function InitChatCommands() {
     ListenToGameEvent('player_chat', (event: any) => {
-        const playerId = event. playerid as PlayerID;
+        const playerId = event.playerid as PlayerID;
         const text = event.text as string;
         
         if (text === '-testequip') {
@@ -501,8 +501,8 @@ function InitChatCommands() {
 
 Object.assign(getfenv(), {
     Activate: () => {
-        print("=". repeat(50));
-        print("[GameMode] Activating.. .");
+        print("=".repeat(50));
+        print("[GameMode] Activating...");
         print("=".repeat(50));
         
         ActivateModules();
@@ -523,7 +523,7 @@ Object.assign(getfenv(), {
         print('[GameMode] POE2 装备系统已加载');
         
         GameRules.SimpleDungeon = new SimpleDungeon();
-        GameRules. ZoneDungeon = new ZoneDungeon();
+        GameRules.ZoneDungeon = new ZoneDungeon();
         
         dungeonPortalInstance = SpawnDungeonPortal();
         if (dungeonPortalInstance) {
@@ -563,12 +563,12 @@ Object.assign(getfenv(), {
                 return;
             }
             
-            print(`[GameMode] 玩家${playerId}的英雄已生成，初始化装备系统... `);
+            print(`[GameMode] 玩家${playerId}的英雄已生成，初始化装备系统...`);
             
             EquipmentVaultSystem.InitializePlayer(playerId, spawnedUnit as CDOTA_BaseNPC_Hero);
             
-            const vault = EquipmentVaultSystem. GetVault(playerId);
-            if (vault. length === 0) {
+            const vault = EquipmentVaultSystem.GetVault(playerId);
+            if (vault.length === 0) {
                 print(`[GameMode] 仓库为空，添加测试装备...`);
                 AddTestEquipmentToVault(playerId);
             } else {
@@ -581,7 +581,7 @@ Object.assign(getfenv(), {
             let playerId: PlayerID = player ?  player.GetPlayerID() : 0 as PlayerID;
             const index = parseInt(itemIndex);
             
-            if (EquipmentVaultSystem. EquipItem(playerId, index)) {
+            if (EquipmentVaultSystem.EquipItem(playerId, index)) {
                 print(`[GameMode] ✓ 玩家${playerId}装备了索引${index}的装备`);
             } else {
                 print(`[GameMode] ❌ 装备失败`);
@@ -611,7 +611,7 @@ Object.assign(getfenv(), {
             const player = Convars.GetCommandClient();
             let playerId: PlayerID = player ? player.GetPlayerID() : 0 as PlayerID;
             (EquipmentVaultSystem as any).playerVaults[playerId] = [];
-            (EquipmentVaultSystem as any). SaveToPersistentStorage(playerId);
+            (EquipmentVaultSystem as any).SaveToPersistentStorage(playerId);
             print(`[GameMode] ✓ 已清空玩家${playerId}的仓库`);
         }, "清空装备仓库", 0);
 

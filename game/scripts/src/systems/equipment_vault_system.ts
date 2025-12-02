@@ -19,13 +19,13 @@ export enum EquipmentSlot {
 
 // 装备类型映射到槽位
 const ITEM_TYPE_TO_SLOT: { [key: string]: EquipmentSlot } = {
-    "头盔": EquipmentSlot. HELMET,
-    "项链": EquipmentSlot. NECKLACE,
-    "戒指": EquipmentSlot. RING,
-    "饰品": EquipmentSlot. TRINKET,
+    "头盔": EquipmentSlot.HELMET,
+    "项链": EquipmentSlot.NECKLACE,
+    "戒指": EquipmentSlot.RING,
+    "饰品": EquipmentSlot.TRINKET,
     "武器": EquipmentSlot.WEAPON,
-    "护甲": EquipmentSlot. ARMOR,
-    "腰带": EquipmentSlot. BELT,
+    "护甲": EquipmentSlot.ARMOR,
+    "腰带": EquipmentSlot.BELT,
     "鞋子": EquipmentSlot.BOOTS,
 };
 
@@ -61,7 +61,7 @@ export class EquipmentVaultSystem {
         
         // 初始化仓库
         if (!this.playerVaults[playerId]) {
-            this. playerVaults[playerId] = [];
+            this.playerVaults[playerId] = [];
         }
         
         // 从持久化存储加载
@@ -95,7 +95,7 @@ export class EquipmentVaultSystem {
                 return;
             }
             
-            print(`[EquipmentVaultSystem] 尝试添加 modifier_equipment_system... `);
+            print(`[EquipmentVaultSystem] 尝试添加 modifier_equipment_system...`);
             
             // 初始化全局属性表
             _G.EquipmentStats[playerId] = {
@@ -128,10 +128,10 @@ export class EquipmentVaultSystem {
         print(`[EquipmentVaultSystem] 保存玩家${playerId}获得的装备：${item.name}`);
         
         if (!this.playerVaults[playerId]) {
-            this. playerVaults[playerId] = [];
+            this.playerVaults[playerId] = [];
         }
         
-        if (this.playerVaults[playerId]. length >= this.MAX_VAULT_SIZE) {
+        if (this.playerVaults[playerId].length >= this.MAX_VAULT_SIZE) {
             print(`[EquipmentVaultSystem] ⚠️ 仓库已满（${this.MAX_VAULT_SIZE}件），无法添加`);
             return;
         }
@@ -150,7 +150,7 @@ export class EquipmentVaultSystem {
 
     // 获取玩家装备
     static GetEquipment(playerId: PlayerID): { [slot: string]: ExternalRewardItem | null } {
-        if (!this. playerEquipment[playerId]) {
+        if (!this.playerEquipment[playerId]) {
             this.playerEquipment[playerId] = {
                 helmet: null,
                 necklace: null,
@@ -182,7 +182,7 @@ export class EquipmentVaultSystem {
             return false;
         }
         
-        vault. splice(index, 1);
+        vault.splice(index, 1);
         print(`[EquipmentVaultSystem] 从仓库移除：${item.name}，剩余 ${vault.length} 件`);
         
         const equipment = this.GetEquipment(playerId);
@@ -195,7 +195,7 @@ export class EquipmentVaultSystem {
         equipment[slot] = item;
         
         // ⭐ 刷新装备属性
-        this. RefreshEquipmentStats(playerId);
+        this.RefreshEquipmentStats(playerId);
         
         this.SaveToPersistentStorage(playerId);
         
@@ -205,7 +205,7 @@ export class EquipmentVaultSystem {
 
     // 卸下装备
     static UnequipItem(playerId: PlayerID, slot: string): boolean {
-        const equipment = this. GetEquipment(playerId);
+        const equipment = this.GetEquipment(playerId);
         const item = equipment[slot];
         
         if (!item) {
@@ -227,7 +227,7 @@ export class EquipmentVaultSystem {
         
         this.SaveToPersistentStorage(playerId);
         
-        print(`[EquipmentVaultSystem] ✓ 玩家${playerId}卸下了：${item. name}`);
+        print(`[EquipmentVaultSystem] ✓ 玩家${playerId}卸下了：${item.name}`);
         return true;
     }
 
@@ -265,7 +265,7 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
                 const statsData = item.stats as any;
                 
                 if (statsData.length !== undefined && statsData.length > 0) {
-                    for (let i = 0; i < statsData. length; i++) {
+                    for (let i = 0; i < statsData.length; i++) {
                         const stat = statsData[i];
                         if (stat && stat.attribute && stat.value !== undefined) {
                             const key = this.AttributeToKey(stat.attribute);
@@ -276,7 +276,7 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
                     }
                 } else {
                     for (let i = 0; i < 10; i++) {
-                        const stat = statsData[i] || statsData[i. toString()];
+                        const stat = statsData[i] || statsData[i.toString()];
                         if (stat && stat.attribute && stat.value !== undefined) {
                             const key = this.AttributeToKey(stat.attribute);
                             if (key) {
@@ -289,7 +289,7 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
         }
     }
     
-    _G. EquipmentStats[playerId] = totalStats;
+    _G.EquipmentStats[playerId] = totalStats;
     
     const hero = PlayerResource.GetSelectedHeroEntity(playerId) as CDOTA_BaseNPC_Hero;
     if (hero && ! hero.IsNull()) {
@@ -300,7 +300,7 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
     
     this.isRefreshing[playerId] = false;
     
-    print(`[EquipmentVaultSystem] 属性已刷新: 力量+${totalStats.strength}, 敏捷+${totalStats. agility}, 智力+${totalStats. intelligence}`);
+    print(`[EquipmentVaultSystem] 属性已刷新: 力量+${totalStats.strength}, 敏捷+${totalStats.agility}, 智力+${totalStats.intelligence}`);
 }
 
     // 属性名称转换为键名
@@ -341,9 +341,9 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
             const statsObj: any = {};
             if (item.stats) {
                 for (let i = 0; i < item.stats.length; i++) {
-                    statsObj[i. toString()] = {
+                    statsObj[i.toString()] = {
                         attribute: item.stats[i].attribute,
-                        value: item.stats[i]. value
+                        value: item.stats[i].value
                     };
                 }
             }
@@ -351,7 +351,7 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
             
             if (item.affixDetails) {
                 const affixObj: any = {};
-                const maxAffixes = Math.min(item. affixDetails.length, 6);
+                const maxAffixes = Math.min(item.affixDetails.length, 6);
                 for (let i = 0; i < maxAffixes; i++) {
                     const affix = item.affixDetails[i];
                     if (affix && affix.name) {
@@ -367,7 +367,7 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
                 serialized.affixDetails = affixObj;
             }
             
-            serializedItems[idx. toString()] = serialized;
+            serializedItems[idx.toString()] = serialized;
         }
         
         const serializedEquipment: any = {};
@@ -398,7 +398,7 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
                     for (let i = 0; i < maxAffixes; i++) {
                         const affix = item.affixDetails[i];
                         if (affix && affix.name) {
-                            affixObj[i. toString()] = {
+                            affixObj[i.toString()] = {
                                 position: affix.position,
                                 tier: affix.tier,
                                 name: affix.name,
@@ -416,9 +416,9 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
             }
         }
         
-        print(`[EquipmentVaultSystem] 💾 保存到存储: ${itemsToSave. length} 件仓库装备`);
+        print(`[EquipmentVaultSystem] 💾 保存到存储: ${itemsToSave.length} 件仓库装备`);
         
-        CustomNetTables.SetTableValue("player_vaults", playerId. toString(), {
+        CustomNetTables.SetTableValue("player_vaults", playerId.toString(), {
             items: serializedItems,
             equipment: serializedEquipment,
             timestamp: Time()
@@ -461,7 +461,7 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
                             }
                         } else if (typeof item.affixDetails === 'object') {
                             for (const k in item.affixDetails) {
-                                const affix = item. affixDetails[k];
+                                const affix = item.affixDetails[k];
                                 if (affix && affix.name) {
                                     tempArr.push(affix);
                                 }
@@ -489,15 +489,15 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
             if (data.equipment) {
                 const equipment: { [slot: string]: ExternalRewardItem | null } = {};
                 for (const slot in data.equipment) {
-                    const item = data. equipment[slot];
+                    const item = data.equipment[slot];
                     if (item) {
                         let statsArray: any[] = [];
                         if (item.stats) {
                             if (Array.isArray(item.stats)) {
-                                statsArray = item. stats;
+                                statsArray = item.stats;
                             } else {
                                 for (const k in item.stats) {
-                                    const stat = item. stats[k];
+                                    const stat = item.stats[k];
                                     if (stat && stat.attribute) {
                                         statsArray.push(stat);
                                     }
@@ -518,8 +518,8 @@ private static RefreshEquipmentStats(playerId: PlayerID): void {
                             } else if (typeof item.affixDetails === 'object') {
                                 for (const k in item.affixDetails) {
                                     const affix = item.affixDetails[k];
-                                    if (affix && affix. name) {
-                                        tempArr. push(affix);
+                                    if (affix && affix.name) {
+                                        tempArr.push(affix);
                                     }
                                 }
                             }

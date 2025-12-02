@@ -66,7 +66,7 @@ export const EXTERNAL_REWARD_POOL: ExternalRewardItem[] = [
     { 
         name: "钢剑", 
         type: ExternalItemType.WEAPON, 
-        icon: "file://{images}/items/claymore. png", 
+        icon: "file://{images}/items/claymore.png", 
         stats: [
             { attribute: EquipmentAttribute.STRENGTH, value: 8 },
             { attribute: EquipmentAttribute.ATTACK_DAMAGE, value: 18 }

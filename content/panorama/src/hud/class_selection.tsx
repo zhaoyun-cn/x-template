@@ -34,7 +34,7 @@ export const ClassSelection: React.FC<ClassSelectionProps> = ({ visible, onSelec
 
     // ⭐ 测试用：强制关闭
     const handleDevClose = () => {
-        $. Msg('[ClassSelection] DEV: 强制关闭职业选择界面');
+        $.Msg('[ClassSelection] DEV: 强制关闭职业选择界面');
         onSelect('warrior'); // 直接触发选择完成
     };
 

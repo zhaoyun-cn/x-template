@@ -43,7 +43,7 @@ const QUALITY_ROLL_RANGES: Record<number, { min: number; max: number }> = {
     [RuneQuality.COMMON]: { min: 1, max: 20 },
     [RuneQuality.UNCOMMON]: { min: 15, max: 40 },
     [RuneQuality.RARE]: { min: 30, max: 60 },
-    [RuneQuality. EPIC]: { min: 50, max: 80 },
+    [RuneQuality.EPIC]: { min: 50, max: 80 },
     [RuneQuality.LEGENDARY]: { min: 70, max: 100 },
 };
 
@@ -170,7 +170,7 @@ class RuneSystemClass {
     private initialized: boolean = false;
 
     public Init(): void {
-        if (this. initialized) return;
+        if (this.initialized) return;
 
         print('[RuneSystem] ========================================');
         print('[RuneSystem] 初始化护石系统 v2');
@@ -187,7 +187,7 @@ class RuneSystemClass {
         CustomGameEventManager.RegisterListener('rune_unequip', (_, data: any) => {
             const playerId = data.PlayerID as PlayerID;
             const runeId = data.runeId as string;
-            this. unequipRune(playerId, runeId);
+            this.unequipRune(playerId, runeId);
         });
 
         CustomGameEventManager.RegisterListener('rune_request_data', (_, data: any) => {
@@ -198,7 +198,7 @@ class RuneSystemClass {
         CustomGameEventManager.RegisterListener('rune_decompose', (_, data: any) => {
             const playerId = data.PlayerID as PlayerID;
             const runeId = data.runeId as string;
-            this. decomposeRune(playerId, runeId);
+            this.decomposeRune(playerId, runeId);
         });
 
         this.initialized = true;
@@ -207,11 +207,11 @@ class RuneSystemClass {
 
     private generateRuneId(): string {
         this.runeIdCounter++;
-        return 'rune_' + this. runeIdCounter + '_' + RandomInt(1000, 9999);
+        return 'rune_' + this.runeIdCounter + '_' + RandomInt(1000, 9999);
     }
 
     private calculateRuneValue(typeId: string, quality: RuneQuality, rollPercent: number): number {
-        const runeType = RUNE_TYPES. find(t => t.id === typeId);
+        const runeType = RUNE_TYPES.find(t => t.id === typeId);
         if (!runeType) return 0;
 
         const value = runeType.minValue + (runeType.maxValue - runeType.minValue) * (rollPercent / 100);
@@ -235,10 +235,10 @@ class RuneSystemClass {
 
     public createGuaranteedRune(typeId: string, quality: RuneQuality): RuneInstance {
         const rollPercent = 0;
-        const rollValue = this. calculateRuneValue(typeId, quality, rollPercent);
+        const rollValue = this.calculateRuneValue(typeId, quality, rollPercent);
 
         return {
-            id: this. generateRuneId(),
+            id: this.generateRuneId(),
             typeId: typeId,
             quality: quality,
             rollPercent: rollPercent,
@@ -258,12 +258,12 @@ class RuneSystemClass {
         });
 
         // 添加测试护石
-        this.addRuneToPlayer(playerId, this.createRandomRune('rune_damage', RuneQuality. UNCOMMON));
-        this.addRuneToPlayer(playerId, this.createRandomRune('rune_range', RuneQuality. RARE));
-        this.addRuneToPlayer(playerId, this. createRandomRune('rune_cooldown', RuneQuality. COMMON));
-        this.addRuneToPlayer(playerId, this. createRandomRune('rune_lifesteal', RuneQuality.EPIC));
-        this.addRuneToPlayer(playerId, this. createRandomRune('rune_thunder_special', RuneQuality. RARE));
-        this.addRuneToPlayer(playerId, this. createRandomRune('rune_crit_chance', RuneQuality.UNCOMMON));
+        this.addRuneToPlayer(playerId, this.createRandomRune('rune_damage', RuneQuality.UNCOMMON));
+        this.addRuneToPlayer(playerId, this.createRandomRune('rune_range', RuneQuality.RARE));
+        this.addRuneToPlayer(playerId, this.createRandomRune('rune_cooldown', RuneQuality.COMMON));
+        this.addRuneToPlayer(playerId, this.createRandomRune('rune_lifesteal', RuneQuality.EPIC));
+        this.addRuneToPlayer(playerId, this.createRandomRune('rune_thunder_special', RuneQuality.RARE));
+        this.addRuneToPlayer(playerId, this.createRandomRune('rune_crit_chance', RuneQuality.UNCOMMON));
 
         print('[RuneSystem] 添加了 6 个测试护石');
         print('[RuneSystem] ========================================');
@@ -276,9 +276,9 @@ class RuneSystemClass {
         if (!data) return;
 
         data.inventory.push(rune);
-        const runeType = RUNE_TYPES. find(t => t.id === rune.typeId);
-        print('[RuneSystem] 添加护石: ' + (runeType?. name || rune.typeId) + 
-              ' [' + QUALITY_NAMES[rune. quality] + '] Roll:' + rune.rollPercent + '% 效果:+' + rune.rollValue + '%');
+        const runeType = RUNE_TYPES.find(t => t.id === rune.typeId);
+        print('[RuneSystem] 添加护石: ' + (runeType?.name || rune.typeId) + 
+              ' [' + QUALITY_NAMES[rune.quality] + '] Roll:' + rune.rollPercent + '% 效果:+' + rune.rollValue + '%');
     }
 
     private getSkillSlotUnlocks(playerId: PlayerID, skillId: string): boolean[] {
@@ -292,7 +292,7 @@ class RuneSystemClass {
     }
 
     public unlockSlot(playerId: PlayerID, skillId: string, slotIndex: number): boolean {
-        const data = this. playerData.get(playerId);
+        const data = this.playerData.get(playerId);
         if (!data) return false;
 
         const unlocks = this.getSkillSlotUnlocks(playerId, skillId);
@@ -304,7 +304,7 @@ class RuneSystemClass {
     }
 
     private canEquipToSkill(rune: RuneInstance, skillId: string): boolean {
-        const runeType = RUNE_TYPES.find(t => t. id === rune.typeId);
+        const runeType = RUNE_TYPES.find(t => t.id === rune.typeId);
         if (!runeType) return false;
 
         if (runeType.applicableSkills.length === 0) return true;
@@ -312,7 +312,7 @@ class RuneSystemClass {
     }
 
     public equipRune(playerId: PlayerID, runeId: string, skillId: string, slotIndex: number): boolean {
-        const data = this. playerData.get(playerId);
+        const data = this.playerData.get(playerId);
         if (!data) return false;
 
         const rune = data.inventory.find(r => r.id === runeId);
@@ -337,13 +337,13 @@ class RuneSystemClass {
             return false;
         }
 
-        const existingRune = data.inventory. find(r => r.equippedTo === skillId && r.slotIndex === slotIndex);
+        const existingRune = data.inventory.find(r => r.equippedTo === skillId && r.slotIndex === slotIndex);
         if (existingRune) {
-            this. sendError(playerId, '该槽位已有护石');
+            this.sendError(playerId, '该槽位已有护石');
             return false;
         }
 
-        rune. equippedTo = skillId;
+        rune.equippedTo = skillId;
         rune.slotIndex = slotIndex;
 
         print('[RuneSystem] 装备成功');
@@ -375,7 +375,7 @@ class RuneSystemClass {
     }
 
     public decomposeRune(playerId: PlayerID, runeId: string): boolean {
-        const data = this. playerData.get(playerId);
+        const data = this.playerData.get(playerId);
         if (!data) return false;
 
         const runeIndex = data.inventory.findIndex(r => r.id === runeId);
@@ -392,19 +392,19 @@ class RuneSystemClass {
         }
 
         const qualityToMaterial: Record<number, { type: LootType; count: number }> = {
-            1: { type: LootType. MATERIAL_COMMON, count: 2 },
+            1: { type: LootType.MATERIAL_COMMON, count: 2 },
             2: { type: LootType.MATERIAL_COMMON, count: 5 },
             3: { type: LootType.MATERIAL_FINE, count: 3 },
             4: { type: LootType.MATERIAL_RARE, count: 2 },
             5: { type: LootType.MATERIAL_LEGENDARY, count: 1 },
         };
 
-        const reward = qualityToMaterial[rune.quality] || { type: LootType. MATERIAL_COMMON, count: 1 };
+        const reward = qualityToMaterial[rune.quality] || { type: LootType.MATERIAL_COMMON, count: 1 };
         const qualityName = QUALITY_NAMES[rune.quality] || '普通';
 
         data.inventory.splice(runeIndex, 1);
 
-        ZoneLootSystem.AddItem(playerId, reward.type, reward. count);
+        ZoneLootSystem.AddItem(playerId, reward.type, reward.count);
 
         print('[RuneSystem] 分解护石: ' + runeId + ', 获得材料 x' + reward.count);
 
@@ -462,7 +462,7 @@ class RuneSystemClass {
         const data = this.playerData.get(playerId);
         if (! data) return;
 
-        print('[RuneSystem] 发送数据, 护石数量: ' + data. inventory.length);
+        print('[RuneSystem] 发送数据, 护石数量: ' + data.inventory.length);
 
         const runesObj: Record<string, any> = {};
         for (const rune of data.inventory) {
@@ -475,7 +475,7 @@ class RuneSystemClass {
                 name: runeType.name,
                 icon: runeType.icon,
                 effectType: runeType.effectType,
-                effectTypeName: EFFECT_TYPE_NAMES[runeType. effectType] || '',
+                effectTypeName: EFFECT_TYPE_NAMES[runeType.effectType] || '',
                 quality: rune.quality,
                 qualityName: QUALITY_NAMES[rune.quality],
                 rollPercent: rune.rollPercent,

@@ -27,7 +27,7 @@ export class POE2Integration {
      * 将 POE2 装备实例转换为仓库系统格式
      */
     public static ConvertToVaultItem(poe2Item: POE2EquipmentInstance): ExternalRewardItem {
-        const baseType = GetBaseTypeById(poe2Item. baseTypeId);
+        const baseType = GetBaseTypeById(poe2Item.baseTypeId);
         if (!baseType) {
             print('[POE2Integration] 无法找到基底类型: ' + poe2Item.baseTypeId);
             return {
@@ -39,15 +39,15 @@ export class POE2Integration {
         }
 
         const slotToTypeMap: Record<EquipSlot, ExternalItemType> = {
-            [EquipSlot. WEAPON]: ExternalItemType. WEAPON,
+            [EquipSlot.WEAPON]: ExternalItemType.WEAPON,
             [EquipSlot.HELMET]: ExternalItemType.HELMET,
-            [EquipSlot.  ARMOR]: ExternalItemType.  ARMOR,
-            [EquipSlot.GLOVES]: ExternalItemType. TRINKET,
+            [EquipSlot. ARMOR]: ExternalItemType. ARMOR,
+            [EquipSlot.GLOVES]: ExternalItemType.TRINKET,
             [EquipSlot.BOOTS]: ExternalItemType.BOOTS,
             [EquipSlot.BELT]: ExternalItemType.BELT,
             [EquipSlot.RING1]: ExternalItemType.RING,
             [EquipSlot.RING2]: ExternalItemType.RING,
-            [EquipSlot. AMULET]: ExternalItemType. NECKLACE,
+            [EquipSlot.AMULET]: ExternalItemType.NECKLACE,
         };
 
         // 收集所有属性
@@ -67,8 +67,8 @@ export class POE2Integration {
                 }
                 
                 // ⭐ 添加词缀详情
-                const desc = affixDef.description. replace('{value}', affix.value. toString());
-                affixDetails. push({
+                const desc = affixDef.description.replace('{value}', affix.value.toString());
+                affixDetails.push({
                     position: 'prefix',
                     tier: affix.tier,
                     name: affixDef.name,
@@ -95,7 +95,7 @@ export class POE2Integration {
                 affixDetails.push({
                     position: 'suffix',
                     tier: affix.tier,
-                    name: affixDef. name,
+                    name: affixDef.name,
                     description: desc,
                     color: '#ffff77',  // 后缀黄色
                 });
@@ -114,29 +114,29 @@ export class POE2Integration {
 
     private static AffixTypeToEquipmentAttribute(affixType: string): EquipmentAttribute | null {
         const mapping: Record<string, EquipmentAttribute> = {
-            'flat_strength': EquipmentAttribute. STRENGTH,
-            'flat_agility': EquipmentAttribute. AGILITY,
+            'flat_strength': EquipmentAttribute.STRENGTH,
+            'flat_agility': EquipmentAttribute.AGILITY,
             'flat_intelligence': EquipmentAttribute.INTELLIGENCE,
-            'flat_health': EquipmentAttribute. HEALTH,
-            'flat_armor': EquipmentAttribute. ARMOR,
-            'flat_mana': EquipmentAttribute. MANA,
-            'flat_attack_damage': EquipmentAttribute. ATTACK_DAMAGE,
+            'flat_health': EquipmentAttribute.HEALTH,
+            'flat_armor': EquipmentAttribute.ARMOR,
+            'flat_mana': EquipmentAttribute.MANA,
+            'flat_attack_damage': EquipmentAttribute.ATTACK_DAMAGE,
             'percent_physical_damage': EquipmentAttribute.ATTACK_DAMAGE,
-            'percent_attack_speed': EquipmentAttribute. ATTACK_SPEED,
-            'percent_max_health': EquipmentAttribute. HEALTH,
-            'percent_armor': EquipmentAttribute. ARMOR,
+            'percent_attack_speed': EquipmentAttribute.ATTACK_SPEED,
+            'percent_max_health': EquipmentAttribute.HEALTH,
+            'percent_armor': EquipmentAttribute.ARMOR,
             'percent_move_speed': EquipmentAttribute.MOVE_SPEED,
             'flat_move_speed': EquipmentAttribute.MOVE_SPEED,
             'fire_resistance': EquipmentAttribute.MAGIC_RESISTANCE,
             'cold_resistance': EquipmentAttribute.MAGIC_RESISTANCE,
             'lightning_resistance': EquipmentAttribute.MAGIC_RESISTANCE,
             'crit_chance': EquipmentAttribute.ATTACK_DAMAGE,
-            'crit_damage': EquipmentAttribute. ATTACK_DAMAGE,
+            'crit_damage': EquipmentAttribute.ATTACK_DAMAGE,
             'life_leech': EquipmentAttribute.HEALTH,
-            'life_regen': EquipmentAttribute. HEALTH,
-            'skill_level_all': EquipmentAttribute. INTELLIGENCE,
+            'life_regen': EquipmentAttribute.HEALTH,
+            'skill_level_all': EquipmentAttribute.INTELLIGENCE,
             'cooldown_reduction': EquipmentAttribute.INTELLIGENCE,
-            'evasion_percent': EquipmentAttribute. AGILITY,
+            'evasion_percent': EquipmentAttribute.AGILITY,
         };
         
         return mapping[affixType] || null;
@@ -162,11 +162,11 @@ export class POE2Integration {
         print(`  名称: ${poe2Item.name}`);
         print(`  稀有度: ${RARITY_NAMES[poe2Item.rarity]}`);
         print(`  物品等级: ${poe2Item.itemLevel}`);
-        print(`  前缀 (${poe2Item.prefixes. length}):`);
+        print(`  前缀 (${poe2Item.prefixes.length}):`);
         for (const affix of poe2Item.prefixes) {
             const affixDef = GetAffixById(affix.affixId);
             if (affixDef) {
-                const desc = affixDef.description. replace('{value}', affix.value.toString());
+                const desc = affixDef.description.replace('{value}', affix.value.toString());
                 print(`    [T${affix.tier}] ${affixDef.name} - ${desc}`);
             }
         }
@@ -184,7 +184,7 @@ export class POE2Integration {
         const vaultItem = this.ConvertToVaultItem(poe2Item);
 
         // ⭐ 调试：打印转换后的词缀
-        print(`[POE2Integration] 转换后 affixDetails 长度: ${vaultItem.affixDetails?. length || 0}`);
+        print(`[POE2Integration] 转换后 affixDetails 长度: ${vaultItem.affixDetails?.length || 0}`);
 
         // 添加到仓库
         EquipmentVaultSystem.SaveToVault(playerId, vaultItem);
@@ -259,7 +259,7 @@ if (IsServer()) {
             if (text === '-poe2legendary') {
                 const { ItemRarity } = require('./poe2_equipment_types');
                 POE2Integration.GenerateAndAddToVault(playerId, 30, ItemRarity.LEGENDARY);
-                GameRules. SendCustomMessage(
+                GameRules.SendCustomMessage(
                     '<font color="#ff8800">🔥 已生成传说装备！</font>',
                     playerId,
                     0

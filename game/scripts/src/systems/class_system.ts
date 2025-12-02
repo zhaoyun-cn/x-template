@@ -119,7 +119,7 @@ export class ClassSystem {
     print('[ClassSystem] 玩家: ' + playerId + ', 职业: ' + classConfig.name);
     print('========================================');
 
-    this.playerClasses. set(playerId, {
+    this.playerClasses.set(playerId, {
         classId: classConfig.id,
         confirmed: true,
     });

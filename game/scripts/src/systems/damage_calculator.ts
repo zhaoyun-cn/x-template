@@ -83,28 +83,28 @@ export function addStatToPlayer(stats: PlayerStats, statType: StatType, value: n
         case StatType.INCREASED_DAMAGE:
             stats.increasedDamage += value;
             break;
-        case StatType. INCREASED_PHYSICAL_DAMAGE:
+        case StatType.INCREASED_PHYSICAL_DAMAGE:
             stats.increasedPhysicalDamage += value;
             break;
         case StatType.INCREASED_ELEMENTAL_DAMAGE:
             stats.increasedElementalDamage += value;
             break;
         case StatType.INCREASED_FIRE_DAMAGE:
-            stats. increasedFireDamage += value;
+            stats.increasedFireDamage += value;
             break;
         case StatType.INCREASED_COLD_DAMAGE:
-            stats. increasedColdDamage += value;
+            stats.increasedColdDamage += value;
             break;
         case StatType.INCREASED_LIGHTNING_DAMAGE:
             stats.increasedLightningDamage += value;
             break;
             
         // 额外类（push到数组）
-        case StatType. MORE_DAMAGE:
+        case StatType.MORE_DAMAGE:
             stats.moreDamage.push(value);
             break;
         case StatType.MORE_PHYSICAL_DAMAGE:
-            stats. morePhysicalDamage.push(value);
+            stats.morePhysicalDamage.push(value);
             break;
         case StatType.MORE_ELEMENTAL_DAMAGE:
             stats.moreElementalDamage.push(value);
@@ -114,7 +114,7 @@ export function addStatToPlayer(stats: PlayerStats, statType: StatType, value: n
         case StatType.CRIT_CHANCE:
             stats.critChance += value;
             break;
-        case StatType. CRIT_MULTIPLIER:
+        case StatType.CRIT_MULTIPLIER:
             stats.critMultiplier += value;
             break;
             
@@ -131,7 +131,7 @@ export function addStatToPlayer(stats: PlayerStats, statType: StatType, value: n
         case StatType.SPELL_DAMAGE:
             stats.spellDamage += value;
             break;
-        case StatType. ATTACK_DAMAGE:
+        case StatType.ATTACK_DAMAGE:
             stats.attackDamage += value;
             break;
         case StatType.DOT_DAMAGE:
@@ -140,7 +140,7 @@ export function addStatToPlayer(stats: PlayerStats, statType: StatType, value: n
             
         // 其他
         case StatType.COOLDOWN_REDUCTION:
-            stats. cooldownReduction += value;
+            stats.cooldownReduction += value;
             break;
         case StatType.AREA_OF_EFFECT:
             stats.areaOfEffect += value;
@@ -194,7 +194,7 @@ export class DamageCalculator {
         }
         if (skill.tags.includes(SkillTag.FIRE) || 
             skill.tags.includes(SkillTag.COLD) || 
-            skill.tags. includes(SkillTag. LIGHTNING)) {
+            skill.tags.includes(SkillTag.LIGHTNING)) {
             totalIncreased += stats.increasedElementalDamage;
         }
         if (skill.tags.includes(SkillTag.FIRE)) {
@@ -204,7 +204,7 @@ export class DamageCalculator {
             totalIncreased += stats.increasedColdDamage;
         }
         if (skill.tags.includes(SkillTag.LIGHTNING)) {
-            totalIncreased += stats. increasedLightningDamage;
+            totalIncreased += stats.increasedLightningDamage;
         }
         
         const increasedMultiplier = 1 + totalIncreased / 100;
@@ -224,8 +224,8 @@ export class DamageCalculator {
             }
         }
         if (skill.tags.includes(SkillTag.FIRE) || 
-            skill.tags. includes(SkillTag. COLD) || 
-            skill. tags.includes(SkillTag.LIGHTNING)) {
+            skill.tags.includes(SkillTag.COLD) || 
+            skill.tags.includes(SkillTag.LIGHTNING)) {
             for (const more of stats.moreElementalDamage) {
                 moreMultiplier *= (1 + more / 100);
             }
@@ -250,7 +250,7 @@ export class DamageCalculator {
         if (skill.tags.includes(SkillTag.PROJECTILE)) {
             totalSkillType += stats.projectileDamage;
         }
-        if (skill. tags.includes(SkillTag.AREA)) {
+        if (skill.tags.includes(SkillTag.AREA)) {
             totalSkillType += stats.areaDamage;
         }
         if (skill.tags.includes(SkillTag.MELEE)) {
@@ -259,7 +259,7 @@ export class DamageCalculator {
         if (skill.tags.includes(SkillTag.SPELL)) {
             totalSkillType += stats.spellDamage;
         }
-        if (skill. tags.includes(SkillTag.ATTACK)) {
+        if (skill.tags.includes(SkillTag.ATTACK)) {
             totalSkillType += stats.attackDamage;
         }
         if (skill.tags.includes(SkillTag.DOT)) {

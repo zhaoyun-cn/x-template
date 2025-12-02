@@ -20,20 +20,20 @@ export class PlayerStatsCollector {
     public static CollectStats(playerId: PlayerID): PlayerStats {
         const stats = createEmptyStats();
         
-        // 1. 从护石收集
+        // 1.从护石收集
         this.CollectFromRunes(playerId, stats);
         
-        // 2. 从装备收集（后续接入）
+        // 2.从装备收集（后续接入）
         // this.CollectFromEquipment(playerId, stats);
         
-        // 3. 从天赋收集（后续接入）
-        // this. CollectFromTalents(playerId, stats);
+        // 3.从天赋收集（后续接入）
+        // this.CollectFromTalents(playerId, stats);
         
-        // 4. 从Buff收集（后续接入）
+        // 4.从Buff收集（后续接入）
         // this.CollectFromBuffs(playerId, stats);
         
         // 缓存结果
-        playerStatsCache. set(playerId, stats);
+        playerStatsCache.set(playerId, stats);
         
         return stats;
     }
@@ -42,7 +42,7 @@ export class PlayerStatsCollector {
      * 获取缓存的属性（性能优化用）
      */
     public static GetCachedStats(playerId: PlayerID): PlayerStats {
-        return playerStatsCache. get(playerId) || this.CollectStats(playerId);
+        return playerStatsCache.get(playerId) || this.CollectStats(playerId);
     }
     
     /**
@@ -81,7 +81,7 @@ export class PlayerStatsCollector {
             'rune_range': StatType.AREA_OF_EFFECT,
             'rune_cooldown': StatType.COOLDOWN_REDUCTION,
             'rune_lifesteal': StatType.LIFESTEAL,
-            'rune_crit_chance': StatType. CRIT_CHANCE,
+            'rune_crit_chance': StatType.CRIT_CHANCE,
             'rune_crit_damage': StatType.CRIT_MULTIPLIER,
             'rune_thunder_special': StatType.INCREASED_LIGHTNING_DAMAGE,
             'rune_execute_special': StatType.MELEE_DAMAGE,
@@ -95,7 +95,7 @@ export class PlayerStatsCollector {
     //  * 从装备收集属性（后续实现）
     //  */
     // private static CollectFromEquipment(playerId: PlayerID, stats: PlayerStats): void {
-    //     const equipment = EquipmentSystem. GetEquipment(playerId);
+    //     const equipment = EquipmentSystem.GetEquipment(playerId);
     //     for (const slot in equipment) {
     //         const item = equipment[slot];
     //         if (! item) continue;

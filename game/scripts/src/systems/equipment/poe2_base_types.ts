@@ -81,7 +81,7 @@ const HELMET_BASES: BaseTypeDefinition[] = [
     {
         id: 'helmet_cloth',
         name: '布甲头盔',
-        slot: EquipSlot. HELMET,
+        slot: EquipSlot.HELMET,
         icon: 'item_cloak',
         requiredLevel: 1,
         dropWeight: 100,
@@ -89,7 +89,7 @@ const HELMET_BASES: BaseTypeDefinition[] = [
     {
         id: 'helmet_bone',
         name: '骸骨头盔',
-        slot: EquipSlot. HELMET,
+        slot: EquipSlot.HELMET,
         icon: 'item_crown',
         requiredLevel: 15,
         dropWeight: 60,
@@ -134,7 +134,7 @@ const ARMOR_BASES: BaseTypeDefinition[] = [
     {
         id: 'armor_mage_robe',
         name: '法师长袍',
-        slot: EquipSlot. ARMOR,
+        slot: EquipSlot.ARMOR,
         icon: 'item_robe',
         requiredLevel: 5,
         dropWeight: 90,
@@ -155,7 +155,7 @@ const GLOVES_BASES: BaseTypeDefinition[] = [
     {
         id: 'gloves_leather',
         name: '皮手套',
-        slot: EquipSlot. GLOVES,
+        slot: EquipSlot.GLOVES,
         icon: 'item_hand_of_midas',
         requiredLevel: 1,
         dropWeight: 100,
@@ -171,7 +171,7 @@ const GLOVES_BASES: BaseTypeDefinition[] = [
     {
         id: 'gloves_plate',
         name: '板甲手套',
-        slot: EquipSlot. GLOVES,
+        slot: EquipSlot.GLOVES,
         icon: 'item_gauntlets',
         requiredLevel: 10,
         dropWeight: 75,
@@ -179,7 +179,7 @@ const GLOVES_BASES: BaseTypeDefinition[] = [
     {
         id: 'gloves_silk',
         name: '丝绸手套',
-        slot: EquipSlot. GLOVES,
+        slot: EquipSlot.GLOVES,
         icon: 'item_mystic_staff',
         requiredLevel: 5,
         dropWeight: 90,
@@ -253,7 +253,7 @@ const BELT_BASES: BaseTypeDefinition[] = [
     {
         id: 'belt_plate',
         name: '板甲腰带',
-        slot: EquipSlot. BELT,
+        slot: EquipSlot.BELT,
         icon: 'item_crimson_guard',
         requiredLevel: 10,
         dropWeight: 75,
@@ -269,7 +269,7 @@ const BELT_BASES: BaseTypeDefinition[] = [
     {
         id: 'belt_runic',
         name: '符文腰带',
-        slot: EquipSlot. BELT,
+        slot: EquipSlot.BELT,
         icon: 'item_arcane_ring',
         requiredLevel: 12,
         dropWeight: 65,
@@ -306,7 +306,7 @@ const RING_BASES: BaseTypeDefinition[] = [
     {
         id: 'ring_ruby',
         name: '红宝石戒指',
-        slot: EquipSlot. RING1,
+        slot: EquipSlot.RING1,
         icon: 'item_ring_of_tarrasque',
         requiredLevel: 10,
         dropWeight: 70,
@@ -314,7 +314,7 @@ const RING_BASES: BaseTypeDefinition[] = [
     {
         id: 'ring_diamond',
         name: '钻石戒指',
-        slot: EquipSlot. RING1,
+        slot: EquipSlot.RING1,
         icon: 'item_aghanims_shard',
         requiredLevel: 15,
         dropWeight: 50,
@@ -343,7 +343,7 @@ const AMULET_BASES: BaseTypeDefinition[] = [
     {
         id: 'amulet_gold',
         name: '黄金护符',
-        slot: EquipSlot. AMULET,
+        slot: EquipSlot.AMULET,
         icon: 'item_solar_crest',
         requiredLevel: 10,
         dropWeight: 70,
@@ -351,7 +351,7 @@ const AMULET_BASES: BaseTypeDefinition[] = [
     {
         id: 'amulet_jade',
         name: '翡翠护符',
-        slot: EquipSlot. AMULET,
+        slot: EquipSlot.AMULET,
         icon: 'item_aghanims_scepter',
         requiredLevel: 12,
         dropWeight: 65,
@@ -375,8 +375,8 @@ export const POE2_BASE_TYPES: BaseTypeDefinition[] = [
     ...GLOVES_BASES,      // 5种手套
     ...BOOTS_BASES,       // 5种鞋子
     ...BELT_BASES,        // 5种腰带
-    ... RING_BASES,        // 5种戒指
-    ... AMULET_BASES,      // 5种项链
+    ...RING_BASES,        // 5种戒指
+    ...AMULET_BASES,      // 5种项链
 ];
 
 // 总计：45种基底
@@ -396,7 +396,7 @@ export function GetBaseTypeById(id: string): BaseTypeDefinition | undefined {
 export function GetBaseTypesBySlot(slot: EquipSlot): BaseTypeDefinition[] {
     return POE2_BASE_TYPES.filter(base => {
         // 戒指特殊处理：RING1 和 RING2 共用基底
-        if (slot === EquipSlot. RING2) {
+        if (slot === EquipSlot.RING2) {
             return base.slot === EquipSlot.RING1;
         }
         return base.slot === slot;
@@ -425,7 +425,7 @@ export function GetRandomBaseType(availableBases: BaseTypeDefinition[]): BaseTyp
     // 加权随机选择
     let random = RandomInt(1, totalWeight);
     for (const base of availableBases) {
-        random -= base. dropWeight;
+        random -= base.dropWeight;
         if (random <= 0) {
             return base;
         }

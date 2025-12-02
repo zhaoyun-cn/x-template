@@ -9,7 +9,7 @@ import { AffixDefinition, AffixType, AffixPosition, EquipSlot } from './poe2_equ
 // ==================== 前缀词缀（进攻性/技能）- 10种 ====================
 
 const PREFIX_AFFIXES: AffixDefinition[] = [
-    // ===== 1.  固定攻击伤害（武器专属）=====
+    // ===== 1. 固定攻击伤害（武器专属）=====
     {
         id: AffixType.FLAT_ATTACK_DAMAGE,
         position: AffixPosition.PREFIX,
@@ -25,10 +25,10 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 2.  物理伤害百分比（武器专属）=====
+    // ===== 2. 物理伤害百分比（武器专属）=====
     {
         id: AffixType.PERCENT_PHYSICAL_DAMAGE,
-        position: AffixPosition. PREFIX,
+        position: AffixPosition.PREFIX,
         name: '残暴的',
         description: '+{value}% 物理伤害',
         isPercent: true,
@@ -41,10 +41,10 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 3. 攻击速度（武器/手套）=====
+    // ===== 3.攻击速度（武器/手套）=====
     {
         id: AffixType.PERCENT_ATTACK_SPEED,
-        position: AffixPosition. PREFIX,
+        position: AffixPosition.PREFIX,
         name: '迅捷的',
         description: '+{value}% 攻击速度',
         isPercent: true,
@@ -57,9 +57,9 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 4. 暴击率（武器/项链）=====
+    // ===== 4.暴击率（武器/项链）=====
     {
-        id: AffixType. CRIT_CHANCE,
+        id: AffixType.CRIT_CHANCE,
         position: AffixPosition.PREFIX,
         name: '致命的',
         description: '+{value}% 暴击率',
@@ -73,23 +73,23 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 5. 全技能等级（头盔/项链专属）=====
+    // ===== 5.全技能等级（头盔/项链专属）=====
     {
-        id: AffixType. SKILL_LEVEL_ALL,
+        id: AffixType.SKILL_LEVEL_ALL,
         position: AffixPosition.PREFIX,
         name: '大师的',
         description: '+{value} 全技能等级',
         isPercent: false,
-        allowedSlots: [EquipSlot. HELMET, EquipSlot. AMULET],
+        allowedSlots: [EquipSlot.HELMET, EquipSlot.AMULET],
         tiers: [
             { tier: 1, minValue: 2, maxValue: 2, requiredItemLevel: 30, weight: 25 },
             { tier: 2, minValue: 1, maxValue: 1, requiredItemLevel: 15, weight: 60 },
         ],
     },
 
-    // ===== 6. 技能冷却减少（头盔专属）=====
+    // ===== 6.技能冷却减少（头盔专属）=====
     {
-        id: AffixType. COOLDOWN_REDUCTION,
+        id: AffixType.COOLDOWN_REDUCTION,
         position: AffixPosition.PREFIX,
         name: '流畅的',
         description: '-{value}% 技能冷却',
@@ -103,7 +103,7 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 7. 生命偷取（手套专属）=====
+    // ===== 7.生命偷取（手套专属）=====
     {
         id: AffixType.LIFE_LEECH,
         position: AffixPosition.PREFIX,
@@ -119,9 +119,9 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 8.  力量（通用）=====
+    // ===== 8. 力量（通用）=====
     {
-        id: AffixType. FLAT_STRENGTH,
+        id: AffixType.FLAT_STRENGTH,
         position: AffixPosition.PREFIX,
         name: '强力的',
         description: '+{value} 力量',
@@ -135,7 +135,7 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 9. 敏捷（通用）=====
+    // ===== 9.敏捷（通用）=====
     {
         id: AffixType.FLAT_AGILITY,
         position: AffixPosition.PREFIX,
@@ -151,7 +151,7 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 10.  智力（通用）=====
+    // ===== 10. 智力（通用）=====
     {
         id: AffixType.FLAT_INTELLIGENCE,
         position: AffixPosition.PREFIX,
@@ -171,11 +171,11 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
 // ==================== 后缀词缀（防御性/生存）- 10种 ====================
 
 const SUFFIX_AFFIXES: AffixDefinition[] = [
-    // ===== 1. 固定生命（通用）=====
+    // ===== 1.固定生命（通用）=====
     {
-        id: AffixType. FLAT_HEALTH,
+        id: AffixType.FLAT_HEALTH,
         position: AffixPosition.SUFFIX,
-        name: '... 的生命',
+        name: '...的生命',
         description: '+{value} 生命',
         isPercent: false,
         allowedSlots: [],
@@ -187,14 +187,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 2. 最大生命百分比（护甲/腰带专属）=====
+    // ===== 2.最大生命百分比（护甲/腰带专属）=====
     {
-        id: AffixType. PERCENT_MAX_HEALTH,
+        id: AffixType.PERCENT_MAX_HEALTH,
         position: AffixPosition.SUFFIX,
         name: '...的活力',
         description: '+{value}% 最大生命',
         isPercent: true,
-        allowedSlots: [EquipSlot. ARMOR, EquipSlot. BELT],
+        allowedSlots: [EquipSlot.ARMOR, EquipSlot.BELT],
         tiers: [
             { tier: 1, minValue: 12, maxValue: 18, requiredItemLevel: 26, weight: 40 },
             { tier: 2, minValue: 9, maxValue: 11, requiredItemLevel: 16, weight: 80 },
@@ -203,11 +203,11 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 3. 固定护甲（护甲专属）=====
+    // ===== 3.固定护甲（护甲专属）=====
     {
-        id: AffixType. FLAT_ARMOR,
-        position: AffixPosition. SUFFIX,
-        name: '... 的护甲',
+        id: AffixType.FLAT_ARMOR,
+        position: AffixPosition.SUFFIX,
+        name: '...的护甲',
         description: '+{value} 护甲',
         isPercent: false,
         allowedSlots: [EquipSlot.ARMOR],
@@ -219,9 +219,9 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 4. 护甲百分比（护甲专属）=====
+    // ===== 4.护甲百分比（护甲专属）=====
     {
-        id: AffixType. PERCENT_ARMOR,
+        id: AffixType.PERCENT_ARMOR,
         position: AffixPosition.SUFFIX,
         name: '...的坚固',
         description: '+{value}% 护甲',
@@ -235,14 +235,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 5. 火焰抗性（戒指/护甲）=====
+    // ===== 5.火焰抗性（戒指/护甲）=====
     {
         id: AffixType.FIRE_RESISTANCE,
         position: AffixPosition.SUFFIX,
         name: '...的抗火',
         description: '+{value}% 火焰抗性',
         isPercent: true,
-        allowedSlots: [EquipSlot.RING1, EquipSlot. ARMOR],
+        allowedSlots: [EquipSlot.RING1, EquipSlot.ARMOR],
         tiers: [
             { tier: 1, minValue: 30, maxValue: 40, requiredItemLevel: 24, weight: 45 },
             { tier: 2, minValue: 22, maxValue: 29, requiredItemLevel: 14, weight: 90 },
@@ -251,9 +251,9 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 6. 冰霜抗性（戒指/护甲）=====
+    // ===== 6.冰霜抗性（戒指/护甲）=====
     {
-        id: AffixType. COLD_RESISTANCE,
+        id: AffixType.COLD_RESISTANCE,
         position: AffixPosition.SUFFIX,
         name: '...的抗冰',
         description: '+{value}% 冰霜抗性',
@@ -267,14 +267,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 7. 闪电抗性（戒指/护甲）=====
+    // ===== 7.闪电抗性（戒指/护甲）=====
     {
         id: AffixType.LIGHTNING_RESISTANCE,
         position: AffixPosition.SUFFIX,
         name: '...的抗电',
         description: '+{value}% 闪电抗性',
         isPercent: true,
-        allowedSlots: [EquipSlot. RING1, EquipSlot.ARMOR],
+        allowedSlots: [EquipSlot.RING1, EquipSlot.ARMOR],
         tiers: [
             { tier: 1, minValue: 30, maxValue: 40, requiredItemLevel: 24, weight: 45 },
             { tier: 2, minValue: 22, maxValue: 29, requiredItemLevel: 14, weight: 90 },
@@ -283,9 +283,9 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 8. 移动速度百分比（鞋子专属）=====
+    // ===== 8.移动速度百分比（鞋子专属）=====
     {
-        id: AffixType. PERCENT_MOVE_SPEED,
+        id: AffixType.PERCENT_MOVE_SPEED,
         position: AffixPosition.SUFFIX,
         name: '...的迅捷',
         description: '+{value}% 移动速度',
@@ -299,14 +299,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 9. 生命回复（腰带专属）=====
+    // ===== 9.生命回复（腰带专属）=====
     {
         id: AffixType.LIFE_REGEN,
         position: AffixPosition.SUFFIX,
         name: '...的再生',
         description: '+{value} 生命回复/秒',
         isPercent: false,
-        allowedSlots: [EquipSlot. BELT],
+        allowedSlots: [EquipSlot.BELT],
         tiers: [
             { tier: 1, minValue: 8, maxValue: 12, requiredItemLevel: 22, weight: 50 },
             { tier: 2, minValue: 5, maxValue: 7, requiredItemLevel: 13, weight: 95 },
@@ -315,7 +315,7 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 10. 闪避率（鞋子专属）=====
+    // ===== 10.闪避率（鞋子专属）=====
     {
         id: AffixType.EVASION_PERCENT,
         position: AffixPosition.SUFFIX,
@@ -335,7 +335,7 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
 // ==================== 导出词缀池 ====================
 
 export const POE2_AFFIX_POOL: AffixDefinition[] = [
-    ... PREFIX_AFFIXES,  // 10种前缀
+    ...PREFIX_AFFIXES,  // 10种前缀
     ...SUFFIX_AFFIXES,  // 10种后缀
 ];
 
@@ -368,11 +368,11 @@ export function GetAffixesBySlot(slot: EquipSlot, position: AffixPosition): Affi
         if (affix.allowedSlots.length === 0) return true;
         
         // 戒指特殊处理
-        if (slot === EquipSlot. RING2) {
-            return affix. allowedSlots.includes(EquipSlot.RING1) || affix.allowedSlots.includes(slot);
+        if (slot === EquipSlot.RING2) {
+            return affix.allowedSlots.includes(EquipSlot.RING1) || affix.allowedSlots.includes(slot);
         }
         
-        return affix.allowedSlots. includes(slot);
+        return affix.allowedSlots.includes(slot);
     });
 }
 
@@ -381,7 +381,7 @@ export function GetAffixesBySlot(slot: EquipSlot, position: AffixPosition): Affi
  */
 export function GetAffixesByItemLevel(itemLevel: number, position: AffixPosition): AffixDefinition[] {
     return POE2_AFFIX_POOL.filter(affix => {
-        if (affix. position !== position) return false;
+        if (affix.position !== position) return false;
         
         // 检查是否有至少一个层级可用
         return affix.tiers.some(tier => tier.requiredItemLevel <= itemLevel);

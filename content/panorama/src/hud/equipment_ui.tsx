@@ -112,7 +112,7 @@ const extractAffixes = (affixDetails: any) => {
                 };
                 
                 if (safeAffix.position === 'prefix') {
-                    prefixes. push(safeAffix);
+                    prefixes.push(safeAffix);
                 } else if (safeAffix.position === 'suffix') {
                     suffixes.push(safeAffix);
                 }
@@ -155,10 +155,10 @@ export const EquipmentUI: React.FC<{ visible: boolean; onClose: () => void }> = 
                 
                 // ⭐ 处理每个槽位（添加 affixDetails）
                 if (eq.helmet) {
-                    const statsArr = eq.helmet.stats ?   (Array.isArray(eq.helmet. stats) ? eq.helmet.stats : Object.values(eq.helmet.stats)) : [];
+                    const statsArr = eq.helmet.stats ?   (Array.isArray(eq.helmet.stats) ? eq.helmet.stats : Object.values(eq.helmet.stats)) : [];
                     setHelmet({ 
                         name: eq.helmet.name || '', 
-                        type: eq. helmet.type || '', 
+                        type: eq.helmet.type || '', 
                         icon: eq.helmet.icon || '', 
                         stats: statsArr as EquipmentStat[],
                         rarity: eq.helmet.rarity,
@@ -173,23 +173,23 @@ export const EquipmentUI: React.FC<{ visible: boolean; onClose: () => void }> = 
                     setNecklace({ 
                         name: eq.necklace.name || '', 
                         type: eq.necklace.type || '', 
-                        icon: eq.necklace. icon || '', 
+                        icon: eq.necklace.icon || '', 
                         stats: statsArr as EquipmentStat[],
-                        rarity: eq.necklace. rarity,
-                        affixDetails: eq.necklace. affixDetails
+                        rarity: eq.necklace.rarity,
+                        affixDetails: eq.necklace.affixDetails
                     });
                 } else {
                     setNecklace(null);
                 }
                 
                 if (eq.ring) {
-                    const statsArr = eq.ring.stats ?  (Array.isArray(eq. ring.stats) ? eq.ring.stats : Object.values(eq.ring.stats)) : [];
+                    const statsArr = eq.ring.stats ?  (Array.isArray(eq.ring.stats) ? eq.ring.stats : Object.values(eq.ring.stats)) : [];
                     setRing({ 
-                        name: eq.ring. name || '', 
+                        name: eq.ring.name || '', 
                         type: eq.ring.type || '', 
-                        icon: eq. ring.icon || '', 
+                        icon: eq.ring.icon || '', 
                         stats: statsArr as EquipmentStat[],
-                        rarity: eq.ring. rarity,
+                        rarity: eq.ring.rarity,
                         affixDetails: eq.ring.affixDetails
                     });
                 } else {
@@ -197,21 +197,21 @@ export const EquipmentUI: React.FC<{ visible: boolean; onClose: () => void }> = 
                 }
                 
                 if (eq.trinket) {
-                    const statsArr = eq.trinket.stats ?  (Array.isArray(eq. trinket.stats) ? eq. trinket.stats : Object.values(eq.trinket.stats)) : [];
+                    const statsArr = eq.trinket.stats ?  (Array.isArray(eq.trinket.stats) ? eq.trinket.stats : Object.values(eq.trinket.stats)) : [];
                     setTrinket({ 
                         name: eq.trinket.name || '', 
-                        type: eq. trinket.type || '', 
+                        type: eq.trinket.type || '', 
                         icon: eq.trinket.icon || '', 
                         stats: statsArr as EquipmentStat[],
-                        rarity: eq.trinket. rarity,
+                        rarity: eq.trinket.rarity,
                         affixDetails: eq.trinket.affixDetails
                     });
                 } else {
                     setTrinket(null);
                 }
                 
-                if (eq. weapon) {
-                    const statsArr = eq.weapon.stats ?  (Array.isArray(eq. weapon.stats) ? eq.weapon.stats : Object.values(eq.weapon.stats)) : [];
+                if (eq.weapon) {
+                    const statsArr = eq.weapon.stats ?  (Array.isArray(eq.weapon.stats) ? eq.weapon.stats : Object.values(eq.weapon.stats)) : [];
                     setWeapon({ 
                         name: eq.weapon.name || '', 
                         type: eq.weapon.type || '', 
@@ -224,8 +224,8 @@ export const EquipmentUI: React.FC<{ visible: boolean; onClose: () => void }> = 
                     setWeapon(null);
                 }
                 
-                if (eq. armor) {
-                    const statsArr = eq.armor.stats ?  (Array.isArray(eq. armor.stats) ? eq.armor.stats : Object.values(eq.armor.stats)) : [];
+                if (eq.armor) {
+                    const statsArr = eq.armor.stats ?  (Array.isArray(eq.armor.stats) ? eq.armor.stats : Object.values(eq.armor.stats)) : [];
                     setArmor({ 
                         name: eq.armor.name || '', 
                         type: eq.armor.type || '', 
@@ -238,8 +238,8 @@ export const EquipmentUI: React.FC<{ visible: boolean; onClose: () => void }> = 
                     setArmor(null);
                 }
                 
-                if (eq. belt) {
-                    const statsArr = eq.belt.stats ?  (Array.isArray(eq. belt.stats) ? eq.belt.stats : Object.values(eq.belt.stats)) : [];
+                if (eq.belt) {
+                    const statsArr = eq.belt.stats ?  (Array.isArray(eq.belt.stats) ? eq.belt.stats : Object.values(eq.belt.stats)) : [];
                     setBelt({ 
                         name: eq.belt.name || '', 
                         type: eq.belt.type || '', 
@@ -253,14 +253,14 @@ export const EquipmentUI: React.FC<{ visible: boolean; onClose: () => void }> = 
                 }
                 
                 if (eq.boots) {
-                    const statsArr = eq. boots.stats ? (Array.isArray(eq.boots.stats) ? eq.boots.stats : Object.values(eq.boots.stats)) : [];
+                    const statsArr = eq.boots.stats ? (Array.isArray(eq.boots.stats) ? eq.boots.stats : Object.values(eq.boots.stats)) : [];
                     setBoots({ 
                         name: eq.boots.name || '', 
                         type: eq.boots.type || '', 
                         icon: eq.boots.icon || '', 
                         stats: statsArr as EquipmentStat[],
                         rarity: eq.boots.rarity,
-                        affixDetails: eq. boots.affixDetails
+                        affixDetails: eq.boots.affixDetails
                     });
                 } else {
                     setBoots(null);
@@ -281,11 +281,11 @@ export const EquipmentUI: React.FC<{ visible: boolean; onClose: () => void }> = 
                 
                 setCharStats({
                     increasedDamage: data.increasedDamage || 0,
-                    increasedPhysicalDamage: data. increasedPhysicalDamage || 0,
+                    increasedPhysicalDamage: data.increasedPhysicalDamage || 0,
                     increasedElementalDamage: data.increasedElementalDamage || 0,
-                    increasedFireDamage: data. increasedFireDamage || 0,
+                    increasedFireDamage: data.increasedFireDamage || 0,
                     increasedColdDamage: data.increasedColdDamage || 0,
-                    increasedLightningDamage: data. increasedLightningDamage || 0,
+                    increasedLightningDamage: data.increasedLightningDamage || 0,
                     moreDamageValues: safeMoreArr,
                     critChance: data.critChance || 5,
                     critMultiplier: data.critMultiplier || 150,
@@ -295,10 +295,10 @@ export const EquipmentUI: React.FC<{ visible: boolean; onClose: () => void }> = 
                     spellDamage: data.spellDamage || 0,
                     attackDamage: data.attackDamage || 0,
                     dotDamage: data.dotDamage || 0,
-                    cooldownReduction: data. cooldownReduction || 0,
+                    cooldownReduction: data.cooldownReduction || 0,
                     areaOfEffect: data.areaOfEffect || 0,
                     attackSpeed: data.attackSpeed || 0,
-                    castSpeed: data. castSpeed || 0,
+                    castSpeed: data.castSpeed || 0,
                     lifesteal: data.lifesteal || 0,
                 });
             }
@@ -315,7 +315,7 @@ export const EquipmentUI: React.FC<{ visible: boolean; onClose: () => void }> = 
     // 卸下装备
     const unequipItem = (slot: string) => {
         (GameEvents.SendCustomGameEventToServer as any)('unequip_item', { PlayerID: Players.GetLocalPlayer(), slot: slot });
-        Game.EmitSound('ui. crafting_gem_create');
+        Game.EmitSound('ui.crafting_gem_create');
     };
 
     // 获取品质颜色
@@ -333,7 +333,7 @@ export const EquipmentUI: React.FC<{ visible: boolean; onClose: () => void }> = 
         const statsArr = item.stats || [];
         let total = 0;
         for (let i = 0; i < statsArr.length; i++) {
-            total += statsArr[i]. value || 0;
+            total += statsArr[i].value || 0;
         }
         if (total >= 50) return '#ff8000';
         if (total >= 35) return '#a335ee';
@@ -496,7 +496,7 @@ export const EquipmentUI: React.FC<{ visible: boolean; onClose: () => void }> = 
                 </Panel>
                 <Panel style={{ flowChildren: 'right', width: '100%', marginBottom: '8px' }}>
                     <Label text="元素增伤" style={{ fontSize: '14px', color: '#aaa', width: '120px' }} />
-                    <Label text={charStats. increasedElementalDamage + '%'} style={{ fontSize: '14px', color: '#0af', fontWeight: 'bold' }} />
+                    <Label text={charStats.increasedElementalDamage + '%'} style={{ fontSize: '14px', color: '#0af', fontWeight: 'bold' }} />
                 </Panel>
                 <Panel style={{ flowChildren: 'right', width: '100%', marginBottom: '8px' }}>
                     <Label text="火焰增伤" style={{ fontSize: '14px', color: '#aaa', width: '120px' }} />

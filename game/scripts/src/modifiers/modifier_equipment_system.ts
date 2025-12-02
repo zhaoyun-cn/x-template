@@ -39,7 +39,7 @@ export class modifier_equipment_system extends BaseModifier {
         const playerId = parent.GetPlayerOwnerID();
         if (playerId === -1) return;
         
-        const globalStats = _G. EquipmentStats ?  _G.EquipmentStats[playerId] : null;
+        const globalStats = _G.EquipmentStats ?  _G.EquipmentStats[playerId] : null;
         
         if (globalStats) {
             this.stats = {
@@ -61,37 +61,37 @@ export class modifier_equipment_system extends BaseModifier {
 
     DeclareFunctions(): ModifierFunction[] {
         return [
-            ModifierFunction. STATS_STRENGTH_BONUS,
+            ModifierFunction.STATS_STRENGTH_BONUS,
             ModifierFunction.STATS_AGILITY_BONUS,
             ModifierFunction.STATS_INTELLECT_BONUS,
             ModifierFunction.PHYSICAL_ARMOR_BONUS,
             ModifierFunction.HEALTH_BONUS,
-            ModifierFunction. MANA_BONUS,
+            ModifierFunction.MANA_BONUS,
             ModifierFunction.PREATTACK_BONUS_DAMAGE,
-            ModifierFunction. BASEATTACK_BONUSDAMAGE,
-            ModifierFunction. ATTACKSPEED_BONUS_CONSTANT,
+            ModifierFunction.BASEATTACK_BONUSDAMAGE,
+            ModifierFunction.ATTACKSPEED_BONUS_CONSTANT,
             ModifierFunction.MOVESPEED_BONUS_CONSTANT,
-            ModifierFunction. MAGICAL_RESISTANCE_BONUS,
+            ModifierFunction.MAGICAL_RESISTANCE_BONUS,
         ];
     }
 
-    GetModifierBonusStats_Strength(): number { return this.stats. strength || 0; }
-    GetModifierBonusStats_Agility(): number { return this.stats. agility || 0; }
-    GetModifierBonusStats_Intellect(): number { return this.stats. intelligence || 0; }
+    GetModifierBonusStats_Strength(): number { return this.stats.strength || 0; }
+    GetModifierBonusStats_Agility(): number { return this.stats.agility || 0; }
+    GetModifierBonusStats_Intellect(): number { return this.stats.intelligence || 0; }
     GetModifierPhysicalArmorBonus(): number { return this.stats.armor || 0; }
     GetModifierHealthBonus(): number { return this.stats.health || 0; }
     GetModifierManaBonus(): number { return this.stats.mana || 0; }
     GetModifierPreAttack_BonusDamage(): number { return this.stats.attack_damage || 0; }
-    GetModifierBaseAttack_BonusDamage(): number { return this. stats.attack_damage || 0; }
+    GetModifierBaseAttack_BonusDamage(): number { return this.stats.attack_damage || 0; }
     
     GetModifierAttackSpeedBonus_Constant(): number {
         if (IsServer()) {
-            return this.stats. attack_speed || 0;
+            return this.stats.attack_speed || 0;
         } else {
             return this.GetStackCount();
         }
     }
     
-    GetModifierMoveSpeedBonus_Constant(): number { return this.stats. move_speed || 0; }
-    GetModifierMagicalResistanceBonus(): number { return this. stats.magic_resistance || 0; }
+    GetModifierMoveSpeedBonus_Constant(): number { return this.stats.move_speed || 0; }
+    GetModifierMagicalResistanceBonus(): number { return this.stats.magic_resistance || 0; }
 }

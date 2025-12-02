@@ -11,16 +11,16 @@ export enum ItemRarity {
 }
 
 export const RARITY_NAMES: Record<ItemRarity, string> = {
-    [ItemRarity. NORMAL]: '普通',
+    [ItemRarity.NORMAL]: '普通',
     [ItemRarity.MAGIC]: '魔法',
     [ItemRarity.RARE]: '稀有',
-    [ItemRarity. LEGENDARY]: '传说',
+    [ItemRarity.LEGENDARY]: '传说',
 };
 
 export const RARITY_COLORS: Record<ItemRarity, string> = {
     [ItemRarity.NORMAL]: '#c8c8c8',    // 灰白色
-    [ItemRarity. MAGIC]: '#8888ff',     // 蓝色
-    [ItemRarity. RARE]: '#ffff77',      // 黄色
+    [ItemRarity.MAGIC]: '#8888ff',     // 蓝色
+    [ItemRarity.RARE]: '#ffff77',      // 黄色
     [ItemRarity.LEGENDARY]: '#ff8800', // 橙色
 };
 
@@ -152,7 +152,7 @@ export interface POE2EquipmentInstance {
 }
 
 // ==================== 通货类型 ====================
-// 注意：通货已集成到材料系统（zone_loot. ts）中
+// 注意：通货已集成到材料系统（zone_loot.ts）中
 // 这里的枚举用于代码中的类型引用
 
 export enum CurrencyType {
@@ -165,22 +165,22 @@ export enum CurrencyType {
 export const CURRENCY_NAMES: Record<CurrencyType, string> = {
     [CurrencyType.CHAOS]: '混沌石',
     [CurrencyType.EXALTED]: '崇高石',
-    [CurrencyType. DIVINE]: '神圣石',
+    [CurrencyType.DIVINE]: '神圣石',
     [CurrencyType.SCRAP]: '装备碎片',
 };
 
 // 通货图标（使用 DOTA2 自带物品图标）
 export const CURRENCY_ICONS: Record<CurrencyType, string> = {
     [CurrencyType.CHAOS]: 'item_octarine_core',      // 混沌石 - 八分仪
-    [CurrencyType. EXALTED]: 'item_ultimate_orb',     // 崇高石 - 极限法球
-    [CurrencyType. DIVINE]: 'item_refresher',         // 神圣石 - 刷新球
-    [CurrencyType. SCRAP]: 'item_branches',           // 碎片 - 树枝
+    [CurrencyType.EXALTED]: 'item_ultimate_orb',     // 崇高石 - 极限法球
+    [CurrencyType.DIVINE]: 'item_refresher',         // 神圣石 - 刷新球
+    [CurrencyType.SCRAP]: 'item_branches',           // 碎片 - 树枝
 };
 
 // 通货描述
 export const CURRENCY_DESCRIPTIONS: Record<CurrencyType, string> = {
     [CurrencyType.CHAOS]: '重新随机稀有装备的所有词缀',
-    [CurrencyType. EXALTED]: '为稀有装备添加一条随机词缀',
+    [CurrencyType.EXALTED]: '为稀有装备添加一条随机词缀',
     [CurrencyType.DIVINE]: '重新随机装备词缀的数值范围',
     [CurrencyType.SCRAP]: '分解装备获得，可用于合成通货',
 };

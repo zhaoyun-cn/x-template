@@ -43,17 +43,17 @@ export class POE2EquipmentGenerator {
         rarity?: ItemRarity,
         slot?: EquipSlot
     ): POE2EquipmentInstance | null {
-        // 1. 选择基底
+        // 1.选择基底
         const baseType = this.SelectRandomBaseType(itemLevel, slot);
         if (!baseType) {
             print('[POE2Generator] 没有可用的基底类型');
             return null;
         }
 
-        // 2. 决定稀有度
+        // 2.决定稀有度
         const finalRarity = rarity !== undefined ? rarity : this.RollRarity(itemLevel);
 
-        // 3.  创建装备实例
+        // 3. 创建装备实例
         const equipment: POE2EquipmentInstance = {
             id: this.GenerateItemId(),
             baseTypeId: baseType.id,
@@ -66,11 +66,11 @@ export class POE2EquipmentGenerator {
             corrupted: false,
         };
 
-        // 4. ⭐ 生成词缀（所有稀有度都生成）
+        // 4.⭐ 生成词缀（所有稀有度都生成）
         this.RollAffixes(equipment);
 
-        // 5. 生成名称
-        equipment.name = this.GenerateEquipmentName(equipment, baseType. name);
+        // 5.生成名称
+        equipment.name = this.GenerateEquipmentName(equipment, baseType.name);
 
         print(`[POE2Generator] 生成装备: ${equipment.name} (iLvl:${itemLevel}, ${RARITY_NAMES[finalRarity]})`);
         return equipment;
@@ -88,8 +88,8 @@ export class POE2EquipmentGenerator {
         if (slot) {
             availableBases = availableBases.filter(base => {
                 // 戒指特殊处理
-                if (slot === EquipSlot. RING2) {
-                    return base.slot === EquipSlot. RING1 || base.slot === slot;
+                if (slot === EquipSlot.RING2) {
+                    return base.slot === EquipSlot.RING1 || base.slot === slot;
                 }
                 return base.slot === slot;
             });
@@ -128,7 +128,7 @@ export class POE2EquipmentGenerator {
         const roll = RandomInt(1, 1000);
 
         // 基础概率随物品等级提升
-        const legendaryChance = Math.min(10, 2 + itemLevel / 15);      // 0. 2% - 1. 0%
+        const legendaryChance = Math.min(10, 2 + itemLevel / 15);      // 0.2% - 1.0%
         const rareChance = Math.min(180, 60 + itemLevel * 3);          // 6% - 18%
         const magicChance = Math.min(450, 220 + itemLevel * 4);        // 22% - 45%
 
@@ -183,14 +183,14 @@ export class POE2EquipmentGenerator {
         for (let i = 0; i < prefixCount; i++) {
             const affix = this.RollOneAffix(equipment, AffixPosition.PREFIX, baseType.slot);
             if (affix) {
-                equipment. prefixes.push(affix);
+                equipment.prefixes.push(affix);
             }
         }
 
         // 生成后缀
         equipment.suffixes = [];
         for (let i = 0; i < suffixCount; i++) {
-            const affix = this.RollOneAffix(equipment, AffixPosition. SUFFIX, baseType.slot);
+            const affix = this.RollOneAffix(equipment, AffixPosition.SUFFIX, baseType.slot);
             if (affix) {
                 equipment.suffixes.push(affix);
             }
@@ -209,22 +209,22 @@ export class POE2EquipmentGenerator {
     ): AffixInstance | null {
         // 获取可用词缀
         const availableAffixes = POE2_AFFIX_POOL.filter(affixDef => {
-            // 1. 位置匹配
+            // 1.位置匹配
             if (affixDef.position !== position) return false;
 
-            // 2. 槽位限制
-            if (affixDef.allowedSlots. length > 0) {
+            // 2.槽位限制
+            if (affixDef.allowedSlots.length > 0) {
                 let checkSlot = slot;
                 // 戒指特殊处理
                 if (slot === EquipSlot.RING2) checkSlot = EquipSlot.RING1;
                 
                 if (! affixDef.allowedSlots.includes(checkSlot) && 
-                    !affixDef.allowedSlots. includes(slot)) {
+                    !affixDef.allowedSlots.includes(slot)) {
                     return false;
                 }
             }
 
-            // 3. 检查是否已有相同词缀（避免重复）
+            // 3.检查是否已有相同词缀（避免重复）
             const existingAffixes = position === AffixPosition.PREFIX 
                 ? equipment.prefixes 
                 : equipment.suffixes;
@@ -232,8 +232,8 @@ export class POE2EquipmentGenerator {
                 return false;
             }
 
-            // 4.  检查是否有可用层级
-            const availableTiers = affixDef. tiers.filter(
+            // 4. 检查是否有可用层级
+            const availableTiers = affixDef.tiers.filter(
                 tier => tier.requiredItemLevel <= equipment.itemLevel
             );
             return availableTiers.length > 0;
@@ -248,14 +248,14 @@ export class POE2EquipmentGenerator {
         if (! selectedAffix) return null;
 
         // 选择层级
-        const availableTiers = selectedAffix. tiers.filter(
+        const availableTiers = selectedAffix.tiers.filter(
             tier => tier.requiredItemLevel <= equipment.itemLevel
         );
         const selectedTier = this.WeightedRandomSelectTier(availableTiers);
         if (!selectedTier) return null;
 
         // 随机数值
-        const value = RandomInt(selectedTier. minValue, selectedTier.maxValue);
+        const value = RandomInt(selectedTier.minValue, selectedTier.maxValue);
 
         return {
             affixId: selectedAffix.id,
@@ -280,7 +280,7 @@ export class POE2EquipmentGenerator {
                 continue;
             }
             // 找到层级最低（最好）的那个
-            const bestTier = availableTiers. reduce((a, b) => a.tier < b.tier ? a : b);
+            const bestTier = availableTiers.reduce((a, b) => a.tier < b.tier ? a : b);
             weights.push(bestTier.weight);
             totalWeight += bestTier.weight;
         }
@@ -343,7 +343,7 @@ export class POE2EquipmentGenerator {
             if (equipment.prefixes.length > 0 && equipment.suffixes.length > 0) {
                 const prefix = GetAffixById(equipment.prefixes[0].affixId);
                 const suffix = GetAffixById(equipment.suffixes[0].affixId);
-                return `${prefix?. name || ''}${baseName}${suffix?. name || ''}`;
+                return `${prefix?.name || ''}${baseName}${suffix?.name || ''}`;
             }
             if (equipment.prefixes.length > 0) {
                 const affix = GetAffixById(equipment.prefixes[0].affixId);
@@ -387,7 +387,7 @@ export class POE2EquipmentGenerator {
         equipment.suffixes = [];
 
         // 重新生成词缀
-        this. RollAffixes(equipment);
+        this.RollAffixes(equipment);
 
         // 重新生成名称
         const baseType = GetBaseTypeById(equipment.baseTypeId);
@@ -403,12 +403,12 @@ export class POE2EquipmentGenerator {
      * 使用崇高石：添加一条词缀
      */
     public static AddRandomAffix(equipment: POE2EquipmentInstance): boolean {
-        if (equipment.rarity !== ItemRarity. RARE && equipment.rarity !== ItemRarity.LEGENDARY) {
+        if (equipment.rarity !== ItemRarity.RARE && equipment.rarity !== ItemRarity.LEGENDARY) {
             print('[POE2Generator] 只能对稀有/传说装备使用崇高石');
             return false;
         }
 
-        if (equipment. corrupted) {
+        if (equipment.corrupted) {
             print('[POE2Generator] 腐化装备无法修改');
             return false;
         }
@@ -429,11 +429,11 @@ export class POE2EquipmentGenerator {
         // 随机选择添加前缀还是后缀
         let position: AffixPosition;
         if (canAddPrefix && canAddSuffix) {
-            position = RandomInt(0, 1) === 0 ? AffixPosition.PREFIX : AffixPosition. SUFFIX;
+            position = RandomInt(0, 1) === 0 ? AffixPosition.PREFIX : AffixPosition.SUFFIX;
         } else if (canAddPrefix) {
             position = AffixPosition.PREFIX;
         } else {
-            position = AffixPosition. SUFFIX;
+            position = AffixPosition.SUFFIX;
         }
 
         const newAffix = this.RollOneAffix(equipment, position, baseType.slot);
@@ -445,7 +445,7 @@ export class POE2EquipmentGenerator {
         if (position === AffixPosition.PREFIX) {
             equipment.prefixes.push(newAffix);
         } else {
-            equipment. suffixes.push(newAffix);
+            equipment.suffixes.push(newAffix);
         }
 
         print(`[POE2Generator] 崇高石: 添加了一条${position === AffixPosition.PREFIX ?  '前缀' : '后缀'}`);
@@ -487,7 +487,7 @@ export class POE2EquipmentGenerator {
         const affixDef = GetAffixById(affix.affixId);
         if (!affixDef) return;
 
-        const tier = affixDef. tiers. find(t => t.tier === affix.tier);
+        const tier = affixDef.tiers.find(t => t.tier === affix.tier);
         if (!tier) return;
 
         affix.value = RandomInt(tier.minValue, tier.maxValue);

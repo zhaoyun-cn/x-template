@@ -16,13 +16,14 @@ import { registerCustomKey } from '../utils/keybinding';
 import { EquipmentUI } from './equipment_ui';
 import { MaterialsUI } from './materials_ui';
 import { ClassSelection } from './class_selection';
-import { SkillTreeUI } from './skill_tree_ui';  // ⭐ 新增导入
+import { SkillTreeUI } from './skill_tree_ui';
+import { ErrorBoundary } from '../components/ErrorBoundary';  // ⭐ 新增导入
 
 registerCustomKey('D');
 registerCustomKey('F');
 registerCustomKey('B');
 registerCustomKey('C');
-registerCustomKey('K');  // ⭐ 注册技能树快捷键
+registerCustomKey('K');
 
 
 // 副本菜单组件
@@ -377,7 +378,7 @@ const Root: FC = () => {
     const [vaultVisible, setVaultVisible] = useState(false);
     const [equipmentVisible, setEquipmentVisible] = useState(false);
     const [materialsVisible, setMaterialsVisible] = useState(false);
-    const [skillTreeVisible, setSkillTreeVisible] = useState(false);  // ⭐ 新增：技能树状态
+    const [skillTreeVisible, setSkillTreeVisible] = useState(false);
     
     // 职业选择状态
     const [showClassSelection, setShowClassSelection] = useState(true);
@@ -408,7 +409,7 @@ const Root: FC = () => {
     const dPressed = useKeyPressed(`D`);
     const bPressed = useKeyPressed(`B`);
     const cPressed = useKeyPressed(`C`);
-    const kPressed = useKeyPressed(`K`);  // ⭐ 新增：K 键
+    const kPressed = useKeyPressed(`K`);
 
     // B 键打开仓库
     useEffect(() => {
@@ -427,7 +428,7 @@ const Root: FC = () => {
         }
     }, [cPressed, classSelected]);
 
-    // ⭐ K 键打开技能树
+    // K 键打开技能树
     useEffect(() => {
         if (kPressed && classSelected) {
             $.Msg('[Root] K 键按下，切换技能树界面');
@@ -459,7 +460,7 @@ const Root: FC = () => {
             setEquipmentVisible(true);
         });
 
-        // ⭐ 新增：监听技能树显示事件
+        // 监听技能树显示事件
         const listenerSkillTree = GameEvents.Subscribe('show_skill_tree', () => {
             $.Msg('[Root] 收到 show_skill_tree 事件');
             setSkillTreeVisible(true);
@@ -514,7 +515,7 @@ const Root: FC = () => {
                             backgroundColor: '#000000cc',
                         }}
                     >
-                        {/* 装备仓库弹窗 */}
+                        {/* ⭐ 装备仓库弹窗 - 用 ErrorBoundary 包裹 */}
                         {vaultVisible && (
                             <Panel
                                 style={{
@@ -522,10 +523,12 @@ const Root: FC = () => {
                                     verticalAlign: 'center',
                                 }}
                             >
-                                <VaultUI 
-                                    visible={vaultVisible} 
-                                    onClose={() => setVaultVisible(false)} 
-                                />
+                                <ErrorBoundary fallbackText="装备仓库加载出错">
+                                    <VaultUI 
+                                        visible={vaultVisible} 
+                                        onClose={() => setVaultVisible(false)} 
+                                    />
+                                </ErrorBoundary>
                             </Panel>
                         )}
                         
@@ -542,7 +545,7 @@ const Root: FC = () => {
                 {/* 装备界面弹窗 */}
                 <EquipmentUI visible={equipmentVisible} onClose={() => setEquipmentVisible(false)} />
                 
-                {/* ⭐ 技能树界面 */}
+                {/* 技能树界面 */}
                 <SkillTreeUI 
                     visible={skillTreeVisible} 
                     onClose={() => setSkillTreeVisible(false)} 
@@ -579,7 +582,7 @@ const Root: FC = () => {
                         }}
                         onmouseout={(panel) => {
                             panel.style.backgroundColor = '#1a5a1a';
-                            panel.style. border = '3px solid #00aa00';
+                            panel.style.border = '3px solid #00aa00';
                         }}
                     >
                         <Panel style={{
@@ -683,7 +686,7 @@ const Root: FC = () => {
                     {/* 仓库按钮 */}
                     <Button
                         onactivate={() => {
-                            $. Msg('[Root] 点击仓库按钮');
+                            $.Msg('[Root] 点击仓库按钮');
                             Game.EmitSound('ui.button_click');
                             setVaultVisible(true);
                             setMaterialsVisible(true);
