@@ -67,7 +67,8 @@ export class modifier_equipment_system extends BaseModifier {
                 cold_resistance: globalStats.cold_resistance || 0,
                 lightning_resistance: globalStats.lightning_resistance || 0,
                 evasion: globalStats.evasion || 0,
-            };
+            }; // ⭐ 打印调试信息
+            print(`[modifier_equipment_system] 加载属性: 力量=${this.stats.strength}, 生命=${this.stats.health}, 攻速=${this.stats. attack_speed}`);
         } else {
             this.stats = this.CreateEmptyStats();
         }

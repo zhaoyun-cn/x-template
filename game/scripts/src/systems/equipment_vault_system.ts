@@ -197,6 +197,9 @@ export class EquipmentVaultSystem {
                             name: affix.name || '',
                             description: affix.description || '',
                             color: affix.color,
+                              value: affix. value || 0,           // ⭐ 添加当前数值
+                            minValue: affix. minValue || 0,     // ⭐ 添加最小值
+                            maxValue: affix.maxValue || 0,     // ⭐ 添加最大值
                         });
                     }
                 }
@@ -211,6 +214,9 @@ export class EquipmentVaultSystem {
                             name: affix.name || '',
                             description: affix.description || '',
                             color: affix.color,
+                              value: affix. value || 0,           // ⭐ 添加当前数值
+                            minValue: affix. minValue || 0,     // ⭐ 添加最小值
+                            maxValue: affix.maxValue || 0,     // ⭐ 添加最大值
                         });
                     }
                 }
