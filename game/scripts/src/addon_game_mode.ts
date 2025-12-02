@@ -12,7 +12,7 @@ import './examples/abilities/axe_giant_strike';
 import { ExternalRewardItem, ExternalItemType, EquipmentAttribute } from "./dungeon/external_reward_pool";
 import { SimpleDungeon } from "./dungeon/simple_dungeon";
 import { EquipmentVaultSystem } from './systems/equipment_vault_system';
-import './modifiers/modifier_equipment_system';
+import './systems/modifier_equipment_system';
 import { ZoneDungeon } from "./zone/zone_dungeon";
 import { MaterialUseSystem } from './zone/zone_loot';
 import { ClassSystem } from './systems/class_system';
@@ -23,6 +23,7 @@ import { InitDamageTest } from './systems/damage_test';
 import { InitCharacterStatsHandler } from './systems/character_stats_handler';
 import { POE2Integration } from './systems/equipment/poe2_integration';
 import { InitPOE2System } from './systems/equipment/poe2_init';
+import { InitEquipmentTestCommands } from './systems/equipment_test_commands';
 
 if (IsServer()) {
     pcall(() => require('init_modifiers'));
@@ -509,6 +510,10 @@ Object.assign(getfenv(), {
         
         ClassSystem.Init();
         
+        // 在 Activate 函数中添加：
+InitEquipmentTestCommands();
+print("[GameMode] 装备测试命令已初始化");
+
         InitSkillPointSystem();
         print("[GameMode] 技能点系统已初始化");
         

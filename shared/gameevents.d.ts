@@ -46,6 +46,34 @@ declare interface CustomGameEventDeclarations {
         PlayerID: PlayerID;
     };
       update_character_stats: {
+          update_character_stats: {
+        // ⭐ 基础属性
+        strength: number;
+        agility: number;
+        intelligence: number;
+        
+        // ⭐ 攻击属性
+        attackDamage: number;
+        attackSpeed: number;
+        critChance: number;
+        critMultiplier: number;
+        
+        // ⭐ 防御属性
+        armor: number;
+        health: number;
+        mana: number;
+        evasion: number;
+        
+        // ⭐ 抗性
+        fireResistance: number;
+        coldResistance: number;
+        lightningResistance: number;
+        magicResistance: number;
+        
+        // ⭐ 移动
+        moveSpeed: number;
+        
+        // 兼容旧字段
         increasedDamage: number;
         increasedPhysicalDamage: number;
         increasedElementalDamage: number;
@@ -53,19 +81,16 @@ declare interface CustomGameEventDeclarations {
         increasedColdDamage: number;
         increasedLightningDamage: number;
         moreDamageValues: number[];
-        critChance: number;
-        critMultiplier: number;
         projectileDamage: number;
         areaDamage: number;
         meleeDamage: number;
         spellDamage: number;
-        attackDamage: number;
         dotDamage: number;
         cooldownReduction: number;
         areaOfEffect: number;
-        attackSpeed: number;
         castSpeed: number;
         lifesteal: number;
+    };
     };
 
 // 材料使用事件

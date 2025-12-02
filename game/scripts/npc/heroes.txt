@@ -45,7 +45,7 @@
 		"AttributeBaseIntelligence" "0"
 		"AttributeIntelligenceGain" "0"
 		"MovementCapabilities" "DOTA_UNIT_CAP_MOVE_GROUND"
-		"MovementSpeed" "550"
+		"MovementSpeed" "350"
 		"MovementTurnRate" "0.8000"
 		"StatusHealth" "10000"
 		"StatusMana" "100"
