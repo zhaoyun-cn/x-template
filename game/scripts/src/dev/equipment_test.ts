@@ -3,7 +3,7 @@
  */
 
 import { EquipmentVaultSystem } from '../systems/equipment/vault_system';
-import { ElementalDamageSystem, ElementType } from '../systems/elemental_damage_system';
+import { ElementalDamageSystem, ElementType } from '../systems/combat/elemental_damage_system';
 
 /** @luaTable */
 declare const _G: {

@@ -5,7 +5,7 @@
  * - 效果实际应用
  */
 
-import { ZoneLootSystem, LootType } from '../zone/zone_loot';
+import { ZoneLootSystem, LootType } from '../../dungeon/zone/zone_loot';
 
 export enum RuneQuality {
     COMMON = 1,      // 白色
@@ -511,7 +511,7 @@ class RuneSystemClass {
     // 延迟清除属性缓存，避免循环依赖
     private invalidateStatsCache(playerId: PlayerID): void {
         try {
-            const { PlayerStatsCollector } = require('./player_stats_collector');
+            const { PlayerStatsCollector } = require('../combat/player_stats_collector');
             PlayerStatsCollector.InvalidateCache(playerId);
         } catch (e) {
             // 如果 player_stats_collector 还没加载，忽略错误

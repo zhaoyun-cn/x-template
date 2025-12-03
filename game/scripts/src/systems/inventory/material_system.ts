@@ -2,7 +2,7 @@
  * 材料使用系统 - 从 zone_loot.ts 分离
  */
 
-import { LootType, LOOT_ITEMS, ZoneLootSystem } from '../../zone/zone_loot';
+import { LootType, LOOT_ITEMS, ZoneLootSystem } from '../../dungeon/zone/zone_loot';
 
 export class MaterialUseSystem {
     

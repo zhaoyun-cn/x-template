@@ -5,9 +5,9 @@
 
 import { POE2Integration } from '../systems/equipment/poe2_integration';
 import { ItemRarity } from '../systems/equipment/poe2_equipment_types';
-import { LootType, ZoneLootSystem } from '../zone/zone_loot';
+import { LootType, ZoneLootSystem } from '../dungeon/zone/zone_loot';
 import { EquipmentVaultSystem } from '../systems/equipment/vault_system';
-import { ClassSystem } from '../systems/class_system';
+import { ClassSystem } from '../systems/player/class_system';
 
 export class TestCommands {
     /**

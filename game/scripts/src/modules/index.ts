@@ -1,5 +1,5 @@
-import { Debug } from './Debug';
-import { GameConfig } from './GameConfig';
+import { Debug } from '../utils/debug';
+import { GameConfig } from '../config/game_config';
 import { XNetTable } from '../utils/xnet-table';
 // 你的其他导出
 

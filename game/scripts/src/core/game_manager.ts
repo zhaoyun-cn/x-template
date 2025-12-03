@@ -2,17 +2,17 @@
  * 游戏管理器 - 统一初始化所有系统
  */
 
-import { ClassSystem } from '../systems/class_system';
-import { InitSkillEquipSystem } from '../systems/skill_equip_system';
-import { InitSkillPointSystem } from '../systems/skill_point_system';
-import { InitRuneSystem } from '../systems/rune_system';
+import { ClassSystem } from '../systems/player/class_system';
+import { InitSkillEquipSystem } from '../systems/skill/skill_equip_system';
+import { InitSkillPointSystem } from '../systems/skill/skill_point_system';
+import { InitRuneSystem } from '../systems/skill/rune_system';
 import { InitDamageTest } from '../dev/damage_test';
-import { InitCharacterStatsHandler } from '../systems/character_stats_handler';
+import { InitCharacterStatsHandler } from '../systems/player/character_stats_handler';
 import { InitPOE2System } from '../systems/equipment/poe2_init';
 import { InitEquipmentTestCommands } from '../dev/equipment_test';
 import { RageSystem } from '../systems/combat/rage_system';
 import { SimpleDungeon } from '../dungeon/simple_dungeon';
-import { ZoneDungeon } from '../zone/zone_dungeon';
+import { ZoneDungeon } from '../dungeon/zone/zone_dungeon';
 
 declare global {
     interface CDOTAGameRules {
