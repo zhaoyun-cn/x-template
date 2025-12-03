@@ -12,7 +12,7 @@ import {
     SKILL_TYPE_STAT_TO_TAG,
     MultiplierType,
     CRIT_CONFIG,
-} from '../config/damage_config';
+} from '../../config/damage_config';
 
 // ========== 玩家属性收集器 ==========
 export interface PlayerStats {
