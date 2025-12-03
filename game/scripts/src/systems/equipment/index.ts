@@ -9,3 +9,4 @@ export * from './poe2_equipment_generator';
 export * from './poe2_equipment_types';
 export * from './poe2_init';
 export * from './poe2_integration';
+export * from './vault_system';
