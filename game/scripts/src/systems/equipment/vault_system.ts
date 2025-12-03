@@ -1,4 +1,4 @@
-import { ExternalRewardItem } from "../dungeon/external_reward_pool";
+import { ExternalRewardItem } from "../../dungeon/external_reward_pool";
 
 // 物品类型到装备槽位的映射
 const ITEM_TYPE_TO_SLOT: { [key: string]: string } = {

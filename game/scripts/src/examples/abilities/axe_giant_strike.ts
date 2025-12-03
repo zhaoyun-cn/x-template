@@ -1,5 +1,5 @@
 import { BaseAbility, registerAbility } from "../../utils/dota_ts_adapter";
-import { RageSystem } from "../../modules/rage_system";
+import { RageSystem } from "../../systems/combat/rage_system";
 
 @registerAbility()
 export class axe_giant_strike extends BaseAbility {

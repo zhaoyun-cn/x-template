@@ -4,7 +4,7 @@ import {
   registerAbility,
   registerModifier,
 } from "../../utils/dota_ts_adapter";
-import { RageSystem } from "../../modules/rage_system";
+import { RageSystem } from "../../systems/combat/rage_system";
 
 @registerAbility()
 export class charge extends BaseAbility {

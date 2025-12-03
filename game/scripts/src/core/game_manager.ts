@@ -6,11 +6,11 @@ import { ClassSystem } from '../systems/class_system';
 import { InitSkillEquipSystem } from '../systems/skill_equip_system';
 import { InitSkillPointSystem } from '../systems/skill_point_system';
 import { InitRuneSystem } from '../systems/rune_system';
-import { InitDamageTest } from '../systems/damage_test';
+import { InitDamageTest } from '../dev/damage_test';
 import { InitCharacterStatsHandler } from '../systems/character_stats_handler';
 import { InitPOE2System } from '../systems/equipment/poe2_init';
-import { InitEquipmentTestCommands } from '../systems/equipment_test_commands';
-import { RageSystem } from '../modules/rage_system';
+import { InitEquipmentTestCommands } from '../dev/equipment_test';
+import { RageSystem } from '../systems/combat/rage_system';
 import { SimpleDungeon } from '../dungeon/simple_dungeon';
 import { ZoneDungeon } from '../zone/zone_dungeon';
 

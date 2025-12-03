@@ -5,7 +5,7 @@
 
 import { POE2Integration } from './poe2_integration';
 import { LootType, ZoneLootSystem, LOOT_ITEMS } from '../../zone/zone_loot';
-import { EquipmentVaultSystem } from '../equipment_vault_system';
+import { EquipmentVaultSystem } from './vault_system';
 
 // 玩家当前选中的装备信息
 interface SelectedEquipment {

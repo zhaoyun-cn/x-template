@@ -2,7 +2,6 @@ import { Debug } from './Debug';
 import { GameConfig } from './GameConfig';
 import { XNetTable } from '../utils/xnet-table';
 // 你的其他导出
-export * from './rage_system';
 
 // 如果 examples 需要被加载，添加这行
 import '../examples';

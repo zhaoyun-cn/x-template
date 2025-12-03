@@ -7,7 +7,7 @@ import { POE2EquipmentInstance, RARITY_COLORS, RARITY_NAMES, EquipSlot, ItemRari
 import { GetBaseTypeById } from './poe2_base_types';
 import { GetAffixById } from './poe2_affix_pool';
 import { POE2EquipmentGenerator } from './poe2_equipment_generator';
-import { EquipmentVaultSystem } from '../equipment_vault_system';
+import { EquipmentVaultSystem } from './vault_system';
 import { LootType, ZoneLootSystem } from '../../zone/zone_loot';
 
 import { 
@@ -572,5 +572,123 @@ export class POE2Integration {
     }
 }
 
-// ==================== 注意 ====================
-// 测试命令已迁移到 dev/test_commands.ts
+// ==================== 测试命令 ====================
+
+if (IsServer()) {
+    Timers.CreateTimer(1, () => {
+        ListenToGameEvent('player_chat', (event) => {
+            const playerId = event.playerid as PlayerID;
+            const text = event.text as string;
+
+            // 生成装备
+            if (text === '-poe2test') {
+                print(`[POE2Integration] 为玩家 ${playerId} 生成测试装备`);
+                POE2Integration.GenerateLootDrop(playerId, 20, 5);
+                GameRules.SendCustomMessage(
+                    '<font color="#ffd700">✨ 已生成 5 件随机装备到仓库！</font>',
+                    playerId, 0
+                );
+            }
+
+            if (text === '-poe2rare') {
+                POE2Integration.GenerateAndAddToVault(playerId, 25, ItemRarity.RARE);
+                GameRules.SendCustomMessage(
+                    '<font color="#ffff77">⚡ 已生成稀有装备！</font>',
+                    playerId, 0
+                );
+            }
+
+            if (text === '-poe2legendary') {
+                POE2Integration.GenerateAndAddToVault(playerId, 30, ItemRarity.LEGENDARY);
+                GameRules.SendCustomMessage(
+                    '<font color="#ff8800">🔥 已生成传说装备！</font>',
+                    playerId, 0
+                );
+            }
+
+            // 通货操作
+            if (text === '-givecurrency') {
+                ZoneLootSystem.AddItem(playerId, LootType.POE2_CHAOS_ORB, 10);
+                ZoneLootSystem.AddItem(playerId, LootType.POE2_EXALTED_ORB, 10);
+                ZoneLootSystem.AddItem(playerId, LootType.POE2_DIVINE_ORB, 10);
+                ZoneLootSystem.AddItem(playerId, LootType.POE2_SCRAP, 50);
+                GameRules.SendCustomMessage(
+                    '<font color="#ffd700">💰 已获得测试通货：混沌石x10, 崇高石x10, 神圣石x10, 碎片x50</font>',
+                    playerId, 0
+                );
+            }
+
+            // 打造系统
+            if (text.startsWith('-select ')) {
+                const index = parseInt(text.replace('-select ', ''));
+                if (! isNaN(index)) {
+                    const { POE2CraftSystem } = require('./poe2_craft_system');
+                    POE2CraftSystem.SelectVaultEquipment(playerId, index);
+                }
+            }
+
+            if (text === '-unselect') {
+                const { POE2CraftSystem } = require('./poe2_craft_system');
+                POE2CraftSystem.CancelSelection(playerId);
+            }
+
+            if (text === '-usechaos') {
+                const { POE2CraftSystem } = require('./poe2_craft_system');
+                POE2CraftSystem.UseCurrency(playerId, LootType.POE2_CHAOS_ORB);
+            }
+            if (text === '-useexalt') {
+                const { POE2CraftSystem } = require('./poe2_craft_system');
+                POE2CraftSystem.UseCurrency(playerId, LootType.POE2_EXALTED_ORB);
+            }
+            if (text === '-usedivine') {
+                const { POE2CraftSystem } = require('./poe2_craft_system');
+                POE2CraftSystem.UseCurrency(playerId, LootType.POE2_DIVINE_ORB);
+            }
+
+            if (text === '-disasm') {
+                const { POE2CraftSystem } = require('./poe2_craft_system');
+                POE2CraftSystem.DisassembleSelected(playerId);
+            }
+
+            // 合成
+            if (text === '-craftchaos') {
+                POE2Integration.CraftCurrency(playerId, LootType.POE2_CHAOS_ORB);
+            }
+            if (text === '-craftexalt') {
+                POE2Integration.CraftCurrency(playerId, LootType.POE2_EXALTED_ORB);
+            }
+            if (text === '-craftdivine') {
+                POE2Integration.CraftCurrency(playerId, LootType.POE2_DIVINE_ORB);
+            }
+
+            // 帮助
+            if (text === '-poe2help') {
+                GameRules.SendCustomMessage('===== POE2 货币系统命令 =====', playerId, 0);
+                GameRules.SendCustomMessage('-poe2test - 生成5件随机装备', playerId, 0);
+                GameRules.SendCustomMessage('-poe2rare - 生成稀有装备', playerId, 0);
+                GameRules.SendCustomMessage('-poe2legendary - 生成传说装备', playerId, 0);
+                GameRules.SendCustomMessage('-givecurrency - 获取测试通货', playerId, 0);
+                GameRules.SendCustomMessage('', playerId, 0);
+                GameRules.SendCustomMessage('===== 打造流程 =====', playerId, 0);
+                GameRules.SendCustomMessage('-select [索引] - 选择仓库中的装备', playerId, 0);
+                GameRules.SendCustomMessage('-unselect - 取消选择', playerId, 0);
+                GameRules.SendCustomMessage('-usechaos - 对选中装备使用混沌石', playerId, 0);
+                GameRules.SendCustomMessage('-useexalt - 对选中装备使用崇高石', playerId, 0);
+                GameRules.SendCustomMessage('-usedivine - 对选中装备使用神圣石', playerId, 0);
+                GameRules.SendCustomMessage('-disasm - 分解选中装备', playerId, 0);
+                GameRules.SendCustomMessage('', playerId, 0);
+                GameRules.SendCustomMessage('===== 合成 =====', playerId, 0);
+                GameRules.SendCustomMessage('-craftchaos - 合成混沌石(10碎片)', playerId, 0);
+                GameRules.SendCustomMessage('-craftexalt - 合成崇高石(30碎片)', playerId, 0);
+                GameRules.SendCustomMessage('-craftdivine - 合成神圣石(50碎片)', playerId, 0);
+            }
+        }, null);
+
+        print('========================================');
+        print('[POE2Integration] 货币系统已加载');
+        print('[POE2Integration] 输入 -poe2help 查看命令');
+        print('========================================');
+
+        return undefined;
+    });
+}

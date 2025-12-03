@@ -1,5 +1,5 @@
 import { BaseModifier, registerModifier } from "../../utils/dota_ts_adapter";
-import { RageSystem } from "../../modules/rage_system";
+import { RageSystem } from "../../systems/combat/rage_system";
 
 @registerModifier()
 export class modifier_rage_attack_listener extends BaseModifier {

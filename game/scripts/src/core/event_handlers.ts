@@ -2,7 +2,7 @@
  * 事件处理器 - 从 addon_game_mode.ts 分离
  */
 
-import { EquipmentVaultSystem } from '../systems/equipment_vault_system';
+import { EquipmentVaultSystem } from '../systems/equipment/vault_system';
 import { ClassSystem } from '../systems/class_system';
 import { ExternalRewardItem, ExternalItemType, EquipmentAttribute } from '../dungeon/external_reward_pool';
 

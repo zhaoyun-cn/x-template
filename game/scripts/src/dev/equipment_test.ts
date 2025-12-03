@@ -2,8 +2,8 @@
  * 装备系统测试命令
  */
 
-import { EquipmentVaultSystem } from './equipment_vault_system';
-import { ElementalDamageSystem, ElementType } from './elemental_damage_system';
+import { EquipmentVaultSystem } from '../systems/equipment/vault_system';
+import { ElementalDamageSystem, ElementType } from '../systems/elemental_damage_system';
 
 /** @luaTable */
 declare const _G: {
