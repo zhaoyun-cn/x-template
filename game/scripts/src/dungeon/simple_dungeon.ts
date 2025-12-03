@@ -11,7 +11,7 @@ import { ShadowFiendBoss } from "./boss/shadow_fiend_boss";
 import { LootSystem } from "./loot_system";
 import { DungeonDifficulty, DIFFICULTY_NAMES, DIFFICULTY_MULTIPLIERS } from "./reward_config";
 import { EXTERNAL_REWARD_POOL, ExternalRewardItem } from "./external_reward_pool";
-import { EquipmentVaultSystem } from "../systems/equipment_vault_system";
+import { EquipmentVaultSystem } from "../systems/equipment/vault_system";
 
 export class SimpleDungeon {
     private monsters: CDOTA_BaseNPC[] = [];
