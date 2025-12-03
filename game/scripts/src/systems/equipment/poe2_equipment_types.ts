@@ -24,13 +24,12 @@ export const RARITY_COLORS: Record<ItemRarity, string> = {
     [ItemRarity.LEGENDARY]: '#ff8800', // 橙色
 };
 
-
-// 稀有度词缀数量限制（⭐ 修改为 1/2/3/4）
+// ⭐⭐⭐ 稀有度词缀数量限制（修正为 POE 标准）
 export const RARITY_AFFIX_LIMITS: Record<ItemRarity, { maxPrefix: number; maxSuffix: number }> = {
     [ItemRarity.NORMAL]: { maxPrefix: 1, maxSuffix: 0 },      // 1条词缀（只有前缀）
     [ItemRarity.MAGIC]: { maxPrefix: 1, maxSuffix: 1 },       // 2条词缀（1前缀+1后缀）
-    [ItemRarity.RARE]: { maxPrefix: 2, maxSuffix: 1 },        // 3条词缀（2前缀+1后缀）
-    [ItemRarity.LEGENDARY]: { maxPrefix: 2, maxSuffix: 2 },   // 4条词缀（2前缀+2后缀）
+    [ItemRarity.RARE]: { maxPrefix: 3, maxSuffix: 3 },        // ⭐ 6条词缀（3前缀+3后缀）
+    [ItemRarity.LEGENDARY]: { maxPrefix: 3, maxSuffix: 3 },   // ⭐ 6条词缀（3前缀+3后缀）
 };
 
 // ==================== 装备槽位 ====================
@@ -91,13 +90,13 @@ export enum AffixType {
     LIGHTNING_RESISTANCE = 'lightning_resistance',
     
     // ===== 特殊属性 =====
-    PERCENT_MOVE_SPEED = 'percent_move_speed',      // 移动速度%
-    FLAT_MOVE_SPEED = 'flat_move_speed',            // 移动速度固定值
-    LIFE_LEECH = 'life_leech',                      // 生命偷取
-    SKILL_LEVEL_ALL = 'skill_level_all',            // 全技能等级
-    SKILL_LEVEL_SINGLE = 'skill_level_single',      // 单一技能等级
-    COOLDOWN_REDUCTION = 'cooldown_reduction',       // 技能冷却
-    EVASION_PERCENT = 'evasion_percent',            // 闪避率
+    PERCENT_MOVE_SPEED = 'percent_move_speed',
+    FLAT_MOVE_SPEED = 'flat_move_speed',
+    LIFE_LEECH = 'life_leech',
+    SKILL_LEVEL_ALL = 'skill_level_all',
+    SKILL_LEVEL_SINGLE = 'skill_level_single',
+    COOLDOWN_REDUCTION = 'cooldown_reduction',
+    EVASION_PERCENT = 'evasion_percent',
 }
 
 // ==================== 词缀层级 ====================
@@ -152,9 +151,6 @@ export interface POE2EquipmentInstance {
 }
 
 // ==================== 通货类型 ====================
-// 注意：通货已集成到材料系统（zone_loot.ts）中
-// 这里的枚举用于代码中的类型引用
-
 export enum CurrencyType {
     CHAOS = 'poe2_chaos_orb',           // 混沌石
     EXALTED = 'poe2_exalted_orb',       // 崇高石
@@ -169,18 +165,16 @@ export const CURRENCY_NAMES: Record<CurrencyType, string> = {
     [CurrencyType.SCRAP]: '装备碎片',
 };
 
-// 通货图标（使用 DOTA2 自带物品图标）
 export const CURRENCY_ICONS: Record<CurrencyType, string> = {
-    [CurrencyType.CHAOS]: 'item_octarine_core',      // 混沌石 - 八分仪
-    [CurrencyType.EXALTED]: 'item_ultimate_orb',     // 崇高石 - 极限法球
-    [CurrencyType.DIVINE]: 'item_refresher',         // 神圣石 - 刷新球
-    [CurrencyType.SCRAP]: 'item_branches',           // 碎片 - 树枝
+    [CurrencyType.CHAOS]: 'item_octarine_core',
+    [CurrencyType.EXALTED]: 'item_ultimate_orb',
+    [CurrencyType.DIVINE]: 'item_refresher',
+    [CurrencyType.SCRAP]: 'item_branches',
 };
 
-// 通货描述
 export const CURRENCY_DESCRIPTIONS: Record<CurrencyType, string> = {
-    [CurrencyType.CHAOS]: '重新随机稀有装备的所有词缀',
-    [CurrencyType.EXALTED]: '为稀有装备添加一条随机词缀',
+    [CurrencyType.CHAOS]: '随机重置装备的一条词缀',
+    [CurrencyType.EXALTED]: '为装备添加一条随机词缀',
     [CurrencyType.DIVINE]: '重新随机装备词缀的数值范围',
     [CurrencyType.SCRAP]: '分解装备获得，可用于合成通货',
 };

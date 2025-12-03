@@ -3,7 +3,7 @@
  * 将 POE2 装备转换为现有仓库系统格式
  */
 
-import { POE2EquipmentInstance, RARITY_COLORS, RARITY_NAMES, EquipSlot, ItemRarity, AffixPosition } from './poe2_equipment_types';
+import { POE2EquipmentInstance, RARITY_COLORS, RARITY_NAMES, EquipSlot, ItemRarity, AffixPosition, RARITY_AFFIX_LIMITS } from './poe2_equipment_types';
 import { GetBaseTypeById } from './poe2_base_types';
 import { GetAffixById } from './poe2_affix_pool';
 import { POE2EquipmentGenerator } from './poe2_equipment_generator';
@@ -22,14 +22,10 @@ export class POE2Integration {
     
     // ==================== 装备实例缓存 ====================
     
-    // 存储 POE2 装备原始实例，用于货币操作
     private static equipmentInstances: Map<string, POE2EquipmentInstance> = new Map();
 
     // ==================== 转换函数 ====================
 
-    /**
-     * 将 POE2 装备实例转换为仓库系统格式
-     */
     public static ConvertToVaultItem(poe2Item: POE2EquipmentInstance): ExternalRewardItem {
         const baseType = GetBaseTypeById(poe2Item.baseTypeId);
         if (!baseType) {
@@ -54,17 +50,13 @@ export class POE2Integration {
             [EquipSlot.AMULET]: ExternalItemType.NECKLACE,
         };
 
-        // stats 和 affixDetails 使用相同的描述文本
         const stats: EquipmentStat[] = [];
         const affixDetails: AffixDetail[] = [];
 
-        // 添加前缀
         for (const affix of poe2Item.prefixes) {
             const affixDef = GetAffixById(affix.affixId);
             if (affixDef) {
                 const desc = affixDef.description.replace('{value}', affix.value.toString());
-                
-                // 找到当前层级的数值范围
                 const tierData = affixDef.tiers.find(t => t.tier === affix.tier);
                 
                 stats.push({
@@ -85,12 +77,10 @@ export class POE2Integration {
             }
         }
 
-        // 添加后缀
         for (const affix of poe2Item.suffixes) {
             const affixDef = GetAffixById(affix.affixId);
             if (affixDef) {
                 const desc = affixDef.description.replace('{value}', affix.value.toString());
-                
                 const tierData = affixDef.tiers.find(t => t.tier === affix.tier);
                 
                 stats.push({
@@ -153,9 +143,6 @@ export class POE2Integration {
 
     // ==================== 便捷生成函数 ====================
 
-    /**
-     * 生成装备并添加到仓库（带缓存）
-     */
     public static GenerateAndAddToVault(
         playerId: PlayerID,
         itemLevel: number,
@@ -163,15 +150,13 @@ export class POE2Integration {
         slot?: EquipSlot
     ): void {
         const poe2Item = POE2EquipmentGenerator.GenerateRandomEquipment(itemLevel, rarity, slot);
-        if (!poe2Item) {
+        if (! poe2Item) {
             print('[POE2Integration] 生成装备失败');
             return;
         }
 
-        // ⭐ 缓存装备实例
         this.equipmentInstances.set(poe2Item.id, poe2Item);
 
-        // 详细日志
         print('========================================');
         print(`[POE2] 装备详情:`);
         print(`  名称: ${poe2Item.name}`);
@@ -196,22 +181,15 @@ export class POE2Integration {
         }
         print('========================================');
 
-        // 转换为仓库格式
         const vaultItem = this.ConvertToVaultItem(poe2Item);
-        
-        // ⭐ 在仓库物品中保存原始ID引用
         (vaultItem as any).poe2InstanceId = poe2Item.id;
 
-        // 添加到仓库
         EquipmentVaultSystem.SaveToVault(playerId, vaultItem);
 
         const rarityName = RARITY_NAMES[poe2Item.rarity];
         print(`[POE2Integration] 已添加装备到仓库: ${vaultItem.name} [${rarityName}]`);
     }
 
-    /**
-     * 批量生成掉落
-     */
     public static GenerateLootDrop(
         playerId: PlayerID,
         itemLevel: number,
@@ -227,19 +205,23 @@ export class POE2Integration {
     /**
      * 使用混沌石：随机重置一条词缀
      */
-    public static UseChaosOrbOnEquipment(playerId: PlayerID, vaultIndex: number): boolean {
-        // 1.检查通货数量
+    public static UseChaosOrbOnEquipment(playerId: PlayerID, vaultIndex: number): {
+        success: boolean;
+        oldAffix?: string;
+        newAffix?: string;
+        oldValue?: number;
+        newValue?: number;
+    } {
         const chaosCount = ZoneLootSystem.GetItemCount(playerId, LootType.POE2_CHAOS_ORB);
         if (chaosCount < 1) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 混沌石不足！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
-        // 2. 获取仓库中的装备
         const vault = EquipmentVaultSystem.GetVault(playerId);
         if (vaultIndex < 0 || vaultIndex >= vault.length) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 无效的装备索引！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
         const vaultItem = vault[vaultIndex];
@@ -247,59 +229,64 @@ export class POE2Integration {
         
         if (!instanceId) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 该装备不支持使用通货！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
-        // 3.获取装备实例
         const equipment = this.equipmentInstances.get(instanceId);
         if (!equipment) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 装备数据丢失！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
-        // 4.使用混沌石（随机重置一条词缀）
-        const success = POE2EquipmentGenerator.RerollOneAffix(equipment);
-        if (!success) {
+        const result = POE2EquipmentGenerator.RerollOneAffix(equipment);
+        if (!result.success) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 无法对该装备使用混沌石！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
-        // 5.消耗通货
         ZoneLootSystem.ConsumeItem(playerId, LootType.POE2_CHAOS_ORB, 1);
 
-        // 6. 更新仓库中的装备
         const newVaultItem = this.ConvertToVaultItem(equipment);
         (newVaultItem as any).poe2InstanceId = instanceId;
         vault[vaultIndex] = newVaultItem;
 
-        // 7.刷新数据
         EquipmentVaultSystem.PushDataToClient(playerId);
 
         GameRules.SendCustomMessage(
-            `<font color="#aa00ff">🔮 混沌石使用成功！${newVaultItem.name} 的一条词缀已重置</font>`,
+            `<font color="#aa00ff">🔮 混沌石: </font><font color="#ff6666">${result.oldAffix}(${result.oldValue})</font> → <font color="#66ff66">${result.newAffix}(${result.newValue})</font>`,
             playerId, 0
         );
 
         this.PrintEquipmentAffixes(equipment);
-        return true;
+        this.NotifyEquipmentChanged(playerId, vaultIndex, 'chaos', result);
+
+        return {
+            success: true,
+            oldAffix: result.oldAffix,
+            newAffix: result.newAffix,
+            oldValue: result.oldValue,
+            newValue: result.newValue
+        };
     }
 
     /**
      * 使用崇高石：添加一条随机词缀
      */
-    public static UseExaltedOrbOnEquipment(playerId: PlayerID, vaultIndex: number): boolean {
-        // 1.检查通货数量
+    public static UseExaltedOrbOnEquipment(playerId: PlayerID, vaultIndex: number): {
+        success: boolean;
+        newAffix?: string;
+        newValue?: number;
+    } {
         const exaltCount = ZoneLootSystem.GetItemCount(playerId, LootType.POE2_EXALTED_ORB);
         if (exaltCount < 1) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 崇高石不足！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
-        // 2.获取仓库中的装备
         const vault = EquipmentVaultSystem.GetVault(playerId);
         if (vaultIndex < 0 || vaultIndex >= vault.length) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 无效的装备索引！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
         const vaultItem = vault[vaultIndex];
@@ -307,59 +294,69 @@ export class POE2Integration {
         
         if (!instanceId) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 该装备不支持使用通货！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
-        // 3.获取装备实例
         const equipment = this.equipmentInstances.get(instanceId);
         if (!equipment) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 装备数据丢失！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
-        // 4.使用崇高石
-        const success = POE2EquipmentGenerator.AddRandomAffix(equipment);
-        if (!success) {
-            GameRules.SendCustomMessage(`<font color="#ff4444">❌ 装备词缀已满，无法添加！</font>`, playerId, 0);
-            return false;
+        const result = POE2EquipmentGenerator.AddRandomAffix(equipment);
+        
+        if (!result.success) {
+            const limits = RARITY_AFFIX_LIMITS[equipment.rarity];
+            if (equipment.prefixes.length >= limits.maxPrefix && equipment.suffixes.length >= limits.maxSuffix) {
+                GameRules.SendCustomMessage(
+                    `<font color="#ff4444">❌ 装备词缀已满！(${equipment.prefixes.length}/${limits.maxPrefix}前缀, ${equipment.suffixes.length}/${limits.maxSuffix}后缀)</font>`,
+                    playerId, 0
+                );
+            } else {
+                GameRules.SendCustomMessage(
+                    `<font color="#ff4444">❌ 没有可添加的词缀！</font>`,
+                    playerId, 0
+                );
+            }
+            return { success: false };
         }
 
-        // 5.消耗通货
         ZoneLootSystem.ConsumeItem(playerId, LootType.POE2_EXALTED_ORB, 1);
 
-        // 6.更新仓库中的装备
         const newVaultItem = this.ConvertToVaultItem(equipment);
         (newVaultItem as any).poe2InstanceId = instanceId;
         vault[vaultIndex] = newVaultItem;
 
-        // 7.刷新数据
         EquipmentVaultSystem.PushDataToClient(playerId);
 
         GameRules.SendCustomMessage(
-            `<font color="#ffd700">✨ 崇高石使用成功！${newVaultItem.name} 添加了新词缀</font>`,
+            `<font color="#ffd700">✨ 崇高石: 添加了 </font><font color="#66ff66">${result.newAffix}(${result.newValue}) [${result.position}]</font>`,
             playerId, 0
         );
 
         this.PrintEquipmentAffixes(equipment);
-        return true;
+        this.NotifyEquipmentChanged(playerId, vaultIndex, 'exalt', result);
+
+        return { success: true, newAffix: result.newAffix, newValue: result.newValue };
     }
 
     /**
      * 使用神圣石：重新随机词缀数值
      */
-    public static UseDivineOrbOnEquipment(playerId: PlayerID, vaultIndex: number): boolean {
-        // 1.检查通货数量
+    public static UseDivineOrbOnEquipment(playerId: PlayerID, vaultIndex: number): {
+        success: boolean;
+        changes?: Array<{ name: string; oldValue: number; newValue: number }>;
+    } {
         const divineCount = ZoneLootSystem.GetItemCount(playerId, LootType.POE2_DIVINE_ORB);
         if (divineCount < 1) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 神圣石不足！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
-        // 2. 获取仓库中的装备
         const vault = EquipmentVaultSystem.GetVault(playerId);
         if (vaultIndex < 0 || vaultIndex >= vault.length) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 无效的装备索引！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
         const vaultItem = vault[vaultIndex];
@@ -367,41 +364,46 @@ export class POE2Integration {
         
         if (!instanceId) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 该装备不支持使用通货！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
-        // 3.获取装备实例
         const equipment = this.equipmentInstances.get(instanceId);
         if (!equipment) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 装备数据丢失！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
-        // 4.使用神圣石
-        const success = POE2EquipmentGenerator.RerollAffixValues(equipment);
-        if (!success) {
+        const result = POE2EquipmentGenerator.RerollAffixValues(equipment);
+        if (!result.success) {
             GameRules.SendCustomMessage(`<font color="#ff4444">❌ 无法对该装备使用神圣石！</font>`, playerId, 0);
-            return false;
+            return { success: false };
         }
 
-        // 5.消耗通货
         ZoneLootSystem.ConsumeItem(playerId, LootType.POE2_DIVINE_ORB, 1);
 
-        // 6.更新仓库中的装备
         const newVaultItem = this.ConvertToVaultItem(equipment);
         (newVaultItem as any).poe2InstanceId = instanceId;
         vault[vaultIndex] = newVaultItem;
 
-        // 7.刷新数据
         EquipmentVaultSystem.PushDataToClient(playerId);
 
+        let changeText = '';
+        for (const change of result.changes) {
+            const diff = change.newValue - change.oldValue;
+            const diffStr = diff >= 0 ? `+${diff}` : `${diff}`;
+            const color = diff >= 0 ? '#66ff66' : '#ff6666';
+            changeText += `${change.name}: ${change.oldValue}→<font color="${color}">${change.newValue}(${diffStr})</font> `;
+        }
+        
         GameRules.SendCustomMessage(
-            `<font color="#00ffff">💎 神圣石使用成功！${newVaultItem.name} 的词缀数值已重置</font>`,
+            `<font color="#00ffff">💎 神圣石: </font>${changeText}`,
             playerId, 0
         );
 
         this.PrintEquipmentAffixes(equipment);
-        return true;
+        this.NotifyEquipmentChanged(playerId, vaultIndex, 'divine', result);
+
+        return { success: true, changes: result.changes };
     }
 
     /**
@@ -418,28 +420,22 @@ export class POE2Integration {
         const rarity = vaultItem.rarity || 0;
         const itemName = vaultItem.name;
 
-        // 根据稀有度决定碎片数量
         let scrapCount: number;
         switch (rarity) {
-            case 3: scrapCount = RandomInt(8, 15); break;  // 传说
-            case 2: scrapCount = RandomInt(4, 8); break;   // 稀有
-            case 1: scrapCount = RandomInt(2, 4); break;   // 魔法
-            default: scrapCount = RandomInt(1, 2); break;  // 普通
+            case 3: scrapCount = RandomInt(8, 15); break;
+            case 2: scrapCount = RandomInt(4, 8); break;
+            case 1: scrapCount = RandomInt(2, 4); break;
+            default: scrapCount = RandomInt(1, 2); break;
         }
 
-        // 从仓库移除装备
         vault.splice(vaultIndex, 1);
 
-        // 清理缓存
         const instanceId = (vaultItem as any).poe2InstanceId;
         if (instanceId) {
             this.equipmentInstances.delete(instanceId);
         }
 
-        // 添加碎片
         ZoneLootSystem.AddItem(playerId, LootType.POE2_SCRAP, scrapCount);
-
-        // 刷新数据
         EquipmentVaultSystem.PushDataToClient(playerId);
 
         GameRules.SendCustomMessage(
@@ -454,11 +450,10 @@ export class POE2Integration {
      * 碎片合成通货
      */
     public static CraftCurrency(playerId: PlayerID, currencyType: LootType): boolean {
-        // 合成配方
         const recipes: Record<string, number> = {
-            [LootType.POE2_CHAOS_ORB]: 10,      // 10碎片 = 1混沌石
-            [LootType.POE2_EXALTED_ORB]: 30,   // 30碎片 = 1崇高石
-            [LootType.POE2_DIVINE_ORB]: 50,    // 50碎片 = 1神圣石
+            [LootType.POE2_CHAOS_ORB]: 10,
+            [LootType.POE2_EXALTED_ORB]: 30,
+            [LootType.POE2_DIVINE_ORB]: 50,
         };
 
         const requiredScrap = recipes[currencyType];
@@ -476,10 +471,7 @@ export class POE2Integration {
             return false;
         }
 
-        // 消耗碎片
         ZoneLootSystem.ConsumeItem(playerId, LootType.POE2_SCRAP, requiredScrap);
-
-        // 添加通货
         ZoneLootSystem.AddItem(playerId, currencyType, 1);
 
         const currencyNames: Record<string, string> = {
@@ -495,6 +487,8 @@ export class POE2Integration {
 
         return true;
     }
+
+    // ==================== 辅助函数 ====================
 
     /**
      * 打印装备词缀信息
@@ -522,7 +516,30 @@ export class POE2Integration {
     }
 
     /**
-     * 获取装备实例（供外部使用）
+     * 通知客户端装备已变化
+     */
+    private static NotifyEquipmentChanged(
+        playerId: PlayerID,
+        vaultIndex: number,
+        currencyType: string,
+        result: any
+    ): void {
+        const player = PlayerResource.GetPlayer(playerId);
+        if (player) {
+            CustomGameEventManager.Send_ServerToPlayer(
+                player,
+                'poe2_equipment_changed' as never,
+                {
+                    vaultIndex: vaultIndex,
+                    currencyType: currencyType,
+                    result: result
+                } as never
+            );
+        }
+    }
+
+    /**
+     * 获取装备实例
      */
     public static GetEquipmentInstance(instanceId: string): POE2EquipmentInstance | undefined {
         return this.equipmentInstances.get(instanceId);
@@ -542,7 +559,6 @@ export class POE2Integration {
             }
         }
 
-        // 清理不在仓库中的缓存
         const toDelete: string[] = [];
         this.equipmentInstances.forEach((_, id) => {
             if (!validIds.has(id)) {
@@ -564,8 +580,7 @@ if (IsServer()) {
             const playerId = event.playerid as PlayerID;
             const text = event.text as string;
 
-            // ==================== 生成装备 ====================
-            
+            // 生成装备
             if (text === '-poe2test') {
                 print(`[POE2Integration] 为玩家 ${playerId} 生成测试装备`);
                 POE2Integration.GenerateLootDrop(playerId, 20, 5);
@@ -591,9 +606,7 @@ if (IsServer()) {
                 );
             }
 
-            // ==================== 通货操作 ====================
-
-            // 给予测试通货
+            // 通货操作
             if (text === '-givecurrency') {
                 ZoneLootSystem.AddItem(playerId, LootType.POE2_CHAOS_ORB, 10);
                 ZoneLootSystem.AddItem(playerId, LootType.POE2_EXALTED_ORB, 10);
@@ -605,9 +618,7 @@ if (IsServer()) {
                 );
             }
 
-            // ==================== 打造系统 ====================
-
-            // 选择装备
+            // 打造系统
             if (text.startsWith('-select ')) {
                 const index = parseInt(text.replace('-select ', ''));
                 if (! isNaN(index)) {
@@ -616,13 +627,11 @@ if (IsServer()) {
                 }
             }
 
-            // 取消选择
             if (text === '-unselect') {
                 const { POE2CraftSystem } = require('./poe2_craft_system');
                 POE2CraftSystem.CancelSelection(playerId);
             }
 
-            // 对选中装备使用通货
             if (text === '-usechaos') {
                 const { POE2CraftSystem } = require('./poe2_craft_system');
                 POE2CraftSystem.UseCurrency(playerId, LootType.POE2_CHAOS_ORB);
@@ -636,14 +645,12 @@ if (IsServer()) {
                 POE2CraftSystem.UseCurrency(playerId, LootType.POE2_DIVINE_ORB);
             }
 
-            // 分解选中装备
             if (text === '-disasm') {
                 const { POE2CraftSystem } = require('./poe2_craft_system');
                 POE2CraftSystem.DisassembleSelected(playerId);
             }
 
-            // ==================== 合成 ====================
-
+            // 合成
             if (text === '-craftchaos') {
                 POE2Integration.CraftCurrency(playerId, LootType.POE2_CHAOS_ORB);
             }
@@ -654,8 +661,7 @@ if (IsServer()) {
                 POE2Integration.CraftCurrency(playerId, LootType.POE2_DIVINE_ORB);
             }
 
-            // ==================== 帮助 ====================
-
+            // 帮助
             if (text === '-poe2help') {
                 GameRules.SendCustomMessage('===== POE2 货币系统命令 =====', playerId, 0);
                 GameRules.SendCustomMessage('-poe2test - 生成5件随机装备', playerId, 0);

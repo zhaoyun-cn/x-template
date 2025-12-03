@@ -4,24 +4,22 @@
  */
 
 import { POE2Integration } from './poe2_integration';
-import { LootType, ZoneLootSystem } from '../../zone/zone_loot';
+import { LootType, ZoneLootSystem, LOOT_ITEMS } from '../../zone/zone_loot';
 import { EquipmentVaultSystem } from '../equipment_vault_system';
 
 // 玩家当前选中的装备信息
 interface SelectedEquipment {
-    source: 'vault' | 'equipped';  // 来源：仓库 或 已装备
-    index: number;                  // 仓库索引
-    slot?: string;                  // 装备槽位（如果是已装备的）
-    timestamp: number;              // 选中时间
+    source: 'vault' | 'equipped';
+    index: number;
+    slot?: string;
+    itemName: string;
+    timestamp: number;
 }
 
 export class POE2CraftSystem {
     
-    // 存储每个玩家当前选中的装备
     private static selectedEquipment: Map<PlayerID, SelectedEquipment> = new Map();
-    
-    // 选中超时时间（秒）
-    private static readonly SELECTION_TIMEOUT = 30;
+    private static readonly SELECTION_TIMEOUT = 60;
 
     /**
      * 初始化打造系统
@@ -29,19 +27,16 @@ export class POE2CraftSystem {
     public static Init(): void {
         print('[POE2CraftSystem] 初始化打造系统...');
         
-        // 监听装备选择事件（来自客户端）
         CustomGameEventManager.RegisterListener(
             'poe2_select_equipment',
             (_, event: any) => this.OnSelectEquipment(event)
         );
         
-        // 监听通货使用事件（来自客户端）
         CustomGameEventManager.RegisterListener(
             'poe2_use_currency',
             (_, event: any) => this.OnUseCurrency(event)
         );
         
-        // 监听取消选择事件
         CustomGameEventManager.RegisterListener(
             'poe2_cancel_selection',
             (_, event: any) => this.OnCancelSelection(event)
@@ -54,10 +49,13 @@ export class POE2CraftSystem {
      * 选择装备（来自仓库）
      */
     public static SelectVaultEquipment(playerId: PlayerID, vaultIndex: number): boolean {
+        print(`[POE2CraftSystem] 玩家${playerId} 尝试选择仓库装备[${vaultIndex}]`);
+        
         const vault = EquipmentVaultSystem.GetVault(playerId);
         
         if (vaultIndex < 0 || vaultIndex >= vault.length) {
             this.SendError(playerId, '无效的装备索引');
+            print(`[POE2CraftSystem] ❌ 无效索引: ${vaultIndex}, 仓库大小: ${vault.length}`);
             return false;
         }
 
@@ -65,18 +63,18 @@ export class POE2CraftSystem {
         const instanceId = (item as any).poe2InstanceId;
         
         if (! instanceId) {
-            this.SendError(playerId, '该装备不支持打造');
+            this.SendError(playerId, '该装备不支持打造（非POE2装备）');
+            print(`[POE2CraftSystem] ❌ 装备没有 poe2InstanceId: ${item.name}`);
             return false;
         }
 
-        // 设置选中状态
         this.selectedEquipment.set(playerId, {
             source: 'vault',
             index: vaultIndex,
+            itemName: item.name,
             timestamp: GameRules.GetGameTime()
         });
 
-        // 通知客户端
         this.SendSelectionUpdate(playerId, item.name, vaultIndex, 'vault');
         
         GameRules.SendCustomMessage(
@@ -84,7 +82,7 @@ export class POE2CraftSystem {
             playerId, 0
         );
         
-        print(`[POE2CraftSystem] 玩家${playerId} 选中仓库装备[${vaultIndex}]: ${item.name}`);
+        print(`[POE2CraftSystem] ✓ 玩家${playerId} 选中仓库装备[${vaultIndex}]: ${item.name}`);
         return true;
     }
 
@@ -93,13 +91,15 @@ export class POE2CraftSystem {
      */
     public static CancelSelection(playerId: PlayerID): void {
         if (this.selectedEquipment.has(playerId)) {
+            const selected = this.selectedEquipment.get(playerId);
             this.selectedEquipment.delete(playerId);
             this.SendSelectionUpdate(playerId, null, -1, null);
             
             GameRules.SendCustomMessage(
-                `<font color="#888888">✖ 已取消选择</font>`,
+                `<font color="#888888">✖ 已取消选择${selected?.itemName || ''}</font>`,
                 playerId, 0
             );
+            print(`[POE2CraftSystem] 玩家${playerId} 取消选择`);
         }
     }
 
@@ -110,14 +110,15 @@ export class POE2CraftSystem {
         const selected = this.selectedEquipment.get(playerId);
         
         if (!selected) {
+            print(`[POE2CraftSystem] 玩家${playerId} 没有选中任何装备`);
             return null;
         }
 
-        // 检查是否超时
         const elapsed = GameRules.GetGameTime() - selected.timestamp;
         if (elapsed > this.SELECTION_TIMEOUT) {
             this.selectedEquipment.delete(playerId);
             this.SendSelectionUpdate(playerId, null, -1, null);
+            print(`[POE2CraftSystem] 玩家${playerId} 选择已超时`);
             return null;
         }
 
@@ -125,38 +126,60 @@ export class POE2CraftSystem {
     }
 
     /**
+     * 检查是否有选中装备
+     */
+    public static HasSelection(playerId: PlayerID): boolean {
+        return this.GetSelectedEquipment(playerId) !== null;
+    }
+
+    /**
      * 使用通货（核心方法）
      */
     public static UseCurrency(playerId: PlayerID, currencyType: LootType): boolean {
+        print(`[POE2CraftSystem] 玩家${playerId} 尝试使用通货: ${currencyType}`);
+        
         // 1.检查是否有选中的装备
         const selected = this.GetSelectedEquipment(playerId);
         if (!selected) {
-            this.SendError(playerId, '请先选择一件装备！');
+            this.SendError(playerId, '请先在仓库中选择一件装备！');
+            GameRules.SendCustomMessage(
+                `<font color="#ff4444">❌ 请先选择一件装备！使用 -select [索引] 或在UI中点击装备</font>`,
+                playerId, 0
+            );
             return false;
         }
+
+        print(`[POE2CraftSystem] 当前选中: ${selected.itemName} (索引: ${selected.index})`);
 
         // 2. 检查通货数量
         const count = ZoneLootSystem.GetItemCount(playerId, currencyType);
         if (count < 1) {
-            this.SendError(playerId, '通货不足！');
+            const currencyName = LOOT_ITEMS[currencyType]?.name || currencyType;
+            this.SendError(playerId, `${currencyName}不足！`);
             return false;
         }
 
-        // 3. 根据通货类型执行操作
+        // 3.根据通货类型执行操作
         let success = false;
         
         switch (currencyType) {
-            case LootType.POE2_CHAOS_ORB:
-                success = POE2Integration.UseChaosOrbOnEquipment(playerId, selected.index);
+            case LootType.POE2_CHAOS_ORB: {
+                const result = POE2Integration.UseChaosOrbOnEquipment(playerId, selected.index);
+                success = result.success;
                 break;
+            }
                 
-            case LootType.POE2_EXALTED_ORB:
-                success = POE2Integration.UseExaltedOrbOnEquipment(playerId, selected.index);
+            case LootType.POE2_EXALTED_ORB: {
+                const result = POE2Integration.UseExaltedOrbOnEquipment(playerId, selected.index);
+                success = result.success;
                 break;
+            }
                 
-            case LootType.POE2_DIVINE_ORB:
-                success = POE2Integration.UseDivineOrbOnEquipment(playerId, selected.index);
+            case LootType.POE2_DIVINE_ORB: {
+                const result = POE2Integration.UseDivineOrbOnEquipment(playerId, selected.index);
+                success = result.success;
                 break;
+            }
                 
             default:
                 this.SendError(playerId, '该物品不能用于打造');
@@ -164,32 +187,44 @@ export class POE2CraftSystem {
         }
 
         if (success) {
-            // 刷新选中状态（装备可能已改变）
+            // 刷新选中状态（装备属性可能已改变）
             const vault = EquipmentVaultSystem.GetVault(playerId);
             if (selected.index < vault.length) {
                 const newItem = vault[selected.index];
+                this.selectedEquipment.set(playerId, {
+                    ...selected,
+                    itemName: newItem.name,
+                    timestamp: GameRules.GetGameTime()
+                });
                 this.SendSelectionUpdate(playerId, newItem.name, selected.index, 'vault');
             }
+            print(`[POE2CraftSystem] ✓ 通货使用成功`);
+        } else {
+            print(`[POE2CraftSystem] ❌ 通货使用失败（可能是装备不符合条件）`);
         }
 
         return success;
     }
 
     /**
-     * 分解装备
+     * 分解选中的装备
      */
     public static DisassembleSelected(playerId: PlayerID): boolean {
         const selected = this.GetSelectedEquipment(playerId);
         if (!selected) {
             this.SendError(playerId, '请先选择一件装备！');
+            GameRules.SendCustomMessage(
+                `<font color="#ff4444">❌ 请先选择一件装备！</font>`,
+                playerId, 0
+            );
             return false;
         }
 
         const success = POE2Integration.DisassembleEquipment(playerId, selected.index);
         
         if (success) {
-            // 清除选中状态
-            this.CancelSelection(playerId);
+            this.selectedEquipment.delete(playerId);
+            this.SendSelectionUpdate(playerId, null, -1, null);
         }
 
         return success;
@@ -199,16 +234,17 @@ export class POE2CraftSystem {
 
     private static OnSelectEquipment(event: { PlayerID: PlayerID; source: string; index: number; slot?: string }): void {
         const playerId = event.PlayerID;
+        print(`[POE2CraftSystem] 收到选择装备事件: source=${event.source}, index=${event.index}`);
         
         if (event.source === 'vault') {
             this.SelectVaultEquipment(playerId, event.index);
         }
-        // 可以扩展支持已装备的装备
     }
 
     private static OnUseCurrency(event: { PlayerID: PlayerID; currencyType: string }): void {
         const playerId = event.PlayerID;
         const currencyType = event.currencyType as LootType;
+        print(`[POE2CraftSystem] 收到使用通货事件: ${currencyType}`);
         
         this.UseCurrency(playerId, currencyType);
     }
@@ -254,6 +290,25 @@ export class POE2CraftSystem {
                 } as never
             );
         }
+    }
+
+    /**
+     * 获取当前选中状态（供UI查询）
+     */
+    public static GetSelectionInfo(playerId: PlayerID): { hasSelection: boolean; itemName: string; index: number } {
+        const selected = this.GetSelectedEquipment(playerId);
+        if (selected) {
+            return {
+                hasSelection: true,
+                itemName: selected.itemName,
+                index: selected.index
+            };
+        }
+        return {
+            hasSelection: false,
+            itemName: '',
+            index: -1
+        };
     }
 }
 

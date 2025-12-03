@@ -1,7 +1,7 @@
 /**
  * POE2 装备系统 - 词缀池配置
  * 10种前缀（进攻性）+ 10种后缀（防御性）= 20种词缀
- * 包含槽位专属词缀
+ * ⭐ 修正：扩展后缀词缀的槽位限制，确保每个槽位都有足够的后缀可选
  */
 
 import { AffixDefinition, AffixType, AffixPosition, EquipSlot } from './poe2_equipment_types';
@@ -9,7 +9,7 @@ import { AffixDefinition, AffixType, AffixPosition, EquipSlot } from './poe2_equ
 // ==================== 前缀词缀（进攻性/技能）- 10种 ====================
 
 const PREFIX_AFFIXES: AffixDefinition[] = [
-    // ===== 1. 固定攻击伤害（武器专属）=====
+    // ===== 1.固定攻击伤害（武器专属）=====
     {
         id: AffixType.FLAT_ATTACK_DAMAGE,
         position: AffixPosition.PREFIX,
@@ -25,9 +25,9 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 2. 物理伤害百分比（武器专属）=====
+    // ===== 2.物理伤害百分比（武器专属）=====
     {
-        id: AffixType.PERCENT_PHYSICAL_DAMAGE,
+        id: AffixType. PERCENT_PHYSICAL_DAMAGE,
         position: AffixPosition.PREFIX,
         name: '残暴的',
         description: '+{value}% 物理伤害',
@@ -103,7 +103,7 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 7.生命偷取（手套专属）=====
+    // ===== 7. 生命偷取（手套专属）=====
     {
         id: AffixType.LIFE_LEECH,
         position: AffixPosition.PREFIX,
@@ -119,14 +119,14 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 8. 力量（通用）=====
+    // ===== 8.力量（通用）=====
     {
         id: AffixType.FLAT_STRENGTH,
         position: AffixPosition.PREFIX,
         name: '强力的',
         description: '+{value} 力量',
         isPercent: false,
-        allowedSlots: [], // 空数组表示所有槽位
+        allowedSlots: [],
         tiers: [
             { tier: 1, minValue: 20, maxValue: 30, requiredItemLevel: 20, weight: 60 },
             { tier: 2, minValue: 14, maxValue: 19, requiredItemLevel: 12, weight: 110 },
@@ -151,7 +151,7 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 10. 智力（通用）=====
+    // ===== 10.智力（通用）=====
     {
         id: AffixType.FLAT_INTELLIGENCE,
         position: AffixPosition.PREFIX,
@@ -169,6 +169,7 @@ const PREFIX_AFFIXES: AffixDefinition[] = [
 ];
 
 // ==================== 后缀词缀（防御性/生存）- 10种 ====================
+// ⭐⭐⭐ 修正：扩展槽位限制，确保每个槽位都有足够的后缀
 
 const SUFFIX_AFFIXES: AffixDefinition[] = [
     // ===== 1.固定生命（通用）=====
@@ -178,7 +179,7 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         name: '...的生命',
         description: '+{value} 生命',
         isPercent: false,
-        allowedSlots: [],
+        allowedSlots: [],  // ⭐ 通用
         tiers: [
             { tier: 1, minValue: 80, maxValue: 120, requiredItemLevel: 22, weight: 55 },
             { tier: 2, minValue: 55, maxValue: 79, requiredItemLevel: 14, weight: 105 },
@@ -187,14 +188,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 2.最大生命百分比（护甲/腰带专属）=====
+    // ===== 2.最大生命百分比 =====
     {
-        id: AffixType.PERCENT_MAX_HEALTH,
+        id: AffixType. PERCENT_MAX_HEALTH,
         position: AffixPosition.SUFFIX,
         name: '...的活力',
         description: '+{value}% 最大生命',
         isPercent: true,
-        allowedSlots: [EquipSlot.ARMOR, EquipSlot.BELT],
+        allowedSlots: [],  // ⭐ 改为通用
         tiers: [
             { tier: 1, minValue: 12, maxValue: 18, requiredItemLevel: 26, weight: 40 },
             { tier: 2, minValue: 9, maxValue: 11, requiredItemLevel: 16, weight: 80 },
@@ -203,14 +204,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 3.固定护甲（护甲专属）=====
+    // ===== 3.固定护甲 =====
     {
         id: AffixType.FLAT_ARMOR,
         position: AffixPosition.SUFFIX,
         name: '...的护甲',
         description: '+{value} 护甲',
         isPercent: false,
-        allowedSlots: [EquipSlot.ARMOR],
+        allowedSlots: [],  // ⭐ 改为通用
         tiers: [
             { tier: 1, minValue: 15, maxValue: 22, requiredItemLevel: 24, weight: 50 },
             { tier: 2, minValue: 10, maxValue: 14, requiredItemLevel: 14, weight: 95 },
@@ -219,14 +220,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 4.护甲百分比（护甲专属）=====
+    // ===== 4. 护甲百分比 =====
     {
         id: AffixType.PERCENT_ARMOR,
         position: AffixPosition.SUFFIX,
         name: '...的坚固',
         description: '+{value}% 护甲',
         isPercent: true,
-        allowedSlots: [EquipSlot.ARMOR],
+        allowedSlots: [EquipSlot.ARMOR, EquipSlot.HELMET, EquipSlot.GLOVES],  // ⭐ 扩展槽位
         tiers: [
             { tier: 1, minValue: 30, maxValue: 45, requiredItemLevel: 28, weight: 35 },
             { tier: 2, minValue: 22, maxValue: 29, requiredItemLevel: 18, weight: 75 },
@@ -235,14 +236,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 5.火焰抗性（戒指/护甲）=====
+    // ===== 5.火焰抗性 =====
     {
         id: AffixType.FIRE_RESISTANCE,
         position: AffixPosition.SUFFIX,
         name: '...的抗火',
         description: '+{value}% 火焰抗性',
         isPercent: true,
-        allowedSlots: [EquipSlot.RING1, EquipSlot.ARMOR],
+        allowedSlots: [],  // ⭐ 改为通用
         tiers: [
             { tier: 1, minValue: 30, maxValue: 40, requiredItemLevel: 24, weight: 45 },
             { tier: 2, minValue: 22, maxValue: 29, requiredItemLevel: 14, weight: 90 },
@@ -251,14 +252,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 6.冰霜抗性（戒指/护甲）=====
+    // ===== 6.冰霜抗性 =====
     {
         id: AffixType.COLD_RESISTANCE,
         position: AffixPosition.SUFFIX,
         name: '...的抗冰',
         description: '+{value}% 冰霜抗性',
         isPercent: true,
-        allowedSlots: [EquipSlot.RING1, EquipSlot.ARMOR],
+        allowedSlots: [],  // ⭐ 改为通用
         tiers: [
             { tier: 1, minValue: 30, maxValue: 40, requiredItemLevel: 24, weight: 45 },
             { tier: 2, minValue: 22, maxValue: 29, requiredItemLevel: 14, weight: 90 },
@@ -267,14 +268,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 7.闪电抗性（戒指/护甲）=====
+    // ===== 7.闪电抗性 =====
     {
         id: AffixType.LIGHTNING_RESISTANCE,
         position: AffixPosition.SUFFIX,
         name: '...的抗电',
         description: '+{value}% 闪电抗性',
         isPercent: true,
-        allowedSlots: [EquipSlot.RING1, EquipSlot.ARMOR],
+        allowedSlots: [],  // ⭐ 改为通用
         tiers: [
             { tier: 1, minValue: 30, maxValue: 40, requiredItemLevel: 24, weight: 45 },
             { tier: 2, minValue: 22, maxValue: 29, requiredItemLevel: 14, weight: 90 },
@@ -290,7 +291,7 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         name: '...的迅捷',
         description: '+{value}% 移动速度',
         isPercent: true,
-        allowedSlots: [EquipSlot.BOOTS],
+        allowedSlots: [EquipSlot.BOOTS],  // 保持鞋子专属
         tiers: [
             { tier: 1, minValue: 25, maxValue: 35, requiredItemLevel: 25, weight: 40 },
             { tier: 2, minValue: 18, maxValue: 24, requiredItemLevel: 15, weight: 80 },
@@ -299,14 +300,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 9.生命回复（腰带专属）=====
+    // ===== 9.生命回复 =====
     {
         id: AffixType.LIFE_REGEN,
         position: AffixPosition.SUFFIX,
         name: '...的再生',
         description: '+{value} 生命回复/秒',
         isPercent: false,
-        allowedSlots: [EquipSlot.BELT],
+        allowedSlots: [],  // ⭐ 改为通用
         tiers: [
             { tier: 1, minValue: 8, maxValue: 12, requiredItemLevel: 22, weight: 50 },
             { tier: 2, minValue: 5, maxValue: 7, requiredItemLevel: 13, weight: 95 },
@@ -315,14 +316,14 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
         ],
     },
 
-    // ===== 10.闪避率（鞋子专属）=====
+    // ===== 10. 闪避率 =====
     {
         id: AffixType.EVASION_PERCENT,
         position: AffixPosition.SUFFIX,
         name: '...的闪避',
         description: '+{value}% 闪避率',
         isPercent: true,
-        allowedSlots: [EquipSlot.BOOTS],
+        allowedSlots: [EquipSlot.BOOTS, EquipSlot.GLOVES],  // ⭐ 扩展到手套
         tiers: [
             { tier: 1, minValue: 18, maxValue: 25, requiredItemLevel: 26, weight: 40 },
             { tier: 2, minValue: 13, maxValue: 17, requiredItemLevel: 16, weight: 80 },
@@ -335,56 +336,35 @@ const SUFFIX_AFFIXES: AffixDefinition[] = [
 // ==================== 导出词缀池 ====================
 
 export const POE2_AFFIX_POOL: AffixDefinition[] = [
-    ...PREFIX_AFFIXES,  // 10种前缀
-    ...SUFFIX_AFFIXES,  // 10种后缀
+    ... PREFIX_AFFIXES,
+    ...SUFFIX_AFFIXES,
 ];
-
-// 总计：20种词缀
 
 // ==================== 辅助函数 ====================
 
-/**
- * 根据ID获取词缀定义
- */
 export function GetAffixById(id: AffixType): AffixDefinition | undefined {
     return POE2_AFFIX_POOL.find(affix => affix.id === id);
 }
 
-/**
- * 根据位置获取所有词缀
- */
 export function GetAffixesByPosition(position: AffixPosition): AffixDefinition[] {
     return POE2_AFFIX_POOL.filter(affix => affix.position === position);
 }
 
-/**
- * 获取槽位可用的词缀
- */
 export function GetAffixesBySlot(slot: EquipSlot, position: AffixPosition): AffixDefinition[] {
     return POE2_AFFIX_POOL.filter(affix => {
         if (affix.position !== position) return false;
-        
-        // 空数组表示通用词缀
         if (affix.allowedSlots.length === 0) return true;
-        
-        // 戒指特殊处理
         if (slot === EquipSlot.RING2) {
             return affix.allowedSlots.includes(EquipSlot.RING1) || affix.allowedSlots.includes(slot);
         }
-        
-        return affix.allowedSlots.includes(slot);
+        return affix. allowedSlots.includes(slot);
     });
 }
 
-/**
- * 获取指定物品等级可用的词缀
- */
 export function GetAffixesByItemLevel(itemLevel: number, position: AffixPosition): AffixDefinition[] {
     return POE2_AFFIX_POOL.filter(affix => {
         if (affix.position !== position) return false;
-        
-        // 检查是否有至少一个层级可用
-        return affix.tiers.some(tier => tier.requiredItemLevel <= itemLevel);
+        return affix. tiers.some(tier => tier. requiredItemLevel <= itemLevel);
     });
 }
 
@@ -395,27 +375,15 @@ if (IsServer()) {
         print('========================================');
         print('[POE2 AffixPool] 词缀池配置加载完成');
         print(`[POE2 AffixPool] 总共 ${POE2_AFFIX_POOL.length} 种词缀`);
+        print(`[POE2 AffixPool]   前缀: ${PREFIX_AFFIXES.length} 种`);
+        print(`[POE2 AffixPool]   后缀: ${SUFFIX_AFFIXES.length} 种`);
         
-        const prefixCount = PREFIX_AFFIXES.length;
-        const suffixCount = SUFFIX_AFFIXES.length;
-        
-        print(`[POE2 AffixPool]   前缀: ${prefixCount} 种`);
-        print(`[POE2 AffixPool]   后缀: ${suffixCount} 种`);
-        
-        // 统计专属词缀
-        let universalCount = 0;
-        let specificCount = 0;
-        
-        for (const affix of POE2_AFFIX_POOL) {
-            if (affix.allowedSlots.length === 0) {
-                universalCount++;
-            } else {
-                specificCount++;
-            }
+        // ⭐ 统计每个槽位可用的后缀数量
+        const slots = [EquipSlot.WEAPON, EquipSlot.HELMET, EquipSlot.ARMOR, EquipSlot. GLOVES, EquipSlot.BOOTS, EquipSlot.BELT, EquipSlot.RING1, EquipSlot.AMULET];
+        for (const slot of slots) {
+            const suffixes = GetAffixesBySlot(slot, AffixPosition.SUFFIX);
+            print(`[POE2 AffixPool]   ${slot} 可用后缀: ${suffixes.length} 种`);
         }
-        
-        print(`[POE2 AffixPool]   通用词缀: ${universalCount} 种`);
-        print(`[POE2 AffixPool]   专属词缀: ${specificCount} 种`);
         print('========================================');
         
         return undefined;
