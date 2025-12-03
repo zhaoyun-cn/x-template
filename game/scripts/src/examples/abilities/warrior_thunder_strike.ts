@@ -1,8 +1,8 @@
 // 示例：雷霆一击技能
 
 import { BaseAbility, registerAbility } from "../../utils/dota_ts_adapter";
-import { DamageCalculator } from "../../systems/damage_calculator";
-import { PlayerStatsCollector } from "../../systems/player_stats_collector";
+import { DamageCalculator } from "../../systems/combat/damage_calculator";
+import { PlayerStatsCollector } from "../../systems/combat/player_stats_collector";
 
 @registerAbility()
 export class warrior_thunder_strike extends BaseAbility {

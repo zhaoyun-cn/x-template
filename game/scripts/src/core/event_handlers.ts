@@ -3,7 +3,7 @@
  */
 
 import { EquipmentVaultSystem } from '../systems/equipment/vault_system';
-import { ClassSystem } from '../systems/class_system';
+import { ClassSystem } from '../systems/player/class_system';
 import { ExternalRewardItem, ExternalItemType, EquipmentAttribute } from '../dungeon/external_reward_pool';
 
 // 最后菜单触发时间记录

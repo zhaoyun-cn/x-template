@@ -1,9 +1,9 @@
 /**
  * 职业系统
  */
-import { RuneSystem } from './rune_system';  // ⭐ 添加这行
-import { SkillPointSystem } from './skill_point_system';
-import { SkillEquipSystem } from './skill_equip_system'
+import { RuneSystem } from '../skill/rune_system';  // ⭐ 添加这行
+import { SkillPointSystem } from '../skill/skill_point_system';
+import { SkillEquipSystem } from '../skill/skill_equip_system'
 export enum PlayerClass {
     WARRIOR = 'warrior',
     UNKNOWN = 'unknown',

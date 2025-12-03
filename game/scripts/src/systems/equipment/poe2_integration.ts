@@ -8,7 +8,7 @@ import { GetBaseTypeById } from './poe2_base_types';
 import { GetAffixById } from './poe2_affix_pool';
 import { POE2EquipmentGenerator } from './poe2_equipment_generator';
 import { EquipmentVaultSystem } from './vault_system';
-import { LootType, ZoneLootSystem } from '../../zone/zone_loot';
+import { LootType, ZoneLootSystem } from '../../dungeon/zone/zone_loot';
 
 import { 
     ExternalRewardItem, 

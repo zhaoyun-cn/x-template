@@ -3,8 +3,8 @@
  * 聊天输入 -testdamage 查看计算结果
  */
 
-import { DamageCalculator, createEmptyStats, addStatToPlayer, PlayerStats } from '../systems/damage_calculator';
-import { PlayerStatsCollector } from '../systems/player_stats_collector';
+import { DamageCalculator, createEmptyStats, addStatToPlayer, PlayerStats } from '../systems/combat/damage_calculator';
+import { PlayerStatsCollector } from '../systems/combat/player_stats_collector';
 import { StatType, SKILL_CONFIG } from '../config/damage_config';
 
 export function InitDamageTest(): void {

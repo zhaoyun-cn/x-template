@@ -3,9 +3,9 @@
  * 从护石、装备、天赋等来源汇总玩家所有词条
  */
 
-import { StatType } from '../config/damage_config';
+import { StatType } from '../../config/damage_config';
 import { PlayerStats, createEmptyStats, addStatToPlayer } from './damage_calculator';
-import { RuneSystem } from './rune_system';
+import { RuneSystem } from '../skill/rune_system';
 // import { EquipmentSystem } from './equipment_system';  // 后续接入
 // import { TalentSystem } from './talent_system';        // 后续接入
 
