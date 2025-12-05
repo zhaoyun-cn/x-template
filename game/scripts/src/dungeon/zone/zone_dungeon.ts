@@ -2,6 +2,8 @@
  * 刷怪区域副本系统 - 主类
  * 对应传送门菜单的"副本B"
  */
+import { CameraSystem } from "../../systems/camera/camera_system";
+import { CameraZone } from "../../systems/camera/camera_zones";
 import { AffixSystem, AffixType, AFFIX_CONFIG } from "./zone_affix";
 import {
     ZONE_CONFIG,
@@ -232,10 +234,19 @@ export class ZoneDungeon {
         print(`[ZoneDungeon] 玩家 ${playerId} 加入，当前 ${this.players.size} 人`);
     }
     
-    private TeleportToZone(hero: CDOTA_BaseNPC_Hero): void {
-        FindClearSpaceForUnit(hero, ZONE_ENTRANCE, true);
-        print(`[ZoneDungeon] 传送到 ${ZONE_ENTRANCE}`);
+  // 修改 TeleportToZone 方法
+private TeleportToZone(hero: CDOTA_BaseNPC_Hero): void {
+    const playerId = hero.GetPlayerOwnerID();
+    
+    // ⭐ 切换到战斗房摄像机区域
+    if (playerId !== -1) {
+        CameraSystem.SetZone(playerId, CameraZone.BATTLE_ROOM);
+        CameraSystem. SnapCameraToHero(playerId);
     }
+    
+    FindClearSpaceForUnit(hero, ZONE_ENTRANCE, true);
+    print(`[ZoneDungeon] 传送到 ${ZONE_ENTRANCE}`);
+}
     
     private TryRejoin(playerId: PlayerID): void {
         if (! this.isActive) {

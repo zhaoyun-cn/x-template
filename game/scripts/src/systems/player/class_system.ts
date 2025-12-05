@@ -137,7 +137,7 @@ export class ClassSystem {
     print('[ClassSystem] 已初始化玩家护石系统');
 
     // 修正出生点坐标
-    const spawnPoint = Vector(-13760, 12544, 192);
+    const spawnPoint = Vector(0, -896, 192);
     FindClearSpaceForUnit(hero, spawnPoint, true);
 
     // 发送确认事件
