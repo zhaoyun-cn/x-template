@@ -11,7 +11,7 @@ import './examples/modifiers/modifier_axe_giant_strike_debuff';
 import './examples/abilities/warrior_deep_wound';
 import './examples/abilities/axe_giant_strike';
 import './modifiers/modifier_equipment_system';
-
+import { CameraSystem } from "./systems/camera";
 // ==================== 核心系统导入 ====================
 import { GameManager } from './core/game_manager';
 import { EventHandlers } from './core/event_handlers';
@@ -29,7 +29,12 @@ Object.assign(getfenv(), {
         print("=".repeat(50));
         print("[GameMode] Activating...");
         print("=".repeat(50));
-        
+          
+        // 初始化摄像机系统
+        CameraSystem.Initialize();
+        CameraSystem.RegisterDebugCommands();
+        print("[GameMode] ✓ 摄像机系统已初始化");
+
         // 激活模块系统
         ActivateModules();
         
