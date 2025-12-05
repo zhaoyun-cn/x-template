@@ -13,28 +13,29 @@ export interface CameraZoneBounds {
     maxY: number;
 }
 
-// 你的主城是 5056 x 5056，中心点 (-13856, 13856)
+// ⭐ 更新后的坐标 - 主城 5024x5024，中心点 (0, 0)
 export const CAMERA_ZONES: Record<CameraZone, CameraZoneBounds> = {
-    [CameraZone.TOWN]: {
-        minX: -16384,
-        maxX: -11328,
-        minY: 11328,
-        maxY: 16384
+    [CameraZone. TOWN]: {
+        minX: -2512,
+        maxX: 2512,
+        minY: -2512,
+        maxY: 2512
     },
     [CameraZone.BATTLE_ROOM]: {
-        minX: -12900,
-        maxX: -11100,
-        minY: 5300,
-        maxY: 6700
+        minX: -1500,
+        maxX: 1500,
+        minY: 2000,
+        maxY: 7000
     },
     [CameraZone.BOSS_ROOM]: {
-        minX: -13100,
-        maxX: -10900,
-        minY: 2100,
-        maxY: 3900
+        minX: -1500,
+        maxX: 1500,
+        minY: 8000,
+        maxY: 10000
     }
 };
 
-export const TOWN_SPAWN = Vector(-13856, 13856, 128);
-export const BATTLE_ROOM_SPAWN = Vector(-12700, 6000, 128);
-export const BOSS_ROOM_SPAWN = Vector(-12800, 3000, 128);
+// ⭐ 更新后的出生点坐标
+export const TOWN_SPAWN = Vector(0, -896, 192);
+export const BATTLE_ROOM_SPAWN = Vector(0, 3000, 256);
+export const BOSS_ROOM_SPAWN = Vector(0, 9000, 512);
