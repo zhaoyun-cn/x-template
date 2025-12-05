@@ -31,7 +31,7 @@ export class EventHandlers {
      * 生成副本传送门
      */
     public static SpawnDungeonPortal(): void {
-        const portalLocation = Vector(-13856, 13856, 192);
+        const portalLocation = Vector(-0, 500, 192);
 
         const portal = CreateUnitByName(
             "npc_dota_portal_to_dungeon",

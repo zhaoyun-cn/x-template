@@ -121,7 +121,7 @@ const CameraOverlay: FC = () => {
                 }
             }
 
-            $.Schedule(0.016, checkBounds);  // 约60fps检查
+            $.Schedule(0.001, checkBounds);  // 约60fps检查
         };
 
         $.Schedule(0.5, checkBounds);

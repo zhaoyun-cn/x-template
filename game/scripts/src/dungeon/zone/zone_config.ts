@@ -50,39 +50,38 @@ export const CLUSTER_CONFIG = {
 };
 
 // ==================== 区域坐标 ====================
-// 你的Hammer区域配置
 export const ZONE_AREA = {
-    center: Vector(-13216, 7776, 128),  // 区域中心点
-    halfSize: 3168,                      // 半边长 (6336/2)
+    center: Vector(0, 4000, 128),   // 战斗区域中心点
+    halfSize: 2000,                  // 半边长
     z: 128,
 };
 
 // 计算区域边界
 export const ZONE_BOUNDS = {
-    minX: ZONE_AREA.center.x - ZONE_AREA.halfSize,  // -16384
-    maxX: ZONE_AREA.center.x + ZONE_AREA.halfSize,  // -10048
-    minY: ZONE_AREA.center.y - ZONE_AREA.halfSize,  // 4608
-    maxY: ZONE_AREA.center.y + ZONE_AREA.halfSize,  // 10944
+    minX: ZONE_AREA.center.x - ZONE_AREA.halfSize,  // -2000
+    maxX: ZONE_AREA.center.x + ZONE_AREA.halfSize,  // 2000
+    minY: ZONE_AREA. center.y - ZONE_AREA. halfSize,  // 2000
+    maxY: ZONE_AREA.center.y + ZONE_AREA.halfSize,  // 6000
 };
 
 // 刷怪点（9个点均匀分布在区域内）
 export const SPAWN_POINTS: Vector[] = [
     // 第一排
-    Vector(ZONE_BOUNDS.minX + 1000, ZONE_BOUNDS.minY + 1000, ZONE_AREA.z),
-    Vector(ZONE_AREA.center.x, ZONE_BOUNDS.minY + 1000, ZONE_AREA.z),
-    Vector(ZONE_BOUNDS.maxX - 1000, ZONE_BOUNDS.minY + 1000, ZONE_AREA.z),
+    Vector(ZONE_BOUNDS. minX + 500, ZONE_BOUNDS.minY + 500, ZONE_AREA.z),
+    Vector(ZONE_AREA.center.x, ZONE_BOUNDS.minY + 500, ZONE_AREA.z),
+    Vector(ZONE_BOUNDS. maxX - 500, ZONE_BOUNDS.minY + 500, ZONE_AREA.z),
     // 第二排
-    Vector(ZONE_BOUNDS.minX + 1000, ZONE_AREA.center.y, ZONE_AREA.z),
-    Vector(ZONE_AREA.center.x, ZONE_AREA.center.y, ZONE_AREA.z),
-    Vector(ZONE_BOUNDS.maxX - 1000, ZONE_AREA.center.y, ZONE_AREA.z),
+    Vector(ZONE_BOUNDS.minX + 500, ZONE_AREA.center.y, ZONE_AREA.z),
+    Vector(ZONE_AREA.center. x, ZONE_AREA.center. y, ZONE_AREA.z),
+    Vector(ZONE_BOUNDS. maxX - 500, ZONE_AREA.center.y, ZONE_AREA.z),
     // 第三排
-    Vector(ZONE_BOUNDS.minX + 1000, ZONE_BOUNDS.maxY - 1000, ZONE_AREA.z),
-    Vector(ZONE_AREA.center.x, ZONE_BOUNDS.maxY - 1000, ZONE_AREA.z),
-    Vector(ZONE_BOUNDS.maxX - 1000, ZONE_BOUNDS.maxY - 1000, ZONE_AREA.z),
+    Vector(ZONE_BOUNDS.minX + 500, ZONE_BOUNDS.maxY - 500, ZONE_AREA. z),
+    Vector(ZONE_AREA.center.x, ZONE_BOUNDS.maxY - 500, ZONE_AREA.z),
+    Vector(ZONE_BOUNDS.maxX - 500, ZONE_BOUNDS.maxY - 500, ZONE_AREA. z),
 ];
 
 // 玩家入口点（区域中心）
 export const ZONE_ENTRANCE = Vector(ZONE_AREA.center.x, ZONE_AREA.center.y, ZONE_AREA.z);
 
-// 主城传送点（和你现有的一致）
-export const TOWN_SPAWN = Vector(-13856, 13856, 128);
+// 主城传送点
+export const TOWN_SPAWN = Vector(0, 0, 128);

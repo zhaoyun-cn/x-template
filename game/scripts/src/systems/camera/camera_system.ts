@@ -111,7 +111,7 @@ export class CameraSystem {
         const player = PlayerResource.GetPlayer(playerId);
         const hero = PlayerResource.GetSelectedHeroEntity(playerId);
 
-        if (! player || !hero) return;
+        if (!player || ! hero) return;
 
         CustomGameEventManager.Send_ServerToPlayer(
             player,
@@ -154,12 +154,16 @@ export class CameraSystem {
         this.TransitionToZone(playerId, CameraZone.TOWN, spawn);
     }
 
-    public static RegisterDebugCommands(): void {
-        // -pos 命令
-        Convars.RegisterCommand("pos", () => {
-            const player = Convars.GetCommandClient();
-            if (player) {
-                const playerId = player.GetPlayerID();
+    // ==================== 聊天命令（用 - 前缀）====================
+    
+    public static RegisterChatCommands(): void {
+        // 监听玩家聊天
+        ListenToGameEvent("player_chat", (event) => {
+            const text = event.text.toLowerCase().trim();
+            const playerId = event.playerid as PlayerID;
+            
+            // -pos 显示位置
+            if (text === "-pos") {
                 const hero = PlayerResource.GetSelectedHeroEntity(playerId);
                 if (hero) {
                     const pos = hero.GetAbsOrigin();
@@ -168,55 +172,49 @@ export class CameraSystem {
                     GameRules.SendCustomMessage(`<font color='#00FF00'>${msg}</font>`, playerId, 0);
                 }
             }
-        }, "显示当前位置", 0);
-
-        // -cam_town 命令
-        Convars.RegisterCommand("cam_town", () => {
-            const player = Convars.GetCommandClient();
-            if (player) {
-                const playerId = player.GetPlayerID();
+            
+            // -cam_town 切换到主城
+            else if (text === "-cam_town") {
                 this.ReturnToTown(playerId);
-                print(`[CameraSystem] 调试: 切换到主城`);
+                print(`[CameraSystem] 玩家 ${playerId} 切换到主城`);
+                GameRules.SendCustomMessage(`<font color='#00FF00'>传送到主城</font>`, playerId, 0);
             }
-        }, "切换到主城", 0);
-
-        // -cam_battle 命令
-        Convars.RegisterCommand("cam_battle", () => {
-            const player = Convars.GetCommandClient();
-            if (player) {
-                const playerId = player.GetPlayerID();
+            
+            // -cam_battle 切换到战斗房
+            else if (text === "-cam_battle") {
                 this.TransitionToZone(playerId, CameraZone.BATTLE_ROOM, BATTLE_ROOM_SPAWN);
-                print(`[CameraSystem] 调试: 切换到战斗房`);
+                print(`[CameraSystem] 玩家 ${playerId} 切换到战斗房`);
+                GameRules.SendCustomMessage(`<font color='#00FF00'>传送到战斗房</font>`, playerId, 0);
             }
-        }, "切换到战斗房", 0);
-
-        // -cam_boss 命令
-        Convars.RegisterCommand("cam_boss", () => {
-            const player = Convars.GetCommandClient();
-            if (player) {
-                const playerId = player.GetPlayerID();
+            
+            // -cam_boss 切换到Boss房
+            else if (text === "-cam_boss") {
                 this.TransitionToZone(playerId, CameraZone.BOSS_ROOM, BOSS_ROOM_SPAWN);
-                print(`[CameraSystem] 调试: 切换到Boss房`);
+                print(`[CameraSystem] 玩家 ${playerId} 切换到Boss房`);
+                GameRules.SendCustomMessage(`<font color='#00FF00'>传送到Boss房</font>`, playerId, 0);
             }
-        }, "切换到Boss房", 0);
-
-        // -cam_info 命令
-        Convars.RegisterCommand("cam_info", () => {
-            const player = Convars.GetCommandClient();
-            if (player) {
-                const playerId = player.GetPlayerID();
+            
+            // -cam_info 显示摄像机信息
+            else if (text === "-cam_info") {
                 const zone = this.GetZone(playerId);
                 const bounds = CAMERA_ZONES[zone];
-                print(`[CameraSystem] 当前区域: ${zone}`);
-                print(`[CameraSystem] 边界: X(${bounds.minX} ~ ${bounds.maxX}), Y(${bounds.minY} ~ ${bounds.maxY})`);
-                GameRules.SendCustomMessage(
-                    `<font color='#00FF00'>区域: ${zone}</font>`,
-                    playerId,
-                    0
-                );
+                const msg = `区域: ${zone} | X(${bounds.minX}~${bounds.maxX}) Y(${bounds.minY}~${bounds.maxY})`;
+                print(`[CameraSystem] ${msg}`);
+                GameRules.SendCustomMessage(`<font color='#00FF00'>${msg}</font>`, playerId, 0);
             }
-        }, "显示摄像机信息", 0);
+            
+            // -cam_help 显示帮助
+            else if (text === "-cam_help") {
+                GameRules.SendCustomMessage(`<font color='#FFD700'>===== 摄像机命令 =====</font>`, playerId, 0);
+                GameRules.SendCustomMessage(`<font color='#00FF00'>-pos</font> - 显示当前位置`, playerId, 0);
+                GameRules.SendCustomMessage(`<font color='#00FF00'>-cam_town</font> - 传送到主城`, playerId, 0);
+                GameRules.SendCustomMessage(`<font color='#00FF00'>-cam_battle</font> - 传送到战斗房`, playerId, 0);
+                GameRules.SendCustomMessage(`<font color='#00FF00'>-cam_boss</font> - 传送到Boss房`, playerId, 0);
+                GameRules.SendCustomMessage(`<font color='#00FF00'>-cam_info</font> - 显示当前区域信息`, playerId, 0);
+            }
+            
+        }, undefined);
 
-        print("[CameraSystem] 调试命令已注册: pos, cam_town, cam_battle, cam_boss, cam_info");
+        print("[CameraSystem] 聊天命令已注册: -pos, -cam_town, -cam_battle, -cam_boss, -cam_info, -cam_help");
     }
 }

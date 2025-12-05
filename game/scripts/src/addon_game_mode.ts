@@ -32,7 +32,7 @@ Object.assign(getfenv(), {
           
         // 初始化摄像机系统
         CameraSystem.Initialize();
-        CameraSystem.RegisterDebugCommands();
+        CameraSystem.RegisterChatCommands(); 
         print("[GameMode] ✓ 摄像机系统已初始化");
 
         // 激活模块系统
