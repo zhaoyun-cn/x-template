@@ -1,3 +1,4 @@
+/// <reference path="./vectorws_fix.d.ts" />
 // 引入所有的lua模块
 require('aeslua');
 require('decrypt');
