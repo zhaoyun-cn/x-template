@@ -91,6 +91,29 @@ declare interface CustomGameEventDeclarations {
         castSpeed: number;
         lifesteal: number;
     };
+    dungeon_completed: {
+        dungeon_name: string;
+        duration: number;
+        rewards: {
+            gold: number;
+            experience: number;
+        };
+    };
+    
+    dungeon_entered: {
+        dungeon_id: string;
+        dungeon_name: string;
+    };
+    
+    dungeon_failed: {
+        dungeon_name: string;
+        reason: string;
+    };
+    
+    trigger_activated: {
+        trigger_id: string;
+        trigger_action: string;
+    };
     };
 
 // 材料使用事件
