@@ -77,8 +77,6 @@ export class DungeonInstance {
      * 设置触发器监听
      */
     private SetupTriggerListeners(): void {
-        const mapData = this.generator.GetMapData();
-        
         // 每0.5秒检查一次触发器
         Timers.CreateTimer(0.5, () => {
             if (this.state === DungeonInstanceState.RUNNING) {
@@ -123,7 +121,11 @@ export class DungeonInstance {
         for (const playerId of this.players) {
             const hero = PlayerResource.GetSelectedHeroEntity(playerId);
             if (hero && hero.IsAlive()) {
-                const distance = (hero.GetAbsOrigin() - position as Vector).Length2D();
+                const heroPos = hero.GetAbsOrigin();
+                const dx = heroPos.x - position.x;
+                const dy = heroPos.y - position.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
                 if (distance <= trigger.radius) {
                     this.ExecuteTrigger(trigger);
                     return;
@@ -164,8 +166,6 @@ export class DungeonInstance {
         // 标记为已触发
         this.triggeredEvents.add(trigger.id);
         
-        const mapData = this.generator.GetMapData();
-        
         // 根据动作类型执行
         switch (trigger.action) {
             case 'spawn_room1':
@@ -204,29 +204,46 @@ export class DungeonInstance {
         this.state = DungeonInstanceState.COMPLETED;
         const duration = GameRules.GetGameTime() - this.startTime;
         
-        print(`[DungeonInstance] 副本完成!  用时: ${duration}秒`);
+        print(`[DungeonInstance] 副本完成!  用时: ${duration.toFixed(2)}秒`);
         
         // 给所有玩家奖励
         for (const playerId of this.players) {
-            this.GiveReward(playerId);
+            this.GiveReward(playerId, duration);
         }
     }
     
     /**
      * 给玩家奖励
      */
-    private GiveReward(playerId: PlayerID): void {
+    private GiveReward(playerId: PlayerID, duration: number): void {
         const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-        if (hero) {
-            // 示例：给经验和金币
-            hero.AddExperience(1000, ModifyXpReason.UNSPECIFIED, false, true);
-            PlayerResource.ModifyGold(playerId, 500, true, ModifyGoldReason.UNSPECIFIED);
-            
-            // 显示消息
-            CustomGameEventManager.Send_ServerToPlayer(PlayerResource.GetPlayer(playerId)!, 'dungeon_completed', {
-                dungeon_name: this.generator.GetMapData().mapName,
-            }as never);
+        if (! hero) return;
+        
+        const goldReward = 500;
+        const expReward = 1000;
+        
+        // 给经验和金币
+        hero.AddExperience(expReward, ModifyXpReason.UNSPECIFIED, false, true);
+        PlayerResource.ModifyGold(playerId, goldReward, true, ModifyGoldReason.UNSPECIFIED);
+        
+        // 发送完成事件到客户端 - 直接调用，使用 as any 绕过类型检查
+        const player = PlayerResource.GetPlayer(playerId);
+        if (player) {
+            (CustomGameEventManager.Send_ServerToPlayer as any)(
+                player,
+                'dungeon_completed',
+                {
+                    dungeon_name: this.generator.GetMapData().mapName,
+                    duration: duration,
+                    rewards: {
+                        gold: goldReward,
+                        experience: expReward,
+                    },
+                }
+            );
         }
+        
+        print(`[DungeonInstance] 玩家 ${playerId} 获得奖励: ${goldReward}金币, ${expReward}经验`);
     }
     
     /**
@@ -234,7 +251,7 @@ export class DungeonInstance {
      */
     private OnAllPlayersLeft(): void {
         print(`[DungeonInstance] 所有玩家已离开，准备清理副本`);
-        // 可以延迟一段时间再清理
+        // 延迟30秒后清理
         Timers.CreateTimer(30, () => {
             this.Cleanup();
             return undefined;
@@ -261,5 +278,12 @@ export class DungeonInstance {
      */
     public GetInstanceId(): string {
         return this.instanceId;
+    }
+    
+    /**
+     * 获取玩家列表
+     */
+    public GetPlayers(): PlayerID[] {
+        return this.players;
     }
 }

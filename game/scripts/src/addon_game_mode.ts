@@ -1,7 +1,7 @@
 import 'utils/index';
 import { ActivateModules } from './modules';
 import Precache from './utils/precache';
-
+import { RegisterDungeonCommands } from './dungeons/commands';
 // ==================== 技能和 Modifier 导入（必须保留）====================
 import './examples/abilities/warrior_sudden_death';
 import './examples/modifiers/modifier_rage_attack_listener';
@@ -41,6 +41,11 @@ Object.assign(getfenv(), {
         // 初始化所有游戏系统（通过 GameManager）
         GameManager.InitializeSystems();
         
+          // 注册副本命令
+    RegisterDungeonCommands();
+    
+    print('[GameMode] 副本系统已激活');
+    
         // 初始化材料使用系统
         MaterialUseSystem.Init();
         print("[GameMode] ✓ 材料使用系统已初始化");

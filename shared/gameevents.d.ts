@@ -3,7 +3,7 @@ import { ExternalRewardItem } from "../game/scripts/src/dungeon/external_reward_
 declare interface CustomGameEventDeclarations {
     /**
      * 在前后端之间（UI的ts代码和游戏逻辑的ts代码之间）传递的事件，需要在此处声明事件的参数类型
-     * Events and their parameters between UI TypeScript code (Panorama) and game mode TypeScript code.
+     * Events and their parameters between UI TypeScript code (Panorama) and game mode TypeScript code. 
      */
 
      /*示例测试事件
@@ -45,8 +45,9 @@ declare interface CustomGameEventDeclarations {
      request_character_stats: {
         PlayerID: PlayerID;
     };
-      update_character_stats: {
-          update_character_stats: {
+    
+    // ⭐ 修复：角色属性更新事件（移除了嵌套的错误结构）
+    update_character_stats: {
         // ⭐ 基础属性
         strength: number;
         agility: number;
@@ -91,6 +92,8 @@ declare interface CustomGameEventDeclarations {
         castSpeed: number;
         lifesteal: number;
     };
+
+    // ⭐ 副本系统事件
     dungeon_completed: {
         dungeon_name: string;
         duration: number;
@@ -114,20 +117,18 @@ declare interface CustomGameEventDeclarations {
         trigger_id: string;
         trigger_action: string;
     };
+
+    // 材料使用事件
+    use_material: {
+        PlayerID: PlayerID;
+        materialType: string;
     };
 
-// 材料使用事件
-use_material: {
-    PlayerID: PlayerID;
-    materialType: string;
-};
-
-material_used: {
-    success: boolean;
-    materialType: string;
-    message: string;
-};
-
+    material_used: {
+        success: boolean;
+        materialType: string;
+        message: string;
+    };
 
     // 示例：玩家选择副本的事件
     select_dungeon: {
@@ -135,7 +136,8 @@ material_used: {
         dungeon_type: string; // 副本类型 ("A", "B", "C")
         difficulty: string;   // 难度 ("easy", "normal", "hard")
     };
- // ⭐ 新增：职业选择事件
+    
+    // ⭐ 新增：职业选择事件
     select_class: {
         PlayerID: PlayerID;
         classId: string;
@@ -153,7 +155,7 @@ material_used: {
     };
 }
 
-    // 其他事件可以继续按照关键-参数模式进行声明...
+// 其他事件可以继续按照关键-参数模式进行声明... 
 
 declare global {
     interface CustomGameEventDeclarations {
