@@ -760,5 +760,10 @@ export const DUNGEON_MY_DUNGEON: DungeonMapData = {
     ],
     "spawners": [],
     "triggers": [],
-    "decorations": []
+    "decorations": [],
+    
+    // 入口点：副本左侧外面
+    "entryPoints": [
+        { "x": -2, "y": 4 },
+    ],
 };

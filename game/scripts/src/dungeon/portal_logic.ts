@@ -1,7 +1,12 @@
 import { BaseAbility, registerAbility } from "../utils/dota_ts_adapter";
+import { GetDungeonManager } from "../dungeons/DungeonManager";
 
 @registerAbility()
 export class portal_logic extends BaseAbility {
+    private lastTriggerTime: Map<PlayerID, number> = new Map();
+    private readonly COOLDOWN_TIME = 3.0; // 3秒冷却时间
+    private readonly TRIGGER_RADIUS = 200; // 触发半径
+
     OnThink(): void {
         const portalLocation = this.GetCaster().GetAbsOrigin();
         const players: PlayerID[] = [];
@@ -24,22 +29,55 @@ export class portal_logic extends BaseAbility {
 
             // 计算玩家位置与传送门的距离
             const distance = ((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2) ** 0.5;
-            if (distance <= 200) { // 玩家进入传送门范围
+            if (distance <= this.TRIGGER_RADIUS) { // 玩家进入传送门范围
                 this.TriggerTeleport(hero, playerId);
             }
         });
     }
 
     private TriggerTeleport(hero: CDOTA_BaseNPC_Hero, playerId: PlayerID): void {
-        const dungeonEntrance = Vector(0, 0, 0); // 副本入口实际坐标
-        FindClearSpaceForUnit(hero, dungeonEntrance, true);
-
-        hero.EmitSound("Portal.Hero_Appear");
-
-        GameRules.SendCustomMessage(
-            `<font color='#FF6600'>你已通过传送门进入副本！</font>`,
-            playerId,
-            0
-        );
+        // 检查冷却时间
+        const currentTime = GameRules.GetGameTime();
+        const lastTrigger = this.lastTriggerTime.get(playerId) || 0;
+        
+        if (currentTime - lastTrigger < this.COOLDOWN_TIME) {
+            return; // 还在冷却中
+        }
+        
+        // 更新最后触发时间
+        this.lastTriggerTime.set(playerId, currentTime);
+        
+        // 获取副本管理器
+        const manager = GetDungeonManager();
+        
+        // 使用默认副本ID（可以根据需要改为菜单选择）
+        const dungeonId = 'test_simple';
+        
+        // 在副本区域创建副本实例
+        // 所有副本都在 BATTLE_ROOM 区域构建
+        const spawnPosition = Vector(0, 4500, 256); // 副本区域中心位置
+        
+        const instanceId = manager.CreateDungeon(dungeonId, spawnPosition);
+        
+        if (instanceId) {
+            // 进入副本（会自动切换摄像头）
+            manager.EnterDungeon(playerId, instanceId);
+            
+            hero.EmitSound("Portal.Hero_Appear");
+            
+            GameRules.SendCustomMessage(
+                `<font color='#FF6600'>你已通过传送门进入副本！</font>`,
+                playerId,
+                0
+            );
+            
+            print(`[PortalLogic] 玩家 ${playerId} 通过传送门进入副本 ${instanceId}`);
+        } else {
+            GameRules.SendCustomMessage(
+                `<font color='#FF0000'>副本创建失败！</font>`,
+                playerId,
+                0
+            );
+        }
     }
 }

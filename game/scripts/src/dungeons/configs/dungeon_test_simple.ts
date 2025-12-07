@@ -27,4 +27,9 @@ export const DUNGEON_TEST_SIMPLE: DungeonMapData = {
     
     // 没有触发器
     triggers: [],
+    
+    // 入口点：副本左侧外面
+    entryPoints: [
+        { x: -2, y: 5 },
+    ],
 };

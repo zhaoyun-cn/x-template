@@ -1,6 +1,7 @@
 import { DungeonMapData } from './types';
 import { DungeonInstance, DungeonInstanceState } from './DungeonInstance';
 import { GetDungeonConfig } from './configs/index';
+import { CameraSystem } from '../systems/camera/camera_system';
 
 /**
  * 副本管理器
@@ -95,6 +96,9 @@ export class DungeonManager {
         
         this.playerDungeonMap.delete(playerId);
         
+        // 返回主城并切换摄像头
+        CameraSystem.ReturnToTown(playerId);
+        
         print(`[DungeonManager] 玩家 ${playerId} 离开副本 ${instanceId}`);
         
         return true;
@@ -110,13 +114,25 @@ export class DungeonManager {
         const hero = PlayerResource.GetSelectedHeroEntity(playerId);
         if (!hero) return;
         
-        // 获取副本入口位置（左侧外面，避开墙壁）
+        // 获取副本配置和入口位置
+        const config = (instance as any).config;
         const generator = (instance as any).generator;
-        const entrancePos = generator.GridToWorld(-2, 10);  // 在地图左侧外面，Y轴中央
         
-        // 传送英雄
-        hero.SetAbsOrigin(entrancePos);
-        FindClearSpaceForUnit(hero, entrancePos, true);
+        let entrancePos: Vector;
+        
+        // 优先使用配置的 entryPoints
+        if (config.entryPoints && config.entryPoints.length > 0) {
+            const entryPoint = config.entryPoints[0];
+            entrancePos = generator.GridToWorld(entryPoint.x, entryPoint.y);
+            print(`[DungeonManager] 使用配置的入口点 (${entryPoint.x}, ${entryPoint.y})`);
+        } else {
+            // 降级方案：在地图左侧外面，Y轴中央
+            entrancePos = generator.GridToWorld(-2, 10);
+            print(`[DungeonManager] 使用默认入口点`);
+        }
+        
+        // 使用摄像头系统进行切换和传送
+        CameraSystem.EnterDungeon(playerId, entrancePos);
         
         print(`[DungeonManager] 传送玩家 ${playerId} 到副本入口 (${entrancePos.x.toFixed(1)}, ${entrancePos.y.toFixed(1)})`);
     }

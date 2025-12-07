@@ -69,4 +69,5 @@ export interface DungeonMapData {
     spawners: SpawnerData[];    // 刷怪点数据
     triggers: TriggerData[];    // 触发器数据
     decorations?: DecorationData[];  // 装饰物数据（可选）
+    entryPoints?: Array<{x: number, y: number}>;  // 副本入口点（可选，网格坐标）
 }

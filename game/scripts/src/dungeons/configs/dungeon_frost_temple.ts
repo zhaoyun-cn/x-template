@@ -134,6 +134,11 @@ export const DUNGEON_FROST_TEMPLE: DungeonMapData = {
         // 宝箱
         { x: 17, y: 10, model: 'models/props_gameplay/treasure_chest001.vmdl', scale: 1.2 },
     ],
+    
+    // 入口点：副本左侧外面（5-15是入口通道）
+    entryPoints: [
+        { x: -2, y: 10 },
+    ],
 };
 
 // ===== 辅助函数 =====
