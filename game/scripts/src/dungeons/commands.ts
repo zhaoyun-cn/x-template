@@ -1,5 +1,6 @@
 import { GetDungeonManager } from './DungeonManager';
 import { GetAllDungeonIds } from './configs/index';
+import { BATTLE_ROOM_SPAWN } from '../systems/camera/camera_zones';
 
 /**
  * 获取执行命令的玩家ID
@@ -122,7 +123,7 @@ export function RegisterDungeonCommands(): void {
             }
             
             // 在副本区域创建副本（所有副本都在统一的BATTLE_ROOM区域）
-            const spawnPos = Vector(0, 4500, 256);
+            const spawnPos = BATTLE_ROOM_SPAWN;
             
             const manager = GetDungeonManager();
             const instanceId = manager.CreateDungeon(dungeonId, spawnPos);
