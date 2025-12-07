@@ -2,6 +2,22 @@ import { GetDungeonManager } from './DungeonManager';
 import { GetAllDungeonIds } from './configs/index';
 
 /**
+ * 获取执行命令的玩家ID
+ */
+function GetExecutingPlayerId(): PlayerID | null {
+    // 遍历所有玩家，找到第一个有效的
+    for (let playerId = 0; playerId < 24; playerId++) {
+        if (PlayerResource.IsValidPlayerID(playerId)) {
+            const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+            if (hero) {
+                return playerId;
+            }
+        }
+    }
+    return null;
+}
+
+/**
  * 注册副本测试命令
  */
 export function RegisterDungeonCommands(): void {
@@ -9,10 +25,12 @@ export function RegisterDungeonCommands(): void {
     Convars.RegisterCommand(
         'dungeon_create',
         (name: string, dungeonId: string) => {
-            const commandClient = Convars.GetCommandClient();
-            if (!commandClient) return;
+            const playerId = GetExecutingPlayerId();
+            if (playerId === null) {
+                print('[命令] 错误：找不到玩家');
+                return;
+            }
             
-            const playerId = commandClient.GetPlayerID();
             const hero = PlayerResource.GetSelectedHeroEntity(playerId);
             if (!hero) {
                 print('[命令] 错误：找不到英雄');
@@ -45,10 +63,12 @@ export function RegisterDungeonCommands(): void {
     Convars.RegisterCommand(
         'dungeon_enter',
         (name: string, instanceId: string) => {
-            const commandClient = Convars.GetCommandClient();
-            if (! commandClient) return;
+            const playerId = GetExecutingPlayerId();
+            if (playerId === null) {
+                print('[命令] 错误：找不到玩家');
+                return;
+            }
             
-            const playerId = commandClient.GetPlayerID();
             const manager = GetDungeonManager();
             const success = manager.EnterDungeon(playerId, instanceId);
             
@@ -66,10 +86,12 @@ export function RegisterDungeonCommands(): void {
     Convars.RegisterCommand(
         'dungeon_leave',
         () => {
-            const commandClient = Convars.GetCommandClient();
-            if (!commandClient) return;
+            const playerId = GetExecutingPlayerId();
+            if (playerId === null) {
+                print('[命令] 错误：找不到玩家');
+                return;
+            }
             
-            const playerId = commandClient.GetPlayerID();
             const manager = GetDungeonManager();
             const success = manager.LeaveDungeon(playerId);
             
@@ -87,10 +109,12 @@ export function RegisterDungeonCommands(): void {
     Convars.RegisterCommand(
         'dungeon_quick',
         (name: string, dungeonId: string) => {
-            const commandClient = Convars.GetCommandClient();
-            if (!commandClient) return;
+            const playerId = GetExecutingPlayerId();
+            if (playerId === null) {
+                print('[命令] 错误：找不到玩家');
+                return;
+            }
             
-            const playerId = commandClient.GetPlayerID();
             const hero = PlayerResource.GetSelectedHeroEntity(playerId);
             if (! hero) {
                 print('[命令] 错误：找不到英雄');

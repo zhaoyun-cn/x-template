@@ -8,8 +8,7 @@ export class DungeonGenerator {
     private basePosition: Vector;
     private mapData: DungeonMapData;
     private spawnedUnits: CDOTA_BaseNPC[] = [];
-    private spawnedDummies: CDOTA_BaseNPC[] = [];
-    private spawnedParticles: ParticleID[] = [];
+    private spawnedProps: any[] = [];
     
     constructor(centerPosition: Vector, mapData: DungeonMapData) {
         this.basePosition = centerPosition;
@@ -22,19 +21,19 @@ export class DungeonGenerator {
     public Generate(): void {
         print(`[DungeonGenerator] 开始生成副本: ${this.mapData.mapName}`);
         
-        // 1. 生成地形
+        // 1.生成地形
         this.GenerateTiles();
         
-        // 2. 生成装饰物
+        // 2.生成装饰物
         if (this.mapData.decorations) {
             this.GenerateDecorations();
         }
         
-        // 3. 创建刷怪点
+        // 3.创建刷怪点
         this.GenerateSpawners();
         
-        // 4. 设置触发器
-        this. GenerateTriggers();
+        // 4.设置触发器
+        this.GenerateTriggers();
         
         print(`[DungeonGenerator] 副本生成完成! `);
     }
@@ -51,117 +50,76 @@ export class DungeonGenerator {
             
             switch (tile.type) {
                 case 'floor':
-                    this.CreateFloorTile(worldPos);
+                    // 地板不生成任何东西
                     break;
                 case 'wall':
                     this.CreateWallTile(worldPos);
-                    break;
-                case 'water':
-                    this.CreateWaterTile(worldPos);
-                    break;
-                case 'lava':
-                    this.CreateLavaTile(worldPos);
-                    break;
-                case 'ice':
-                    this.CreateIceTile(worldPos);
                     break;
             }
         }
     }
     
-    /**
-     * 创建地板格子（添加视觉效果）
-     */
-    private CreateFloorTile(position: Vector): void {
-        // 创建地板特效（可选）
-        const particle = ParticleManager.CreateParticle(
-            'particles/world_environmental_fx/dungeon_floor.vpcf',
-            ParticleAttachment. WORLDORIGIN,
-            undefined
-        );
-        ParticleManager.SetParticleControl(particle, 0, position);
-        this.spawnedParticles. push(particle);
+/**
+ * 创建墙壁格子 - 使用多个建筑物形成更大的阻挡
+ */
+private CreateWallTile(position: Vector): void {
+    // 1. 创建视觉效果（石柱）
+    const prop = SpawnEntityFromTableSynchronous('prop_dynamic', {
+        origin: position,
+        model: 'models/props_structures/tower_dragon_blk_dest_lvl3.vmdl',
+        modelscale: 0.8,
+        DefaultAnim: 'idle',
+    }) as any;
+    
+    if (prop) {
+        this. spawnedProps.push(prop);
     }
     
-    /**
-     * 创建墙壁格子（使用隐形单位阻挡）
-     */
-    private CreateWallTile(position: Vector): void {
-        // 创建阻挡单位
-        const dummy = CreateUnitByName(
-            'npc_dota_creature_dummy_target',  // 使用训练假人作为阻挡
-            position,
+    // 2. 创建 9 个建筑物形成 3x3 网格阻挡（覆盖更大范围）
+    const blockerPositions = [
+        position,  // 中心
+        Vector(position.x + 64, position.y, position.z),       // 右
+        Vector(position.x - 64, position.y, position. z),       // 左
+        Vector(position.x, position. y + 64, position.z),       // 上
+        Vector(position.x, position.y - 64, position.z),       // 下
+        Vector(position.x + 64, position.y + 64, position.z),  // 右上
+        Vector(position.x - 64, position.y + 64, position. z),  // 左上
+        Vector(position.x + 64, position.y - 64, position.z),  // 右下
+        Vector(position.x - 64, position. y - 64, position.z),  // 左下
+    ];
+    
+    for (const blockPos of blockerPositions) {
+        const blocker = CreateUnitByName(
+            'npc_dota_building',
+            blockPos,
             false,
             null,
             null,
-            DotaTeam.NEUTRALS
+            DotaTeam. NEUTRALS
         );
         
-        if (dummy) {
-            // 设置为不可见、不可选择
-            dummy.AddNoDraw();
-            dummy.SetAbsOrigin(position);
+        if (blocker) {
+            // 设置为无敌、隐身
+            blocker. AddNewModifier(blocker, null, 'modifier_invulnerable', {});
+            blocker.AddNoDraw();
+            blocker.SetAbsOrigin(blockPos);
             
-            // 添加碰撞
-            // dummy.SetHullRadius(64);  // 半个格子的大小
+            // 建筑物属性
+            blocker.SetMoveCapability(UnitMoveCapability.NONE);
+            blocker.SetAttackCapability(UnitAttackCapability. NO_ATTACK);
             
-            this.spawnedDummies.push(dummy);
-            
-            // 添加墙壁视觉效果
-            const particle = ParticleManager.CreateParticle(
-                'particles/world_environmental_fx/dungeon_wall.vpcf',
-                ParticleAttachment. WORLDORIGIN,
-                undefined
-            );
-            ParticleManager. SetParticleControl(particle, 0, position);
-            this.spawnedParticles. push(particle);
+            this.spawnedProps. push(blocker as any);
         }
     }
-    
-    /**
-     * 创建水面格子
-     */
-    private CreateWaterTile(position: Vector): void {
-        const particle = ParticleManager.CreateParticle(
-            'particles/econ/items/earthshaker/earthshaker_gravelmaw/earthshaker_gravelmaw_fissure_groundwater.vpcf',
-            ParticleAttachment.WORLDORIGIN,
-            undefined
-        );
-        ParticleManager.SetParticleControl(particle, 0, position);
-        this.spawnedParticles.push(particle);
-    }
-    
-    /**
-     * 创建岩浆格子
-     */
-    private CreateLavaTile(position: Vector): void {
-        const particle = ParticleManager.CreateParticle(
-            'particles/units/heroes/hero_phoenix/phoenix_fire_spirit_ground.vpcf',
-            ParticleAttachment.WORLDORIGIN,
-            undefined
-        );
-        ParticleManager.SetParticleControl(particle, 0, position);
-        this.spawnedParticles.push(particle);
-    }
-    
-    /**
-     * 创建冰面格子
-     */
-    private CreateIceTile(position: Vector): void {
-        const particle = ParticleManager.CreateParticle(
-            'particles/units/heroes/hero_ancient_apparition/ancient_ice_vortex. vpcf',
-            ParticleAttachment.WORLDORIGIN,
-            undefined
-        );
-        ParticleManager.SetParticleControl(particle, 0, position);
-        this.spawnedParticles.push(particle);
-    }
+}
     
     /**
      * 生成装饰物
      */
     private GenerateDecorations(): void {
-        if (! this.mapData.decorations) return;
+        if (!this.mapData.decorations) return;
+        
+        print(`[DungeonGenerator] 生成装饰物: ${this.mapData.decorations.length} 个`);
         
         for (const deco of this.mapData.decorations) {
             const worldPos = this.GridToWorld(deco.x, deco.y);
@@ -173,35 +131,21 @@ export class DungeonGenerator {
      * 创建装饰物
      */
     private CreateDecoration(position: Vector, deco: DecorationData): void {
-        const dummy = CreateUnitByName(
-            'npc_dota_creature_dummy_target',
-            position,
-            false,
-            null,
-            null,
-            DotaTeam.NEUTRALS
-        );
+        const prop = SpawnEntityFromTableSynchronous('prop_dynamic', {
+            origin: position,
+            model: deco.model,
+            modelscale: deco.scale || 1.0,
+            DefaultAnim: 'idle',
+        }) as any;
         
-        if (dummy) {
-            // 设置模型
-            dummy.SetModel(deco.model);
-            dummy.SetOriginalModel(deco.model);
-            
-            // 设置缩放
-            if (deco.scale) {
-                dummy.SetModelScale(deco.scale);
-            }
-            
-            // 设置旋转
+        if (prop) {
             if (deco.rotation !== undefined) {
-                const angles = QAngle(0, deco.rotation, 0);
-                dummy.SetAngles(angles. x, angles.y, angles. z);
+                prop.SetAngles(0, deco.rotation, 0);
             }
-            
-            // 设置为不可攻击、不可移动
-            dummy.SetUnitCanRespawn(false);
-            
-            this.spawnedDummies.push(dummy);
+            this.spawnedProps.push(prop);
+            print(`[DungeonGenerator] ✅ 装饰物: ${deco.model}`);
+        } else {
+            print(`[DungeonGenerator] ❌ 装饰物失败: ${deco.model}`);
         }
     }
     
@@ -209,6 +153,8 @@ export class DungeonGenerator {
      * 生成刷怪点
      */
     private GenerateSpawners(): void {
+        print(`[DungeonGenerator] 设置刷怪点: ${this.mapData.spawners.length} 个`);
+        
         for (const spawner of this.mapData.spawners) {
             const worldPos = this.GridToWorld(spawner.x, spawner.y);
             
@@ -216,7 +162,6 @@ export class DungeonGenerator {
             if (spawner.spawnMode === 'instant' || ! spawner.spawnMode) {
                 this.SpawnUnits(worldPos, spawner);
             }
-            // 其他模式（trigger, delayed, wave）由触发器或管理器处理
         }
     }
     
@@ -226,14 +171,20 @@ export class DungeonGenerator {
     public SpawnUnits(position: Vector, spawner: SpawnerData): CDOTA_BaseNPC[] {
         const units: CDOTA_BaseNPC[] = [];
         
+        print(`[DungeonGenerator] ======= 开始刷怪 =======`);
+        print(`[DungeonGenerator] 单位类型: ${spawner.unitType}`);
+        print(`[DungeonGenerator] 数量: ${spawner.count}`);
+        print(`[DungeonGenerator] 位置: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})`);
+        
         for (let i = 0; i < spawner.count; i++) {
-            // 在刷怪点周围随机偏移一点位置
             const offset = RandomVector(100);
             const spawnPos = Vector(
-                position.x + offset. x,
+                position.x + offset.x,
                 position.y + offset.y,
-                position. z
+                position.z
             );
+            
+            print(`[DungeonGenerator] 尝试生成第 ${i+1}/${spawner.count} 个单位...`);
             
             const unit = CreateUnitByName(
                 spawner.unitType,
@@ -245,13 +196,15 @@ export class DungeonGenerator {
             );
             
             if (unit) {
-                units. push(unit);
+                units.push(unit);
                 this.spawnedUnits.push(unit);
-                
-                print(`[DungeonGenerator] 生成单位: ${spawner.unitType} at (${spawner.x}, ${spawner. y})`);
+                print(`[DungeonGenerator] ✅ 成功: ${unit.GetUnitName()} at (${spawnPos.x.toFixed(1)}, ${spawnPos.y.toFixed(1)})`);
+            } else {
+                print(`[DungeonGenerator] ❌ 失败: ${spawner.unitType} - 单位名称可能错误或未预加载`);
             }
         }
         
+        print(`[DungeonGenerator] ======= 刷怪完成: ${units.length}/${spawner.count} =======`);
         return units;
     }
     
@@ -259,45 +212,7 @@ export class DungeonGenerator {
      * 生成触发器
      */
     private GenerateTriggers(): void {
-        for (const trigger of this.mapData.triggers) {
-            const worldPos = this.GridToWorld(trigger.x, trigger.y);
-            this.CreateTrigger(worldPos, trigger);
-        }
-    }
-    
-    /**
-     * 创建触发器
-     */
-    private CreateTrigger(position: Vector, trigger: TriggerData): void {
-        // 创建触发器标记（隐形单位）
-        const triggerDummy = CreateUnitByName(
-            'npc_dota_creature_dummy_target',
-            position,
-            false,
-            null,
-            null,
-            DotaTeam. NEUTRALS
-        );
-        
-        if (triggerDummy) {
-            triggerDummy.AddNoDraw();
-            
-            // 在开发模式下显示触发器范围
-            if (IsInToolsMode()) {
-                const particle = ParticleManager.CreateParticle(
-                    'particles/ui_mouseactions/range_display. vpcf',
-                    ParticleAttachment.WORLDORIGIN,
-                    undefined
-                );
-                ParticleManager.SetParticleControl(particle, 0, position);
-                ParticleManager.SetParticleControl(particle, 1, Vector(trigger.radius, 0, 0));
-                this.spawnedParticles.push(particle);
-            }
-            
-            this.spawnedDummies.push(triggerDummy);
-        }
-        
-        // 触发器逻辑将由 DungeonInstance 类处理
+        print(`[DungeonGenerator] 设置触发器: ${this.mapData.triggers.length} 个`);
     }
     
     /**
@@ -305,8 +220,8 @@ export class DungeonGenerator {
      */
     public GridToWorld(gridX: number, gridY: number): Vector {
         return Vector(
-            this.basePosition. x + (gridX - this.mapData.width / 2) * this.mapData.tileSize,
-            this.basePosition.y + (gridY - this.mapData. height / 2) * this. mapData.tileSize,
+            this.basePosition.x + (gridX - this.mapData.width / 2) * this.mapData.tileSize,
+            this.basePosition.y + (gridY - this.mapData.height / 2) * this.mapData.tileSize,
             this.basePosition.z
         );
     }
@@ -317,12 +232,12 @@ export class DungeonGenerator {
     public WorldToGrid(worldPos: Vector): { x: number; y: number } {
         return {
             x: Math.floor((worldPos.x - this.basePosition.x) / this.mapData.tileSize + this.mapData.width / 2),
-            y: Math. floor((worldPos.y - this.basePosition.y) / this.mapData.tileSize + this.mapData.height / 2),
+            y: Math.floor((worldPos.y - this.basePosition.y) / this.mapData.tileSize + this.mapData.height / 2),
         };
     }
     
     /**
-     * 清理副本（移除所有生成的实体）
+     * 清理副本
      */
     public Cleanup(): void {
         print(`[DungeonGenerator] 清理副本: ${this.mapData.mapName}`);
@@ -330,26 +245,19 @@ export class DungeonGenerator {
         // 清理单位
         for (const unit of this.spawnedUnits) {
             if (unit && IsValidEntity(unit) && unit.IsAlive()) {
-                unit.ForceKill(false);
+                unit.ForceKill(false);  
             }
         }
         
-        // 清理假人
-        for (const dummy of this.spawnedDummies) {
-            if (dummy && IsValidEntity(dummy)) {
-                UTIL_Remove(dummy);
+        // 清理模型和阻挡单位
+        for (const prop of this.spawnedProps) {
+            if (prop && IsValidEntity(prop)) {
+                UTIL_Remove(prop);
             }
-        }
-        
-        // 清理粒子效果
-        for (const particle of this.spawnedParticles) {
-            ParticleManager.DestroyParticle(particle, false);
-            ParticleManager.ReleaseParticleIndex(particle);
         }
         
         this.spawnedUnits = [];
-        this.spawnedDummies = [];
-        this.spawnedParticles = [];
+        this.spawnedProps = [];
     }
     
     /**
@@ -363,6 +271,6 @@ export class DungeonGenerator {
      * 获取地图数据
      */
     public GetMapData(): DungeonMapData {
-        return this. mapData;
+        return this.mapData;
     }
 }

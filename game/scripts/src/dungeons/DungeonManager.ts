@@ -9,7 +9,7 @@ import { GetDungeonConfig } from './configs/index';
 export class DungeonManager {
     private static instance: DungeonManager;
     private instances: Map<string, DungeonInstance> = new Map();
-    private playerDungeonMap: Map<PlayerID, string> = new Map(); // 玩家ID -> 副本实例ID
+    private playerDungeonMap: Map<PlayerID, string> = new Map();
     private nextInstanceId: number = 1;
     
     private constructor() {
@@ -28,9 +28,6 @@ export class DungeonManager {
     
     /**
      * 创建新的副本实例
-     * @param dungeonId 副本配置ID
-     * @param spawnPosition 副本生成位置
-     * @returns 副本实例ID，失败返回 null
      */
     public CreateDungeon(dungeonId: string, spawnPosition: Vector): string | null {
         const config = GetDungeonConfig(dungeonId);
@@ -39,14 +36,11 @@ export class DungeonManager {
             return null;
         }
         
-        // 生成唯一的实例ID
         const instanceId = `${dungeonId}_${this.nextInstanceId++}`;
         
-        // 创建副本实例
         const instance = new DungeonInstance(instanceId, spawnPosition, config);
         instance.Initialize();
         
-        // 保存到管理器
         this.instances.set(instanceId, instance);
         
         print(`[DungeonManager] 创建副本实例: ${instanceId} at (${spawnPosition.x}, ${spawnPosition.y}, ${spawnPosition.z})`);
@@ -56,9 +50,6 @@ export class DungeonManager {
     
     /**
      * 玩家进入副本
-     * @param playerId 玩家ID
-     * @param instanceId 副本实例ID
-     * @returns 是否成功进入
      */
     public EnterDungeon(playerId: PlayerID, instanceId: string): boolean {
         const instance = this.instances.get(instanceId);
@@ -67,23 +58,19 @@ export class DungeonManager {
             return false;
         }
         
-        // 检查玩家是否已经在副本中
         const currentInstanceId = this.playerDungeonMap.get(playerId);
         if (currentInstanceId) {
             print(`[DungeonManager] 警告：玩家 ${playerId} 已经在副本 ${currentInstanceId} 中`);
             return false;
         }
         
-        // 添加玩家到副本
         instance.AddPlayer(playerId);
         this.playerDungeonMap.set(playerId, instanceId);
         
-        // 如果副本还在等待状态，开始副本
         if (instance.GetState() === DungeonInstanceState.WAITING) {
             instance.Start();
         }
         
-        // 传送玩家到副本入口
         this.TeleportPlayerToDungeon(playerId, instanceId);
         
         print(`[DungeonManager] 玩家 ${playerId} 进入副本 ${instanceId}`);
@@ -93,12 +80,10 @@ export class DungeonManager {
     
     /**
      * 玩家离开副本
-     * @param playerId 玩家ID
-     * @returns 是否成功离开
      */
     public LeaveDungeon(playerId: PlayerID): boolean {
         const instanceId = this.playerDungeonMap.get(playerId);
-        if (!instanceId) {
+        if (! instanceId) {
             print(`[DungeonManager] 警告：玩家 ${playerId} 不在任何副本中`);
             return false;
         }
@@ -120,41 +105,37 @@ export class DungeonManager {
      */
     private TeleportPlayerToDungeon(playerId: PlayerID, instanceId: string): void {
         const instance = this.instances.get(instanceId);
-        if (!instance) return;
+        if (! instance) return;
         
         const hero = PlayerResource.GetSelectedHeroEntity(playerId);
         if (!hero) return;
         
-        // 计算入口位置（副本左下角）
-        const mapData = (instance as any).generator.GetMapData();
-        const entrancePos = (instance as any).generator.GridToWorld(0, 0);
+        // 获取副本入口位置（左侧外面，避开墙壁）
+        const generator = (instance as any).generator;
+        const entrancePos = generator.GridToWorld(-2, 10);  // 在地图左侧外面，Y轴中央
         
         // 传送英雄
         hero.SetAbsOrigin(entrancePos);
         FindClearSpaceForUnit(hero, entrancePos, true);
         
-        print(`[DungeonManager] 传送玩家 ${playerId} 到副本入口`);
+        print(`[DungeonManager] 传送玩家 ${playerId} 到副本入口 (${entrancePos.x.toFixed(1)}, ${entrancePos.y.toFixed(1)})`);
     }
     
     /**
      * 清理副本实例
-     * @param instanceId 副本实例ID
      */
     public CleanupDungeon(instanceId: string): void {
         const instance = this.instances.get(instanceId);
         if (!instance) return;
         
-        // 清理副本
         instance.Cleanup();
         
-        // 移除所有在此副本中的玩家记录
         for (const [playerId, dungeonId] of this.playerDungeonMap.entries()) {
             if (dungeonId === instanceId) {
                 this.playerDungeonMap.delete(playerId);
             }
         }
         
-        // 从管理器中移除
         this.instances.delete(instanceId);
         
         print(`[DungeonManager] 清理副本实例: ${instanceId}`);

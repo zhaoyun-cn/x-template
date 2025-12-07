@@ -2,53 +2,43 @@ import { DungeonMapData } from '../types';
 
 /**
  * 冰霜神殿 - 初级副本
- * 
- * 设计思路：
- * - 这是一个10x10的小型副本
- * - 玩家从左下角进入
- * - 路上有3波小怪
- * - 中央房间有BOSS
- * - 击败BOSS后触发宝箱
  */
 export const DUNGEON_FROST_TEMPLE: DungeonMapData = {
     mapId: 'frost_temple_01',
     mapName: '冰霜神殿',
     width: 20,
     height: 20,
-    tileSize: 128,  // DOTA2中每格128单位
+    tileSize: 128,
     
-    // 地形数据
+    // 地形数据 - 优化后的墙壁布局
     tiles: [
-        // 入口走廊（0-5行）
-        ...generateFloorTiles(0, 0, 5, 20),
+        // 边界墙壁（左侧留出入口）
+        ...generateTopWall(0, 20),           // 上墙
+        ...generateBottomWall(0, 20),        // 下墙
+        ...generateLeftWall(0, 5, 20),       // 左墙上半部分
+        ...generateLeftWall(15, 20, 20),     // 左墙下半部分（中间 5-15 是入口）
+        ...generateRightWall(0, 20),         // 右墙
         
-        // 第一个房间（6-10行）
-        ...generateRoomTiles(6, 5, 10, 15),
-        
-        // 走廊
-        ...generateFloorTiles(11, 9, 14, 11),
-        
-        // BOSS房间（15-20行）
-        ...generateRoomTiles(15, 3, 20, 17),
-        
-        // 墙壁（边界）
-        ...generateWallBorder(0, 0, 20, 20),
+        // 房间分隔墙
+        ...generateWallLine(6, 0, 6, 5),     // 第一个房间左侧
+        ...generateWallLine(6, 15, 6, 20),   // 第一个房间右侧
+        ...generateWallLine(15, 0, 15, 5),   // BOSS房间左侧
+        ...generateWallLine(15, 15, 15, 20), // BOSS房间右侧
     ],
     
     // 刷怪点
     spawners: [
-        // 第一波：入口的狗头人
+        // 入口小怪（在入口走廊里）
         {
             id: 'spawn_entrance_01',
             x: 2,
             y: 10,
-            unitType: 'npc_dota_creature_kobold',
+            unitType: 'npc_dota_neutral_kobold',
             count: 3,
-            spawnDelay: 2,
             spawnMode: 'instant',
         },
         
-        // 第二波：第一个房间的冰霜萨满
+        // 第一个房间
         {
             id: 'spawn_room1_01',
             x: 8,
@@ -68,7 +58,7 @@ export const DUNGEON_FROST_TEMPLE: DungeonMapData = {
             triggerCondition: 'trigger_room1_enter',
         },
         
-        // 第三波：走廊的精英怪
+        // 走廊精英
         {
             id: 'spawn_corridor_elite',
             x: 12,
@@ -79,7 +69,7 @@ export const DUNGEON_FROST_TEMPLE: DungeonMapData = {
             triggerCondition: 'trigger_corridor_enter',
         },
         
-        // BOSS：中央房间
+        // BOSS
         {
             id: 'spawn_boss',
             x: 17,
@@ -93,7 +83,6 @@ export const DUNGEON_FROST_TEMPLE: DungeonMapData = {
     
     // 触发器
     triggers: [
-        // 进入第一个房间
         {
             id: 'trigger_room1_enter',
             x: 7,
@@ -103,8 +92,6 @@ export const DUNGEON_FROST_TEMPLE: DungeonMapData = {
             action: 'spawn_room1',
             oneTime: true,
         },
-        
-        // 进入走廊
         {
             id: 'trigger_corridor_enter',
             x: 11,
@@ -114,8 +101,6 @@ export const DUNGEON_FROST_TEMPLE: DungeonMapData = {
             action: 'spawn_corridor',
             oneTime: true,
         },
-        
-        // 进入BOSS房间
         {
             id: 'trigger_boss_room_enter',
             x: 15,
@@ -125,8 +110,6 @@ export const DUNGEON_FROST_TEMPLE: DungeonMapData = {
             action: 'spawn_boss',
             oneTime: true,
         },
-        
-        // 击败BOSS
         {
             id: 'trigger_boss_killed',
             x: 17,
@@ -140,61 +123,80 @@ export const DUNGEON_FROST_TEMPLE: DungeonMapData = {
     
     // 装饰物
     decorations: [
-        // 入口的冰柱
-        { x: 1, y: 5, model: 'models/props_gameplay/ice_column.vmdl', scale: 1.5 },
-        { x: 1, y: 15, model: 'models/props_gameplay/ice_column.vmdl', scale: 1.5 },
+        // 入口标记（两侧）
+        { x: -1, y: 5, model: 'models/props_structures/tower_dragon_blk_dest_lvl3.vmdl', scale: 0.6 },
+        { x: -1, y: 15, model: 'models/props_structures/tower_dragon_blk_dest_lvl3.vmdl', scale: 0.6 },
         
-        // BOSS房间的雕像
-        { x: 15, y: 5, model: 'models/props_structures/dire_statue001.vmdl', scale: 1.0 },
-        { x: 15, y: 15, model: 'models/props_structures/dire_statue001.vmdl', scale: 1.0 },
+        // BOSS房间雕像
+        { x: 15, y: 5, model: 'models/props_structures/dire_statue001.vmdl', scale: 0.8 },
+        { x: 15, y: 15, model: 'models/props_structures/dire_statue001.vmdl', scale: 0.8 },
+        
+        // 宝箱
+        { x: 17, y: 10, model: 'models/props_gameplay/treasure_chest001.vmdl', scale: 1.2 },
     ],
 };
 
-// ===== 辅助函数：快速生成地块 =====
+// ===== 辅助函数 =====
 
 /**
- * 生成地板区域
+ * 生成上墙
  */
-function generateFloorTiles(startX: number, startY: number, endX: number, endY: number) {
+function generateTopWall(startX: number, endX: number) {
     const tiles = [];
     for (let x = startX; x < endX; x++) {
-        for (let y = startY; y < endY; y++) {
-            tiles.push({ x, y, type: 'floor' as const });
-        }
+        tiles.push({ x, y: 0, type: 'wall' as const });
     }
     return tiles;
 }
 
 /**
- * 生成房间（包含墙壁）
+ * 生成下墙
  */
-function generateRoomTiles(startX: number, startY: number, endX: number, endY: number) {
+function generateBottomWall(startX: number, endX: number) {
     const tiles = [];
     for (let x = startX; x < endX; x++) {
-        for (let y = startY; y < endY; y++) {
-            // 边界是墙壁
-            if (x === startX || x === endX - 1 || y === startY || y === endY - 1) {
-                tiles.push({ x, y, type: 'wall' as const });
-            } else {
-                tiles.push({ x, y, type: 'floor' as const });
-            }
-        }
+        tiles.push({ x, y: 19, type: 'wall' as const });
     }
     return tiles;
 }
 
 /**
- * 生成边界墙壁
+ * 生成左墙（部分）
  */
-function generateWallBorder(startX: number, startY: number, endX: number, endY: number) {
+function generateLeftWall(startY: number, endY: number, height: number) {
     const tiles = [];
-    for (let x = startX; x < endX; x++) {
-        tiles.push({ x, y: startY, type: 'wall' as const });
-        tiles.push({ x, y: endY - 1, type: 'wall' as const });
-    }
     for (let y = startY; y < endY; y++) {
-        tiles.push({ x: startX, y, type: 'wall' as const });
-        tiles.push({ x: endX - 1, y, type: 'wall' as const });
+        tiles.push({ x: 0, y, type: 'wall' as const });
+    }
+    return tiles;
+}
+
+/**
+ * 生成右墙
+ */
+function generateRightWall(startY: number, endY: number) {
+    const tiles = [];
+    for (let y = startY; y < endY; y++) {
+        tiles.push({ x: 19, y, type: 'wall' as const });
+    }
+    return tiles;
+}
+
+/**
+ * 生成墙壁线
+ */
+function generateWallLine(x: number, startY: number, endX: number, endY: number) {
+    const tiles = [];
+    if (x === endX) {
+        // 垂直线
+        for (let y = startY; y <= endY; y++) {
+            tiles.push({ x, y, type: 'wall' as const });
+        }
+    } else {
+        // 水平线
+        for (let nx = x; nx <= endX; nx++) {
+            tiles.push({ x: nx, y: startY, type: 'wall' as const });
+        }
     }
     return tiles;
 }

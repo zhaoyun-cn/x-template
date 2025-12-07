@@ -22,6 +22,7 @@ export class DungeonInstance {
     private players: PlayerID[] = [];
     private triggeredEvents: Set<string> = new Set();
     private startTime: number = 0;
+    private spawnedUnitsByTrigger: Map<string, CDOTA_BaseNPC[]> = new Map(); // 记录每个触发器生成的单位
     
     constructor(instanceId: string, centerPosition: Vector, mapData: DungeonMapData) {
         this.instanceId = instanceId;
@@ -138,21 +139,24 @@ export class DungeonInstance {
      * 检查击杀触发器
      */
     private CheckKillTrigger(position: Vector, trigger: TriggerData): void {
-        // 检查范围内是否还有敌对单位
-        const units = FindUnitsInRadius(
-            DotaTeam.NEUTRALS,
-            position,
-            undefined,
-            trigger.radius,
-            UnitTargetTeam.ENEMY,
-            UnitTargetType.BASIC + UnitTargetType.HERO,
-            UnitTargetFlags.NONE,
-            FindOrder.ANY,
-            false
-        );
+        // 检查这个触发器是否已经生成过单位
+        const spawnedUnits = this.spawnedUnitsByTrigger.get(trigger.id);
+        if (! spawnedUnits || spawnedUnits.length === 0) {
+            // 还没有生成单位，不检查
+            return;
+        }
         
-        // 如果范围内没有单位了，触发
-        if (units.length === 0) {
+        // 检查生成的单位是否都已经死亡
+        let allDead = true;
+        for (const unit of spawnedUnits) {
+            if (unit && IsValidEntity(unit) && unit.IsAlive()) {
+                allDead = false;
+                break;
+            }
+        }
+        
+        // 如果所有单位都死了，触发
+        if (allDead) {
             this.ExecuteTrigger(trigger);
         }
     }
@@ -169,13 +173,13 @@ export class DungeonInstance {
         // 根据动作类型执行
         switch (trigger.action) {
             case 'spawn_room1':
-                this.SpawnByTrigger('trigger_room1_enter');
+                this.SpawnByTrigger('trigger_room1_enter', trigger.id);
                 break;
             case 'spawn_corridor':
-                this.SpawnByTrigger('trigger_corridor_enter');
+                this.SpawnByTrigger('trigger_corridor_enter', trigger.id);
                 break;
             case 'spawn_boss':
-                this.SpawnByTrigger('trigger_boss_room_enter');
+                this.SpawnByTrigger('trigger_boss_room_enter', trigger.id);
                 break;
             case 'dungeon_complete':
                 this.CompleteDungeon();
@@ -186,14 +190,21 @@ export class DungeonInstance {
     /**
      * 根据触发器ID生成怪物
      */
-    private SpawnByTrigger(triggerConditionId: string): void {
+    private SpawnByTrigger(triggerConditionId: string, parentTriggerId: string): void {
         const mapData = this.generator.GetMapData();
+        const allSpawnedUnits: CDOTA_BaseNPC[] = [];
         
         for (const spawner of mapData.spawners) {
             if (spawner.triggerCondition === triggerConditionId) {
                 const worldPos = this.generator.GridToWorld(spawner.x, spawner.y);
-                this.generator.SpawnUnits(worldPos, spawner);
+                const units = this.generator.SpawnUnits(worldPos, spawner);
+                allSpawnedUnits.push(...units);
             }
+        }
+        
+        // 记录生成的单位，用于 kill 触发器检查
+        if (allSpawnedUnits.length > 0) {
+            this.spawnedUnitsByTrigger.set(parentTriggerId, allSpawnedUnits);
         }
     }
     
@@ -204,7 +215,7 @@ export class DungeonInstance {
         this.state = DungeonInstanceState.COMPLETED;
         const duration = GameRules.GetGameTime() - this.startTime;
         
-        print(`[DungeonInstance] 副本完成!  用时: ${duration.toFixed(2)}秒`);
+        print(`[DungeonInstance] 副本完成!   用时: ${duration.toFixed(2)}秒`);
         
         // 给所有玩家奖励
         for (const playerId of this.players) {
