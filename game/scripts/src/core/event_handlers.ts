@@ -5,6 +5,8 @@
 import { EquipmentVaultSystem } from '../systems/equipment/vault_system';
 import { ClassSystem } from '../systems/player/class_system';
 import { ExternalRewardItem, ExternalItemType, EquipmentAttribute } from '../dungeon/external_reward_pool';
+import { GetDungeonManager } from '../dungeons/DungeonManager';
+import { GetAllDungeonConfigs, DUNGEON_CONFIGS } from '../dungeons/configs/index';
 
 // 最后菜单触发时间记录
 const lastMenuTriggerTime: { [key: number]: number } = {};
@@ -58,7 +60,7 @@ export class EventHandlers {
      */
     private static MonitorPortalTrigger(): void {
         Timers.CreateTimer(0.25, () => {
-            if (!this.dungeonPortalInstance || this.dungeonPortalInstance.IsNull()) {
+            if (! this.dungeonPortalInstance || this.dungeonPortalInstance.IsNull()) {
                 return 0.25;
             }
 
@@ -66,12 +68,12 @@ export class EventHandlers {
             const playerCount = PlayerResource.GetPlayerCount();
 
             for (let i = 0; i < playerCount; i++) {
-                if (!PlayerResource.IsValidPlayerID(i)) continue;
+                if (! PlayerResource.IsValidPlayerID(i)) continue;
                 
-                if (!ClassSystem.HasSelectedClass(i as PlayerID)) continue;
+                if (! ClassSystem.HasSelectedClass(i as PlayerID)) continue;
                 
                 const hero = PlayerResource.GetSelectedHeroEntity(i);
-                if (!hero || !hero.IsAlive()) continue;
+                if (!hero || ! hero.IsAlive()) continue;
 
                 const portalPos = this.dungeonPortalInstance.GetAbsOrigin();
                 const heroPos = hero.GetAbsOrigin();
@@ -116,14 +118,14 @@ export class EventHandlers {
         ListenToGameEvent("npc_spawned", (event) => {
             const spawnedUnit = EntIndexToHScript(event.entindex) as CDOTA_BaseNPC;
             
-            if (!spawnedUnit || !spawnedUnit.IsRealHero()) {
+            if (! spawnedUnit || !spawnedUnit.IsRealHero()) {
                 return;
             }
             
             const playerId = spawnedUnit.GetPlayerOwnerID();
             if (playerId === -1) return;
             
-            if (!ClassSystem.HasSelectedClass(playerId)) {
+            if (! ClassSystem.HasSelectedClass(playerId)) {
                 print(`[EventHandlers] 玩家${playerId}尚未选择职业，跳过装备初始化`);
                 return;
             }
@@ -151,52 +153,77 @@ export class EventHandlers {
      * 注册副本相关事件
      */
     private static RegisterDungeonEvents(): void {
+        // 请求副本列表
+        CustomGameEventManager.RegisterListener("request_dungeon_list", (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            
+            print(`[EventHandlers] 玩家 ${playerId} 请求副本列表`);
+            
+            const dungeonList: any[] = [];
+            const allConfigs = GetAllDungeonConfigs();
+            
+            allConfigs.forEach(({ id, config }) => {
+                dungeonList.push({
+                    id: id,
+                    name: config.mapName,
+                    description: config.description || "暂无描述"
+                });
+            });
+            
+            const player = PlayerResource.GetPlayer(playerId);
+            if (player) {
+                (CustomGameEventManager.Send_ServerToPlayer as any)(player, "update_dungeon_list", {
+                    dungeons: dungeonList
+                });
+                print(`[EventHandlers] 发送副本列表: ${dungeonList.length} 个副本`);
+            }
+        });
+        
+        // 选择副本
         CustomGameEventManager.RegisterListener("select_dungeon", (userId, event: any) => {
             const playerId = event.PlayerID as PlayerID;
-            const dungeonType = event.dungeon_type as string;
-            const difficulty = event.difficulty as string;
+            const dungeonId = event.dungeon_id as string;
             
             const hero = PlayerResource.GetSelectedHeroEntity(playerId);
             if (!hero) return;
             
-            print(`[EventHandlers] 玩家 ${playerId} 选择副本: ${dungeonType}, 难度: ${difficulty}`);
+            print(`[EventHandlers] 玩家 ${playerId} 选择副本: ${dungeonId}`);
             
-            if (dungeonType === "A") {
-                if (GameRules.SimpleDungeon) {
-                    (GameRules.SimpleDungeon as any).StartDungeon(playerId, difficulty);
-                }
+            const manager = GetDungeonManager();
+            
+            // 副本生成位置：战斗区域，高度128
+            // 根据副本ID设置不同的位置，避免重叠
+            const baseX = 10000;
+            const baseY = 10000;
+            const allIds = Object.keys(DUNGEON_CONFIGS);
+            const dungeonIndex = allIds.indexOf(dungeonId);
+            const offsetX = dungeonIndex * 3000; // 每个副本间隔3000单位
+            
+            const spawnPosition = Vector(baseX + offsetX, baseY, 128);
+            
+            print(`[EventHandlers] 创建副本在位置: (${spawnPosition.x}, ${spawnPosition.y}, ${spawnPosition.z})`);
+            
+            const instanceId = manager.CreateDungeon(dungeonId, spawnPosition);
+            
+            if (instanceId) {
+                manager.EnterDungeon(playerId, instanceId);
                 
-                let difficultyText = "";
-                if (difficulty === "easy") {
-                    difficultyText = "简单";
-                } else if (difficulty === "normal") {
-                    difficultyText = "普通";
-                } else if (difficulty === "hard") {
-                    difficultyText = "困难";
-                }
+                hero.EmitSound("Portal.Hero_Appear");
                 
                 GameRules.SendCustomMessage(
-                    `<font color='#00FF00'>正在进入副本A (${difficultyText}难度)...</font>`,
+                    `<font color='#00FF00'>正在进入副本: ${dungeonId}...</font>`,
                     playerId,
                     0
                 );
                 
-            } else if (dungeonType === "B") {
-                if (GameRules.ZoneDungeon) {
-                    GameRules.ZoneDungeon.EnterFromPortal(playerId, 0);
-                } else {
-                    GameRules.SendCustomMessage(
-                        `<font color='#FF0000'>❌ 刷怪区域系统未初始化</font>`,
-                        playerId,
-                        0
-                    );
-                }
-            } else if (dungeonType === "C") {
+                print(`[EventHandlers] 玩家 ${playerId} 成功进入副本 ${instanceId}`);
+            } else {
                 GameRules.SendCustomMessage(
-                    `<font color='#FFAA00'>副本C开发中，敬请期待！</font>`,
+                    `<font color='#FF0000'>副本创建失败！</font>`,
                     playerId,
                     0
                 );
+                print(`[EventHandlers] 副本创建失败: ${dungeonId}`);
             }
         });
     }

@@ -62,6 +62,7 @@ export interface DecorationData {
 export interface DungeonMapData {
     mapId: string;          // 地图ID
     mapName: string;        // 地图名称
+    description?: string;   // 地图描述（新增）
     width: number;          // 地图宽度（格子数）
     height: number;         // 地图高度（格子数）
     tileSize: number;       // 单个格子大小（DOTA2单位）
