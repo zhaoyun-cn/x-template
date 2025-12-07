@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>DOTA2 副本编辑器 - 优化版</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar">
+        <h2>🛠️ 工具</h2>
+        <!-- 基础工具 -->
+        <div class="tool-section">
+            <h3>画笔模式</h3>
+            <div class="tool-buttons">
+                <button class="tool-btn active" data-tool="wall">🟫 墙壁</button>
+                <button class="tool-btn" data-tool="floor">⬜ 地板</button>
+                <button class="tool-btn" data-tool="erase">🗑️ 擦除</button>
+            </div>
+        </div>
+        <!-- 刷怪点 -->
+        <div class="tool-section">
+            <h3>刷怪点</h3>
+            <div class="tool-buttons">
+                <button class="tool-btn" data-tool="kobold">👹 狗头人</button>
+                <button class="tool-btn" data-tool="ice_shaman">❄️ 冰霜萨满</button>
+                <button class="tool-btn" data-tool="troll">🧟 巨魔</button>
+                <button class="tool-btn" data-tool="dragon">🐲 黑龙</button>
+            </div>
+        </div>
+        <!-- 特殊功能 -->
+        <div class="tool-section">
+            <h3>特殊点</h3>
+            <div class="tool-buttons">
+                <button class="tool-btn" data-tool="entry">🚪 入口点</button>
+                <button class="tool-btn" data-tool="boss">👑 BOSS点</button>
+            </div>
+        </div>
+        <!-- 摄像头区域 -->
+        <div class="tool-section">
+            <h3>摄像头区域</h3>
+            <div class="tool-buttons">
+                <button class="tool-btn" data-tool="camera">📷 摄像头区域</button>
+            </div>
+        </div>
+        <!-- 触发器 -->
+        <div class="tool-section">
+            <h3>触发器</h3>
+            <div class="tool-buttons">
+                <button class="tool-btn" data-tool="trigger">⚡ 触发区域</button>
+            </div>
+        </div>
+        <!-- 装饰物 -->
+        <div class="tool-section">
+            <h3>装饰物</h3>
+            <div class="tool-buttons">
+                <button class="tool-btn" data-tool="chest">📦 宝箱</button>
+                <button class="tool-btn" data-tool="pillar">🏛️ 石柱</button>
+            </div>
+        </div>
+        <!-- 地图设置 -->
+        <div class="tool-section">
+            <h3>地图设置</h3>
+            <label>地图ID:<input type="text" id="mapId" value="my_dungeon" /></label>
+            <label>地图名称:<input type="text" id="mapName" value="我的副本" /></label>
+            <label>网格大小:
+                <select id="gridSize">
+                    <option value="16">16x16</option>
+                    <option value="20" selected>20x20</option>
+                    <option value="24">24x24</option>
+                    <option value="32">32x32</option>
+                </select>
+            </label>
+        </div>
+        <!-- 操作 -->
+        <div class="tool-section">
+            <h3>操作</h3>
+            <button class="action-btn" id="clearBtn">🗑️ 清空</button>
+            <button class="action-btn" id="fillBorderBtn">🟫 填充边界</button>
+            <button class="action-btn primary" id="exportBtn">💾 导出配置</button>
+            <button class="action-btn" id="importBtn">📂 导入配置</button>
+        </div>
+        <div class="info">
+            <div id="cellInfo">鼠标: -</div>
+            <div id="statsInfo">墙壁: 0 | 刷怪点: 0 | 入口点: 0 | 摄像头区域: 0</div>
+        </div>
+    </div>
+    <div class="canvas-container">
+        <h1>🗺️ DOTA2 副本编辑器</h1>
+        <div class="canvas-wrapper">
+            <canvas id="canvas"></canvas>
+        </div>
+        <div class="tips">
+            <p>💡 <strong>操作提示:</strong></p>
+            <ul>
+                <li>左键点击/拖拽：绘制</li>
+                <li>右键：擦除</li>
+                <li>滚轮：缩放</li>
+                <li>中键拖拽：平移</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<script src="editor.js"></script>
+</body>
+</html>
