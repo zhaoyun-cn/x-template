@@ -152,81 +152,88 @@ export class EventHandlers {
     /**
      * 注册副本相关事件
      */
-    private static RegisterDungeonEvents(): void {
-        // 请求副本列表
-        CustomGameEventManager.RegisterListener("request_dungeon_list", (userId, event: any) => {
-            const playerId = event.PlayerID as PlayerID;
-            
-            print(`[EventHandlers] 玩家 ${playerId} 请求副本列表`);
-            
-            const dungeonList: any[] = [];
-            const allConfigs = GetAllDungeonConfigs();
-            
-            allConfigs.forEach(({ id, config }) => {
-                dungeonList.push({
-                    id: id,
-                    name: config.mapName,
-                    description: config.description || "暂无描述"
-                });
+  /**
+ * 注册副本相关事件
+ */
+/**
+ * 注册副本相关事件
+ */
+private static RegisterDungeonEvents(): void {
+    // 请求副本列表
+    CustomGameEventManager.RegisterListener("request_dungeon_list", (userId, event: any) => {
+        const playerId = event.PlayerID as PlayerID;
+        
+        print(`[EventHandlers] 玩家 ${playerId} 请求副本列表`);
+        
+        const dungeonList: any[] = [];
+        const allConfigs = GetAllDungeonConfigs();
+        
+        allConfigs.forEach(({ id, config }) => {
+            dungeonList.push({
+                id: id,
+                name: config.mapName,
+                description: config.description || "暂无描述"
             });
-            
-            const player = PlayerResource.GetPlayer(playerId);
-            if (player) {
-                (CustomGameEventManager.Send_ServerToPlayer as any)(player, "update_dungeon_list", {
-                    dungeons: dungeonList
-                });
-                print(`[EventHandlers] 发送副本列表: ${dungeonList.length} 个副本`);
-            }
+            print(`[EventHandlers] 副本: ${id} - ${config.mapName} - ${config.description || "暂无描述"}`);
         });
         
-        // 选择副本
-        CustomGameEventManager.RegisterListener("select_dungeon", (userId, event: any) => {
-            const playerId = event.PlayerID as PlayerID;
-            const dungeonId = event.dungeon_id as string;
+        const player = PlayerResource.GetPlayer(playerId);
+        if (player) {
+            (CustomGameEventManager.Send_ServerToPlayer as any)(player, "update_dungeon_list", {
+                dungeons: dungeonList
+            });
+            print(`[EventHandlers] 发送副本列表: ${dungeonList.length} 个副本`);
+        }
+    });
+    
+    // 选择副本
+    CustomGameEventManager.RegisterListener("select_dungeon", (userId, event: any) => {
+        const playerId = event.PlayerID as PlayerID;
+        const dungeonId = event.dungeon_id as string;
+        
+        const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+        if (!hero) return;
+        
+        print(`[EventHandlers] 玩家 ${playerId} 选择副本: ${dungeonId}`);
+        
+        const manager = GetDungeonManager();
+        
+        // 副本生成位置：战斗区域，高度128
+        // 根据副本ID设置不同的位置，避免重叠
+        const baseX = 10000;
+        const baseY = 10000;
+        const allIds = Object.keys(DUNGEON_CONFIGS);
+        const dungeonIndex = allIds.indexOf(dungeonId);
+        const offsetX = dungeonIndex * 3000; // 每个副本间隔3000单位
+        
+        const spawnPosition = Vector(baseX + offsetX, baseY, 128);
+        
+        print(`[EventHandlers] 创建副本在位置: (${spawnPosition.x}, ${spawnPosition. y}, ${spawnPosition.z})`);
+        
+        const instanceId = manager.CreateDungeon(dungeonId, spawnPosition);
+        
+        if (instanceId) {
+            manager. EnterDungeon(playerId, instanceId);
             
-            const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-            if (!hero) return;
+            hero.EmitSound("Portal. Hero_Appear");
             
-            print(`[EventHandlers] 玩家 ${playerId} 选择副本: ${dungeonId}`);
+            GameRules.SendCustomMessage(
+                `<font color='#00FF00'>正在进入副本: ${dungeonId}... </font>`,
+                playerId,
+                0
+            );
             
-            const manager = GetDungeonManager();
-            
-            // 副本生成位置：战斗区域，高度128
-            // 根据副本ID设置不同的位置，避免重叠
-            const baseX = 10000;
-            const baseY = 10000;
-            const allIds = Object.keys(DUNGEON_CONFIGS);
-            const dungeonIndex = allIds.indexOf(dungeonId);
-            const offsetX = dungeonIndex * 3000; // 每个副本间隔3000单位
-            
-            const spawnPosition = Vector(baseX + offsetX, baseY, 128);
-            
-            print(`[EventHandlers] 创建副本在位置: (${spawnPosition.x}, ${spawnPosition.y}, ${spawnPosition.z})`);
-            
-            const instanceId = manager.CreateDungeon(dungeonId, spawnPosition);
-            
-            if (instanceId) {
-                manager.EnterDungeon(playerId, instanceId);
-                
-                hero.EmitSound("Portal.Hero_Appear");
-                
-                GameRules.SendCustomMessage(
-                    `<font color='#00FF00'>正在进入副本: ${dungeonId}...</font>`,
-                    playerId,
-                    0
-                );
-                
-                print(`[EventHandlers] 玩家 ${playerId} 成功进入副本 ${instanceId}`);
-            } else {
-                GameRules.SendCustomMessage(
-                    `<font color='#FF0000'>副本创建失败！</font>`,
-                    playerId,
-                    0
-                );
-                print(`[EventHandlers] 副本创建失败: ${dungeonId}`);
-            }
-        });
-    }
+            print(`[EventHandlers] 玩家 ${playerId} 成功进入副本 ${instanceId}`);
+        } else {
+            GameRules.SendCustomMessage(
+                `<font color='#FF0000'>副本创建失败！</font>`,
+                playerId,
+                0
+            );
+            print(`[EventHandlers] 副本创建失败: ${dungeonId}`);
+        }
+    });
+}
 
     /**
      * 注册装备相关事件

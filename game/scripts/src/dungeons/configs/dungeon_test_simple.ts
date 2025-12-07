@@ -6,6 +6,7 @@ import { DungeonMapData } from '../types';
 export const DUNGEON_TEST_SIMPLE: DungeonMapData = {
     mapId: 'test_simple',
     mapName: '测试副本',
+    description: '用于测试的简单副本地图，仅包含基础战斗', // 新增
     width: 10,
     height: 10,
     tileSize: 128,

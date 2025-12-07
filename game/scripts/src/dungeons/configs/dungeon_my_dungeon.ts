@@ -8,6 +8,7 @@ import { DungeonMapData } from '../types';
 export const DUNGEON_MY_DUNGEON: DungeonMapData = {
     "mapId": "my_dungeon",
     "mapName": "我的副本",
+    "description": "使用可视化编辑器创建的自定义副本", // 新增
     "width": 20,
     "height": 20,
     "tileSize": 128,
