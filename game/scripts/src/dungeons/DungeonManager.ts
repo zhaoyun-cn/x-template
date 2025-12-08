@@ -5,6 +5,9 @@ import { GetDungeonZoneManager } from './DungeonZoneManager';
 import { MultiStageDungeonInstance } from './MultiStageDungeonInstance';
 import { DUNGEON_FROST_TEMPLE_MULTI } from './configs/dungeon_frost_temple_multi';
 import { CameraSystem, CameraZone } from '../systems/camera';
+import { RoguelikeDungeonInstance } from './roguelike/RoguelikeDungeonInstance';
+import { ROGUELIKE_TEST_CONFIG } from './configs/dungeon_roguelike_test';
+import { RoguelikeEvents } from './roguelike/RoguelikeEvents';
 
 /**
  * 副本管理器
@@ -12,7 +15,7 @@ import { CameraSystem, CameraZone } from '../systems/camera';
  */
 class DungeonManager {
     private static instance: DungeonManager;
-    private instances: Map<string, DungeonInstance | MultiStageDungeonInstance> = new Map();
+    private instances: Map<string, DungeonInstance | MultiStageDungeonInstance | RoguelikeDungeonInstance> = new Map();
     private playerDungeonMap: Map<PlayerID, string> = new Map();
     private nextInstanceId: number = 1;
     private instanceZoneMap: Map<string, number> = new Map();
@@ -32,6 +35,11 @@ class DungeonManager {
      * 创建新的副本实例
      */
     public CreateDungeon(dungeonId: string, playerId?: PlayerID): string | null {
+        // 检查是否是 Roguelike 副本
+        if (dungeonId === 'roguelike_test') {
+            return this.CreateRoguelikeDungeon(playerId);
+        }
+        
         // 检查是否是多阶段副本
         if (dungeonId === 'frost_temple_multi') {
             return this.CreateMultiStageDungeon(playerId);
@@ -108,6 +116,44 @@ class DungeonManager {
     }
     
     /**
+     * 创建 Roguelike 副本
+     */
+    private CreateRoguelikeDungeon(playerId?: PlayerID): string | null {
+        const config = ROGUELIKE_TEST_CONFIG;
+        const dungeonId = config.dungeonId;
+        
+        const instanceId = `${dungeonId}_${this.nextInstanceId++}`;
+        const zoneManager = GetDungeonZoneManager();
+        const zone = zoneManager.AllocateZone(instanceId);
+        
+        if (!zone) {
+            print(`[DungeonManager] 错误：无法分配区域给副本 ${instanceId}`);
+            if (playerId !== undefined) {
+                GameRules.SendCustomMessage(
+                    `<font color='#FF0000'>副本区域已满，请稍后再试</font>`,
+                    playerId,
+                    0
+                );
+            }
+            return null;
+        }
+        
+        const spawnPosition = Vector(zone.centerX, zone.centerY, 128);
+        const instance = new RoguelikeDungeonInstance(instanceId, spawnPosition, config);
+        instance.Initialize();
+        
+        this.instances.set(instanceId, instance as any);
+        this.instanceZoneMap.set(instanceId, zone.id);
+        
+        // 注册到事件系统
+        RoguelikeEvents.RegisterInstance(instanceId, instance);
+        
+        print(`[DungeonManager] 创建Roguelike副本: ${instanceId} at 区域${zone.id}`);
+        
+        return instanceId;
+    }
+    
+    /**
      * 玩家进入副本
      */
     public EnterDungeon(playerId: PlayerID, instanceId: string): boolean {
@@ -140,7 +186,16 @@ class DungeonManager {
             
             // 获取地图数据
             let mapData;
-            if (instance instanceof MultiStageDungeonInstance) {
+            if (instance instanceof RoguelikeDungeonInstance) {
+                // Roguelike副本由内部处理传送
+                CameraSystem.SetZone(playerId, CameraZone.BATTLE_ROOM);
+                GameRules.SendCustomMessage(
+                    '<font color="#00FF00">已进入副本</font>',
+                    playerId,
+                    0
+                );
+                return undefined;
+            } else if (instance instanceof MultiStageDungeonInstance) {
                 mapData = (instance as any).config?.stages[0]?.mapData;
             } else {
                 mapData = (instance as DungeonInstance).GetMapData();
