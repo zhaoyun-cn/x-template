@@ -16,12 +16,13 @@ export class MultiStageDungeonInstance {
     private currentGenerator: DungeonGenerator | null = null;
     private completedStages: Set<string> = new Set();
     
-    public portalEntity: CDOTA_BaseNPC | null = null;
-    private portalParticles: ParticleID[] = [];  // ✅ ParticleID 类型
     private startTime: number = 0;
     
-    // 记录正在读条的玩家
-    private channelingPlayers: Set<PlayerID> = new Set();
+    // 积分系统
+    public currentScore: number = 0;  // ✅ 改为 public
+    public requiredScore: number = 10;
+    public spawnedUnits: CDOTA_BaseNPC[] = [];  // ✅ 改为 public
+    private isWaitingForNextStage: boolean = false;
     
     constructor(instanceId: string, basePosition: Vector, config: MultiStageDungeonConfig) {
         this.instanceId = instanceId;
@@ -51,6 +52,11 @@ export class MultiStageDungeonInstance {
         
         print(`[MultiStageDungeon] 生成阶段: ${stage.stageName}`);
         
+        // 重置积分
+        this.currentScore = 0;
+        this.spawnedUnits = [];
+        this.isWaitingForNextStage = false;
+        
         const stageCenter = Vector(
             this.basePosition.x + stage.offsetX,
             this.basePosition.y + stage.offsetY,
@@ -64,278 +70,163 @@ export class MultiStageDungeonInstance {
         this.currentGenerator = new DungeonGenerator(stageCenter, stage.mapData);
         this.currentGenerator.Generate();
         
-        this.SpawnImmediateUnits(stage);
+        // 刷新所有怪物（包括触发式的）
+        this.SpawnAllUnits(stage);
         
-        if (! stage.isFinalStage && stage.portalPosition) {
-            this.SpawnPortal(stage);
+        // 通知玩家
+        for (const playerId of this.players) {
+            GameRules.SendCustomMessage(
+                `<font color="#FFD700">【${stage.stageName}】击杀怪物获得积分 (需要${this.requiredScore}分)</font>`,
+                playerId,
+                0
+            );
         }
     }
     
     /**
-     * 刷新立即刷怪点
+     * 刷新所有怪物
      */
-    private SpawnImmediateUnits(stage: DungeonStageConfig): void {
+    private SpawnAllUnits(stage: DungeonStageConfig): void {
         if (!this.currentGenerator) return;
         
-        print(`[MultiStageDungeon] 检查立即刷怪点，共 ${stage.mapData.spawners.length} 个刷怪点`);
+        print(`[MultiStageDungeon] 刷新所有怪物，共 ${stage.mapData.spawners.length} 个刷怪点`);
         
         for (const spawner of stage.mapData.spawners) {
-            print(`[MultiStageDungeon] 刷怪点 ${spawner.id}: 模式=${spawner.spawnMode}, 单位=${spawner.unitType}, 数量=${spawner.count}`);
+            const worldPos = this.currentGenerator.GridToWorld(spawner.x, spawner.y);
+            print(`[MultiStageDungeon] 刷怪: ${spawner.id} at (${worldPos.x}, ${worldPos.y})`);
             
-            if (spawner.spawnMode === 'immediate' || spawner.spawnMode === 'instant') {
-                const worldPos = this.currentGenerator.GridToWorld(spawner.x, spawner.y);
-                print(`[MultiStageDungeon] 正在刷怪: ${spawner.id} at (${worldPos.x}, ${worldPos.y})`);
-                
-                const units = this.currentGenerator.SpawnUnits(worldPos, spawner);
-                print(`[MultiStageDungeon] ✅ 立即刷怪: ${spawner.id}, 生成 ${units.length} 个单位`);
-                
-                // 为BOSS添加击杀监听
-                if (spawner.id === 'spawn_boss' && units.length > 0) {
-                    print(`[MultiStageDungeon] 为BOSS添加击杀监听`);
-                    for (const unit of units) {
-                        ListenToGameEvent('entity_killed', (event) => {
-                            const killedUnit = EntIndexToHScript(event.entindex_killed);
-                            if (killedUnit === unit) {
-                                print(`[MultiStageDungeon] 🎉 BOSS被击杀！`);
-                                this.CompleteDungeon();
-                            }
-                        }, undefined);
-                    }
-                }
+            const units = this.currentGenerator.SpawnUnits(worldPos, spawner);
+            print(`[MultiStageDungeon] ✅ 生成 ${units.length} 个单位`);
+            
+            // 保存所有单位并监听击杀
+            for (const unit of units) {
+                this.spawnedUnits.push(unit);
+                this.ListenToUnitKilled(unit, spawner.id);
             }
+        }
+        
+        print(`[MultiStageDungeon] 总共刷新了 ${this.spawnedUnits.length} 个单位`);
+    }
+    
+    /**
+     * 监听单位被击杀
+     */
+    private ListenToUnitKilled(unit: CDOTA_BaseNPC, spawnerId: string): void {
+        ListenToGameEvent('entity_killed', (event) => {
+            const killedUnit = EntIndexToHScript(event.entindex_killed);
+            if (killedUnit !== unit) return;
+            
+            // 判断是否BOSS
+            const isBoss = spawnerId === 'spawn_boss';
+            const score = isBoss ? 10 : 1;
+            
+            this.OnUnitKilled(unit, score, isBoss);
+        }, undefined);
+    }
+    
+    /**
+     * 单位被击杀
+     */
+    private OnUnitKilled(unit: CDOTA_BaseNPC, score: number, isBoss: boolean): void {
+        if (this.isWaitingForNextStage) return;
+        
+        this.currentScore += score;
+        
+        print(`[MultiStageDungeon] 击杀单位，获得 ${score} 分，当前: ${this.currentScore}/${this.requiredScore}`);
+        
+        // 通知所有玩家
+        for (const playerId of this.players) {
+            GameRules.SendCustomMessage(
+                `<font color="#00FF00">+${score}分！当前: ${this.currentScore}/${this.requiredScore}</font>`,
+                playerId,
+                0
+            );
+        }
+        
+        // 检查是否达到要求
+        if (this.currentScore >= this.requiredScore) {
+            this.OnStageComplete();
         }
     }
     
     /**
-     * 生成阶段传送门
+     * 阶段完成
      */
-    private SpawnPortal(stage: DungeonStageConfig): void {
-        if (!this.currentGenerator || !stage.portalPosition) return;
+    public OnStageComplete(): void {  // ✅ 改为 public
+        if (this.isWaitingForNextStage) return;
+        this.isWaitingForNextStage = true;
         
-        const portalPos = this.currentGenerator.GridToWorld(
-            stage.portalPosition.x,
-            stage.portalPosition.y
-        );
+        print(`[MultiStageDungeon] 🎉 阶段完成！积分达标`);
         
-        portalPos.z = 192;
+        // 通知玩家
+        for (const playerId of this.players) {
+            GameRules.SendCustomMessage(
+                '<font color="#FFD700">🎉 阶段完成！清理怪物中...</font>',
+                playerId,
+                0
+            );
+        }
         
-        print(`[MultiStageDungeon] 生成传送门在 (${portalPos.x}, ${portalPos.y}, ${portalPos.z})`);
+        // 清空所有怪物
+        this.ClearAllUnits();
         
-        // 使用影魔作为传送门
-        this.portalEntity = CreateUnitByName(
-            'npc_dota_hero_nevermore',
-            portalPos,
-            false,
-            null,
-            null,
-            DotaTeam.NOTEAM
-        );
-        
-        if (this.portalEntity) {
-            // 设置为无敌、定身、不可攻击
-            this.portalEntity.AddNewModifier(this.portalEntity, null, 'modifier_invulnerable', {});
-            this.portalEntity.AddNewModifier(this.portalEntity, null, 'modifier_rooted', {});
-            this.portalEntity.SetModelScale(2.5);
-            this.portalEntity.StartGesture(GameActivity.DOTA_SPAWN);
-            this.portalEntity.SetAttackCapability(UnitAttackCapability.NO_ATTACK);
-            
-            // 移除经验和金钱
-            if (this.portalEntity.IsCreature && this.portalEntity.IsCreature()) {
-                (this.portalEntity as CDOTA_BaseNPC_Creature).SetDeathXP(0);
-                (this.portalEntity as CDOTA_BaseNPC_Creature).SetMinimumGoldBounty(0);
-                (this.portalEntity as CDOTA_BaseNPC_Creature).SetMaximumGoldBounty(0);
-            }
-            
-            // ✅ 添加粒子效果 - 在地面
-            const groundPos = Vector(portalPos.x, portalPos.y, GetGroundHeight(portalPos, this.portalEntity));
-            
-            // 底部光圈
-            const p1 = ParticleManager.CreateParticle(
-                'particles/econ/events/ti6/teleport_end_ground_ti6.vpcf',
-                ParticleAttachment.WORLDORIGIN,
-                null
-            ) as ParticleID;
-            ParticleManager.SetParticleControl(p1, 0, groundPos);
-            this.portalParticles.push(p1);
-            
-            // 蓝色旋转效果
-            const p2 = ParticleManager.CreateParticle(
-                'particles/econ/events/ti6/teleport_start_ti6.vpcf',
-                ParticleAttachment.WORLDORIGIN,
-                null
-            ) as ParticleID;
-            ParticleManager.SetParticleControl(p2, 0, groundPos);
-            this.portalParticles.push(p2);
-            
-            // 黑色阴影效果
-            const p3 = ParticleManager.CreateParticle(
-                'particles/units/heroes/hero_nevermore/nevermore_shadowraze.vpcf',
-                ParticleAttachment.WORLDORIGIN,
-                null
-            ) as ParticleID;
-            ParticleManager.SetParticleControl(p3, 0, groundPos);
-            this.portalParticles.push(p3);
-            
-            // 光柱
-            const topPos = Vector(portalPos.x, portalPos.y, portalPos.z + 800);
-            const p4 = ParticleManager.CreateParticle(
-                'particles/items2_fx/teleport_end.vpcf',
-                ParticleAttachment.WORLDORIGIN,
-                null
-            ) as ParticleID;
-            ParticleManager.SetParticleControl(p4, 0, groundPos);
-            ParticleManager.SetParticleControl(p4, 1, topPos);
-            this.portalParticles.push(p4);
-            
-            print(`[MultiStageDungeon] ✅ 传送门创建成功 (影魔) at (${portalPos.x}, ${portalPos.y}, ${portalPos.z})`);
-            print(`[MultiStageDungeon] ✅ 开始监听玩家靠近`);
-            
-            // 监听靠近
-            this.MonitorPortalInteraction();
+        // 检查是否最终阶段
+        const currentStage = this.GetStageConfig(this.currentStageId);
+        if (currentStage?.isFinalStage) {
+            // 最终阶段完成，结束副本
+            Timers.CreateTimer(2, () => {
+                this.CompleteDungeon();
+                return undefined;
+            });
         } else {
-            print(`[MultiStageDungeon] ❌ 传送门创建失败`);
+            // 5秒后弹出选择界面
+            this.StartCountdownToStageSelection();
         }
     }
     
     /**
-     * 监听传送门交互（靠近自动触发）
+     * 清空所有怪物
      */
-    private MonitorPortalInteraction(): void {
-        if (!this.portalEntity) {
-            print(`[MultiStageDungeon] ❌ 监听失败：传送门不存在`);
-            return;
+    private ClearAllUnits(): void {
+        print(`[MultiStageDungeon] 开始清理 ${this.spawnedUnits.length} 个单位`);
+        
+        let clearedCount = 0;
+        
+        for (let i = 0; i < this.spawnedUnits.length; i++) {
+            const unit = this.spawnedUnits[i];
+            if (unit && IsValidEntity(unit) && !unit.IsNull()) {
+                if (unit.IsAlive()) {
+                    print(`[MultiStageDungeon] 清理单位: ${unit.GetUnitName()}`);
+                    unit.ForceKill(false);
+                    clearedCount++;
+                } else {
+                    print(`[MultiStageDungeon] 单位已死亡: ${unit.GetUnitName()}`);
+                }
+            } else {
+                print(`[MultiStageDungeon] 单位无效或为空 (索引 ${i})`);
+            }
         }
         
-        print(`[MultiStageDungeon] ✅ 监听循环已启动`);
-        
-        Timers.CreateTimer(0.5, () => {
-            // 检查传送门是否存在
-            if (! this.portalEntity || this.portalEntity.IsNull()) {
-                print(`[MultiStageDungeon] 传送门已销毁，停止监听`);
-                return undefined;
-            }
-            
-            // 检查副本状态
-            if (this.state !== DungeonInstanceState.RUNNING) {
-                print(`[MultiStageDungeon] 副本未运行，停止监听`);
-                return undefined;
-            }
-            
-            const portalPos = this.portalEntity.GetAbsOrigin();
-            
-            // 遍历所有玩家
-            for (const playerId of this.players) {
-                const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-                if (! hero || ! hero.IsAlive()) {
-                    continue;
-                }
-                
-                // 跳过已经在读条的玩家
-                if (this.channelingPlayers.has(playerId)) {
-                    continue;
-                }
-                
-                const heroPos = hero.GetAbsOrigin();
-                const dx = portalPos.x - heroPos.x;
-                const dy = portalPos.y - heroPos.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                // ✅ 每次都打印日志
-                print(`[MultiStageDungeon] 监听中 - 玩家 ${playerId} 距离: ${distance.toFixed(2)}`);
-                
-                // 显示提示
-                if (distance <= 600 && distance > 350) {
-                    GameRules.SendCustomMessage(
-                        '<font color="#00FFFF">【走近传送门】进入下一阶段</font>',
-                        playerId,
-                        0
-                    );
-                }
-                
-                // ✅ 靠近传送门时自动触发（350距离内）
-                if (distance <= 350) {
-                    print(`[MultiStageDungeon] 🚪 玩家 ${playerId} 接近传送门，触发传送！`);
-                    this.StartPortalChanneling(playerId);
-                }
-            }
-            
-            return 0.5;  // 每0.5秒检测一次
-        });
+        print(`[MultiStageDungeon] ✅ 清理完成，共清理 ${clearedCount} 个存活单位`);
+        this.spawnedUnits = [];
     }
     
     /**
-     * 开始传送门读条 - 5秒
+     * 开始倒计时到关卡选择
      */
-    public StartPortalChanneling(playerId: PlayerID): void {
-        // 防止重复触发
-        if (this.channelingPlayers.has(playerId)) {
-            print(`[MultiStageDungeon] 玩家 ${playerId} 已在读条中`);
-            return;
-        }
-        
-        this.channelingPlayers.add(playerId);
-        
-        print(`[MultiStageDungeon] 🔔 玩家 ${playerId} 开始读条`);
-        
-        const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-        if (!hero) {
-            this.channelingPlayers.delete(playerId);
-            return;
-        }
-        
-        // 记录起始位置
-        const startPos = hero.GetAbsOrigin();
-        
-        // 显示读条提示
-        GameRules.SendCustomMessage(
-            '<font color="#00FFFF">传送中...  请勿移动 (5秒)</font>',
-            playerId,
-            0
-        );
-        
-        // 定身5秒
-        hero.Stop();
-        hero.AddNewModifier(hero, null, 'modifier_stunned', { duration: 5 });
-        
-        // ✅ 添加读条粒子效果 - 在英雄脚下
-        const heroGroundPos = Vector(startPos.x, startPos.y, GetGroundHeight(startPos, hero));
-        const particle = ParticleManager.CreateParticle(
-            'particles/items2_fx/teleport_start.vpcf',
-            ParticleAttachment.WORLDORIGIN,
-            null
-        ) as ParticleID;
-        ParticleManager.SetParticleControl(particle, 0, heroGroundPos);
-        
-        // 每秒倒计时提示
+    private StartCountdownToStageSelection(): void {
         let countdown = 5;
-        let cancelled = false;
         
         const countdownTimer = () => {
-            if (cancelled || countdown <= 0) return;
-            
-            // 检查玩家是否移动
-            const currentPos = hero.GetAbsOrigin();
-            const moved = Math.abs(currentPos.x - startPos.x) > 100 || Math.abs(currentPos.y - startPos.y) > 100;
-            
-            if (moved) {
-                print(`[MultiStageDungeon] 玩家 ${playerId} 移动了，取消传送`);
-                GameRules.SendCustomMessage(
-                    '<font color="#FF0000">传送已取消（你移动了）</font>',
-                    playerId,
-                    0
-                );
-                cancelled = true;
-                this.channelingPlayers.delete(playerId);
-                hero.RemoveModifierByName('modifier_stunned');
-                ParticleManager.DestroyParticle(particle, false);
-                ParticleManager.ReleaseParticleIndex(particle);
+            if (countdown <= 0) {
+                // 弹出UI
+                this.ShowStageSelectionUI();
                 return;
             }
             
-            // 显示倒计时
-            if (countdown > 0) {
+            for (const playerId of this.players) {
                 GameRules.SendCustomMessage(
-                    `<font color="#FFD700">${countdown}...</font>`,
+                    `<font color="#FFFF00">${countdown}秒后选择下一关卡...</font>`,
                     playerId,
                     0
                 );
@@ -343,65 +234,107 @@ export class MultiStageDungeonInstance {
             
             countdown--;
             
-            if (countdown > 0) {
-                Timers.CreateTimer(1, () => {
-                    countdownTimer();
-                    return undefined;
-                });
-            }
+            Timers.CreateTimer(1, () => {
+                countdownTimer();
+                return undefined;
+            });
         };
         
         countdownTimer();
-        
-        // 5秒后完成传送
-        Timers.CreateTimer(5, () => {
-            if (cancelled) return undefined;
-            
-            // 再次检查是否移动
-            const currentPos = hero.GetAbsOrigin();
-            const moved = Math.abs(currentPos.x - startPos.x) > 100 || Math.abs(currentPos.y - startPos.y) > 100;
-            
-            if (moved) {
-                print(`[MultiStageDungeon] 玩家 ${playerId} 传送前移动了，取消`);
-                this.channelingPlayers.delete(playerId);
-                ParticleManager.DestroyParticle(particle, false);
-                ParticleManager.ReleaseParticleIndex(particle);
-                return undefined;
-            }
-            
-            // 播放音效
-            hero.EmitSound('Portal.Loop_Disappear');
-            
-            // 销毁粒子
-            ParticleManager.DestroyParticle(particle, false);
-            ParticleManager.ReleaseParticleIndex(particle);
-            
-            // 完成传送
-            this.OnPortalChannelComplete(playerId);
-            this.channelingPlayers.delete(playerId);
-            
-            return undefined;
-        });
     }
     
     /**
-     * 读条完成
+     * 显示关卡选择UI
      */
-    private OnPortalChannelComplete(playerId: PlayerID): void {
-        const currentStage = this.GetStageConfig(this.currentStageId);
-        if (! currentStage) return;
+    private ShowStageSelectionUI(): void {
+        print(`[MultiStageDungeon] 显示关卡选择UI`);
         
-        this.completedStages.add(this.currentStageId);
+        // 获取所有可用的下一阶段
+        const availableStages = this.GetAvailableNextStages();
         
-        print(`[MultiStageDungeon] 玩家 ${playerId} 完成阶段: ${currentStage.stageName}`);
-        
-        const nextStageId = this.GetNextStageId(this.currentStageId);
-        
-        if (nextStageId) {
-            this.EnterNextStage(nextStageId);
-        } else {
-            print(`[MultiStageDungeon] 没有下一阶段`);
+        if (availableStages.length === 0) {
+            // 没有下一阶段，完成副本
+            this.CompleteDungeon();
+            return;
         }
+        
+        // 发送UI事件给客户端
+        for (const playerId of this.players) {
+            const player = PlayerResource.GetPlayer(playerId);
+            if (player) {
+                // 发送自定义事件到UI
+                CustomGameEventManager.Send_ServerToPlayer(
+                    player,
+                    'dungeon_stage_selection' as never,
+                    {
+                        instanceId: this.instanceId,
+                        stages: availableStages.map(stage => ({
+                            stageId: stage.stageId,
+                            stageName: stage.stageName,
+                            description: stage.description,
+                        }))
+                    } as never
+                );
+            }
+            
+            // 同时在聊天显示（备用）
+            GameRules.SendCustomMessage(
+                '<font color="#00FFFF">【选择下一关卡】</font>',
+                playerId,
+                0
+            );
+            
+            for (let i = 0; i < availableStages.length; i++) {
+                const stage = availableStages[i];
+                GameRules.SendCustomMessage(
+                    `<font color="#FFFF00">${i + 1}.${stage.stageName} - ${stage.description}</font>`,
+                    playerId,
+                    0
+                );
+            }
+            
+            GameRules.SendCustomMessage(
+                '<font color="#00FF00">输入 -stage 1 / -stage 2 选择关卡</font>',
+                playerId,
+                0
+            );
+        }
+    }
+    
+    /**
+     * 获取可用的下一阶段
+     */
+    public GetAvailableNextStages(): DungeonStageConfig[] {  // ✅ 改为 public
+        const currentIndex = this.config.stages.findIndex(s => s.stageId === this.currentStageId);
+        if (currentIndex < 0) return [];
+        
+        // 返回当前阶段之后的所有阶段
+        const result: DungeonStageConfig[] = [];
+        for (let i = currentIndex + 1; i < this.config.stages.length; i++) {
+            result.push(this.config.stages[i]);
+        }
+        return result;
+    }
+    
+    /**
+     * 选择下一阶段（由命令调用）
+     */
+    public SelectNextStage(stageIndex: number): boolean {
+        const availableStages = this.GetAvailableNextStages();
+        
+        print(`[MultiStageDungeon] SelectNextStage: 索引=${stageIndex}, 可用=${availableStages.length}`);
+        
+        if (stageIndex < 0 || stageIndex >= availableStages.length) {
+            print(`[MultiStageDungeon] 无效的阶段索引: ${stageIndex}`);
+            return false;
+        }
+        
+        const selectedStage = availableStages[stageIndex];
+        print(`[MultiStageDungeon] 选择阶段: ${selectedStage.stageName}`);
+        
+        this.EnterNextStage(selectedStage.stageId);
+        
+        return true;
     }
     
     /**
@@ -413,21 +346,8 @@ export class MultiStageDungeonInstance {
         
         print(`[MultiStageDungeon] 进入下一阶段: ${stage.stageName}`);
         
-        // 销毁粒子
-        for (const particleId of this.portalParticles) {
-            ParticleManager.DestroyParticle(particleId, false);
-            ParticleManager.ReleaseParticleIndex(particleId);
-        }
-        this.portalParticles = [];
-        
-        // 移除旧传送门
-        if (this.portalEntity && ! this.portalEntity.IsNull()) {
-            UTIL_Remove(this.portalEntity);
-            this.portalEntity = null;
-        }
-        
-        // 清空读条玩家列表
-        this.channelingPlayers.clear();
+        // 标记完成当前阶段
+        this.completedStages.add(this.currentStageId);
         
         // 更新当前阶段
         this.currentStageId = stageId;
@@ -441,7 +361,7 @@ export class MultiStageDungeonInstance {
         // 通知玩家
         for (const playerId of this.players) {
             GameRules.SendCustomMessage(
-                `<font color="#00FF00">进入：${stage.stageName}</font>`,
+                `<font color="#00FF00">✅ 进入：${stage.stageName}</font>`,
                 playerId,
                 0
             );
@@ -475,17 +395,6 @@ export class MultiStageDungeonInstance {
     }
     
     /**
-     * 获取下一阶段ID
-     */
-    private GetNextStageId(currentId: string): string | null {
-        const currentIndex = this.config.stages.findIndex(s => s.stageId === currentId);
-        if (currentIndex >= 0 && currentIndex < this.config.stages.length - 1) {
-            return this.config.stages[currentIndex + 1].stageId;
-        }
-        return null;
-    }
-    
-    /**
      * 获取阶段配置
      */
     private GetStageConfig(stageId: string): DungeonStageConfig | null {
@@ -508,6 +417,7 @@ export class MultiStageDungeonInstance {
         if (! this.players.includes(playerId)) {
             this.players.push(playerId);
         }
+        print(`[MultiStageDungeon] 添加玩家 ${playerId}，当前玩家数: ${this.players.length}`);
     }
     
     /**
@@ -518,7 +428,7 @@ export class MultiStageDungeonInstance {
         if (index > -1) {
             this.players.splice(index, 1);
         }
-        this.channelingPlayers.delete(playerId);
+        print(`[MultiStageDungeon] 移除玩家 ${playerId}，当前玩家数: ${this.players.length}`);
     }
     
     /**
@@ -576,9 +486,6 @@ export class MultiStageDungeonInstance {
         
         print(`[MultiStageDungeon] 玩家 ${playerId} 死亡，返回城镇`);
         
-        // 取消读条
-        this.channelingPlayers.delete(playerId);
-        
         GameRules.SendCustomMessage(
             `<font color='#FF0000'>你已死亡，2秒后返回城镇</font>`,
             playerId,
@@ -609,23 +516,15 @@ export class MultiStageDungeonInstance {
             this.currentGenerator.Cleanup();
         }
         
-        // 清理粒子
-        for (const particleId of this.portalParticles) {
-            ParticleManager.DestroyParticle(particleId, false);
-            ParticleManager.ReleaseParticleIndex(particleId);
-        }
-        this.portalParticles = [];
-        
-        if (this.portalEntity && !this.portalEntity.IsNull()) {
-            UTIL_Remove(this.portalEntity);
-        }
-        
+        this.ClearAllUnits();
         this.players = [];
-        this.channelingPlayers.clear();
     }
     
     // Getters
     public GetState(): DungeonInstanceState { return this.state; }
     public GetInstanceId(): string { return this.instanceId; }
-    public GetPlayers(): PlayerID[] { return this.players; }
+    public GetPlayers(): PlayerID[] { 
+        print(`[MultiStageDungeon] GetPlayers 被调用，返回 ${this.players.length} 个玩家`);
+        return this.players; 
+    }
 }
