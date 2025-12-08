@@ -200,22 +200,23 @@ private static RegisterDungeonEvents(): void {
         
         // 副本生成位置：战斗区域，高度128
         // 根据副本ID设置不同的位置，避免重叠
-        const baseX = 10000;
-        const baseY = 10000;
+        // 战斗区域范围: X(-2000 to 2000), Y(2000 to 10000)
+        const baseX = 0;       // X轴中心
+        const baseY = 3500;    // Y轴起始位置（留出一些边距）
         const allIds = Object.keys(DUNGEON_CONFIGS);
         const dungeonIndex = allIds.indexOf(dungeonId);
-        const offsetX = dungeonIndex * 3000; // 每个副本间隔3000单位
+        const offsetY = dungeonIndex * 3000; // 每个副本沿Y轴间隔3000单位
         
-        const spawnPosition = Vector(baseX + offsetX, baseY, 128);
+        const spawnPosition = Vector(baseX, baseY + offsetY, 128);
         
-        print(`[EventHandlers] 创建副本在位置: (${spawnPosition.x}, ${spawnPosition. y}, ${spawnPosition.z})`);
+        print(`[EventHandlers] 创建副本在位置: (${spawnPosition.x}, ${spawnPosition.y}, ${spawnPosition.z})`);
         
         const instanceId = manager.CreateDungeon(dungeonId, spawnPosition);
         
         if (instanceId) {
-            manager. EnterDungeon(playerId, instanceId);
+            manager.EnterDungeon(playerId, instanceId);
             
-            hero.EmitSound("Portal. Hero_Appear");
+            hero.EmitSound("Portal.Hero_Appear");
             
             GameRules.SendCustomMessage(
                 `<font color='#00FF00'>正在进入副本: ${dungeonId}... </font>`,

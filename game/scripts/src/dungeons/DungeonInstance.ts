@@ -296,5 +296,19 @@ export class DungeonInstance {
      */
     public GetPlayers(): PlayerID[] {
         return this.players;
+
+    
     }
+      /**
+     * 获取副本地图数据
+     */
+    public GetMapData(): DungeonMapData {
+        return this.generator.GetMapData();
+    }
+
+    /**
+     * 获取副本生成器
+     */
+    public GetGenerator(): DungeonGenerator {
+        return this.generator;}
 }

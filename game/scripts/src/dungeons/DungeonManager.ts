@@ -115,8 +115,8 @@ export class DungeonManager {
         if (!hero) return;
         
         // 获取副本配置和入口位置
-        const config = (instance as any).config;
-        const generator = (instance as any).generator;
+        const config = instance.GetMapData();
+const generator = instance.GetGenerator();
         
         let entrancePos: Vector;
         

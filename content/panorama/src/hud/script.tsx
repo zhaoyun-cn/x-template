@@ -167,15 +167,30 @@ interface DungeonInfo {
     description: string;
 }
 
+
+
+    
 const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, onClose }) => {
     const [dungeons, setDungeons] = useState<DungeonInfo[]>([]);
 
     useEffect(() => {
         // 监听副本列表更新
         const listListener = GameEvents.Subscribe("update_dungeon_list", (data: any) => {
-            $.Msg(`[DungeonMenu] 收到副本列表: ${JSON.stringify(data)}`);
+            $.Msg(`[DungeonMenu] 收到副本列表`);
+            
             if (data && data.dungeons) {
-                setDungeons(data.dungeons);
+                let dungeonArray: DungeonInfo[];
+                
+                // DOTA 2 会将 Lua 数组转为 JavaScript 对象
+                if (Array.isArray(data.dungeons)) {
+                    dungeonArray = data.dungeons;
+                } else {
+                    // 对象转数组
+                    dungeonArray = Object.values(data.dungeons) as DungeonInfo[];
+                }
+                
+                $.Msg(`[DungeonMenu] 解析后的副本数量: ${dungeonArray.length}`);
+                setDungeons(dungeonArray);
             }
         });
 
@@ -247,7 +262,7 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
                             marginTop: '50px'
                         }} />
                     ) : (
-                        dungeons.map((dungeon, index) => (
+                        dungeons.map((dungeon) => (
                             <Panel
                                 key={dungeon.id}
                                 onactivate={() => selectDungeon(dungeon.id)}
