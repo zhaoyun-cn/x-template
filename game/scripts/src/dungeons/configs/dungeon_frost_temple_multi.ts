@@ -1,5 +1,4 @@
 import { MultiStageDungeonConfig } from '../types_multistage';
-import { DUNGEON_FROST_TEMPLE } from './dungeon_frost_temple';
 
 /**
  * 冰霜神殿 - 多阶段版本（积分制）
@@ -19,10 +18,29 @@ export const DUNGEON_FROST_TEMPLE_MULTI: MultiStageDungeonConfig & { mapName: st
             offsetY: 0,
             isFinalStage: false,
             mapData: {
-                ...DUNGEON_FROST_TEMPLE,
+                // ✅ 不使用 ...DUNGEON_FROST_TEMPLE，完全自定义
+                mapId: 'frost_temple_stage1',
                 mapName: '冰封前厅',
+                description: '清理小怪',
+                width: 20,
+                height: 20,
+                tileSize: 128,
+                
+                // 简化的地形 - 只保留基本墙壁
+                tiles: [
+                    // 上墙
+                    ...Array.from({ length: 20 }, (_, i) => ({ x: i, y: 0, type: 'wall' as const })),
+                    // 下墙
+                    ...Array.from({ length: 20 }, (_, i) => ({ x: i, y: 19, type: 'wall' as const })),
+                    // 左墙（留出入口 5-15）
+                    ...Array.from({ length: 5 }, (_, i) => ({ x: 0, y: i, type: 'wall' as const })),
+                    ...Array.from({ length: 5 }, (_, i) => ({ x: 0, y: 15 + i, type: 'wall' as const })),
+                    // 右墙
+                    ...Array.from({ length: 20 }, (_, i) => ({ x: 19, y: i, type: 'wall' as const })),
+                ],
+                
+                // ✅ 只有这两个刷怪点
                 spawners: [
-                    // 5个狗头人在入口
                     {
                         id: 'spawn_entrance_01',
                         x: 2,
@@ -31,7 +49,6 @@ export const DUNGEON_FROST_TEMPLE_MULTI: MultiStageDungeonConfig & { mapName: st
                         count: 5,
                         spawnMode: 'instant',
                     },
-                    // 5个冰霜萨满在第一房间
                     {
                         id: 'spawn_room1',
                         x: 8,
@@ -41,7 +58,9 @@ export const DUNGEON_FROST_TEMPLE_MULTI: MultiStageDungeonConfig & { mapName: st
                         spawnMode: 'instant',
                     },
                 ],
+                
                 triggers: [],
+                decorations: [],
                 entryPoints: [{ x: -2, y: 10 }],
             }
         },
@@ -53,20 +72,41 @@ export const DUNGEON_FROST_TEMPLE_MULTI: MultiStageDungeonConfig & { mapName: st
             offsetY: 0,
             isFinalStage: true,
             mapData: {
-                ...DUNGEON_FROST_TEMPLE,
+                // ✅ 不使用 ...DUNGEON_FROST_TEMPLE，完全自定义
+                mapId: 'frost_temple_stage2',
                 mapName: 'BOSS房间',
+                description: '击败黑龙BOSS',
+                width: 20,
+                height: 20,
+                tileSize: 128,
+                
+                // 简化的地形
+                tiles: [
+                    // 上墙
+                    ...Array.from({ length: 20 }, (_, i) => ({ x: i, y: 0, type: 'wall' as const })),
+                    // 下墙
+                    ...Array.from({ length: 20 }, (_, i) => ({ x: i, y: 19, type: 'wall' as const })),
+                    // 左墙
+                    ...Array.from({ length: 20 }, (_, i) => ({ x: 0, y: i, type: 'wall' as const })),
+                    // 右墙
+                    ...Array.from({ length: 20 }, (_, i) => ({ x: 19, y: i, type: 'wall' as const })),
+                ],
+                
+                // ✅ 只有BOSS
                 spawners: [
                     {
                         id: 'spawn_boss',
-                        x: 17,
+                        x: 10,
                         y: 10,
                         unitType: 'npc_dota_neutral_black_dragon',
                         count: 1,
                         spawnMode: 'instant',
                     }
                 ],
+                
                 triggers: [],
-                entryPoints: [{ x: 15, y: 10 }],
+                decorations: [],
+                entryPoints: [{ x: 2, y: 10 }],
             }
         }
     ]
