@@ -65,85 +65,110 @@ export function RegisterDungeonCommands(): void {
         }
     }, '离开当前副本', 0);
     
-   // ✅ 修复：进入下一阶段
-Convars.RegisterCommand('-next', (_, playerIdStr: string) => {
-    // ✅ 从命令参数获取玩家ID
-    let playerId: PlayerID = 0;
-    
-    const player = Convars.GetCommandClient();
-    if (player) {
-        playerId = player.GetPlayerID();
-    } else {
-        // 如果无法获取玩家，尝试使用第一个玩家（单人测试）
-        playerId = 0;
-    }
-    
-    print(`[Commands] 玩家 ${playerId} 尝试使用传送门`);
-    
-    const manager = GetDungeonManager();
-    const instanceId = manager.GetPlayerDungeon(playerId);
-    
-    if (! instanceId) {
-        print('[Commands] 你不在任何副本中');
-        GameRules.SendCustomMessage(
-            '<font color="#FF0000">你不在任何副本中</font>',
-            playerId,
-            0
-        );
-        return;
-    }
-    
-    const instance = manager. GetDungeonInstance(instanceId);
-    if (instance && instance instanceof MultiStageDungeonInstance) {
-        const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-        if (! hero) {
-            print('[Commands] 错误：找不到英雄');
-            return;
+    // ✅ 进入下一阶段 - 完全重写
+    Convars.RegisterCommand('-next', () => {
+        // 遍历所有玩家，找到在副本中的玩家
+        const manager = GetDungeonManager();
+        
+        for (let playerId = 0; playerId < DOTA_MAX_TEAM_PLAYERS; playerId++) {
+            if (!PlayerResource.IsValidPlayerID(playerId)) continue;
+            
+            const instanceId = manager.GetPlayerDungeon(playerId);
+            if (!instanceId) continue;
+            
+            const instance = manager.GetDungeonInstance(instanceId);
+            if (!instance || !(instance instanceof MultiStageDungeonInstance)) continue;
+            
+            const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+            if (!hero) continue;
+            
+            const portalEntity = (instance as any).portalEntity;
+            if (!portalEntity || portalEntity.IsNull()) {
+                print('[Commands] 找不到传送门');
+                GameRules.SendCustomMessage(
+                    '<font color="#FF0000">找不到传送门</font>',
+                    playerId,
+                    0
+                );
+                continue;
+            }
+            
+            // 检查距离
+            const heroPos = hero.GetAbsOrigin();
+            const portalPos = portalEntity.GetAbsOrigin();
+            const dx = portalPos.x - heroPos.x;
+            const dy = portalPos.y - heroPos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            print(`[Commands] 玩家 ${playerId} 距离传送门: ${distance.toFixed(2)}`);
+            
+            if (distance > 800) {
+                GameRules.SendCustomMessage(
+                    `<font color="#FF0000">你离传送门太远了（当前${distance.toFixed(0)}，需要<800）</font>`,
+                    playerId,
+                    0
+                );
+                continue;
+            }
+            
+            // 开始传送
+            print(`[Commands] 玩家 ${playerId} 使用传送门`);
+            instance.StartPortalChanneling(playerId);
+            return;  // 只处理第一个符合条件的玩家
         }
         
-        const portalEntity = (instance as any).portalEntity;
-        if (! portalEntity || portalEntity.IsNull()) {
-            print('[Commands] 找不到传送门');
-            GameRules.SendCustomMessage(
-                '<font color="#FF0000">找不到传送门，请先完成当前阶段</font>',
-                playerId,
-                0
-            );
-            return;
-        }
-        
-        // 检查距离
-        const heroPos = hero.GetAbsOrigin();
-        const portalPos = portalEntity.GetAbsOrigin();
-        const dx = portalPos.x - heroPos. x;
-        const dy = portalPos.y - heroPos. y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        print(`[Commands] 玩家距离传送门: ${distance. toFixed(2)}`);
-        
-        if (distance > 800) {
-            GameRules.SendCustomMessage(
-                `<font color="#FF0000">你离传送门太远了（当前${distance.toFixed(0)}，需要<800）</font>`,
-                playerId,
-                0
-            );
-            return;
-        }
-        
-        // 开始传送
-        print(`[Commands] 玩家 ${playerId} 使用传送门`);
-        instance.StartPortalChanneling(playerId);
-    } else {
-        GameRules.SendCustomMessage(
-            '<font color="#FF0000">当前副本不支持此命令</font>',
-            playerId,
-            0
-        );
-    }
-}, '进入下一阶段', 0);
+        print('[Commands] 没有玩家在传送门附近');
+    }, '进入下一阶段', 0);
     
     // ✅ 查看传送门位置
     Convars.RegisterCommand('-portal_pos', () => {
+        const manager = GetDungeonManager();
+        
+        for (let playerId = 0; playerId < DOTA_MAX_TEAM_PLAYERS; playerId++) {
+            if (!PlayerResource.IsValidPlayerID(playerId)) continue;
+            
+            const instanceId = manager.GetPlayerDungeon(playerId);
+            if (!instanceId) continue;
+            
+            const instance = manager.GetDungeonInstance(instanceId);
+            if (instance && instance instanceof MultiStageDungeonInstance) {
+                const portalEntity = (instance as any).portalEntity;
+                if (portalEntity && ! portalEntity.IsNull()) {
+                    const pos = portalEntity.GetAbsOrigin();
+                    print(`[Commands] 传送门位置: (${pos.x}, ${pos.y}, ${pos.z})`);
+                    
+                    const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+                    if (hero) {
+                        const heroPos = hero.GetAbsOrigin();
+                        const dx = pos.x - heroPos.x;
+                        const dy = pos.y - heroPos.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        print(`[Commands] 你的位置: (${heroPos.x}, ${heroPos.y}, ${heroPos.z})`);
+                        print(`[Commands] 距离传送门: ${distance.toFixed(2)}`);
+                        
+                        GameRules.SendCustomMessage(
+                            `<font color="#FFFF00">传送门距离: ${distance.toFixed(0)}</font>`,
+                            playerId,
+                            0
+                        );
+                    }
+                } else {
+                    print('[Commands] 传送门不存在');
+                    GameRules.SendCustomMessage(
+                        '<font color="#FF0000">传送门不存在</font>',
+                        playerId,
+                        0
+                    );
+                }
+                return;
+            }
+        }
+        
+        print('[Commands] 没有玩家在副本中');
+    }, '查看传送门位置', 0);
+    
+    // 手动完成副本
+    Convars.RegisterCommand('-complete_dungeon', () => {
         const player = Convars.GetCommandClient();
         if (!player) return;
         
@@ -151,54 +176,7 @@ Convars.RegisterCommand('-next', (_, playerIdStr: string) => {
         const manager = GetDungeonManager();
         const instanceId = manager.GetPlayerDungeon(playerId);
         
-        if (!instanceId) {
-            print('[Commands] 你不在任何副本中');
-            return;
-        }
-        
-        const instance = manager.GetDungeonInstance(instanceId);
-        if (instance && instance instanceof MultiStageDungeonInstance) {
-            const portalEntity = (instance as any).portalEntity;
-            if (portalEntity && ! portalEntity.IsNull()) {
-                const pos = portalEntity.GetAbsOrigin();
-                print(`[Commands] 传送门位置: (${pos.x}, ${pos.y}, ${pos.z})`);
-                
-                const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-                if (hero) {
-                    const heroPos = hero.GetAbsOrigin();
-                    const dx = pos.x - heroPos.x;
-                    const dy = pos.y - heroPos.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    print(`[Commands] 你的位置: (${heroPos.x}, ${heroPos.y}, ${heroPos.z})`);
-                    print(`[Commands] 距离传送门: ${distance.toFixed(2)}`);
-                    
-                    GameRules.SendCustomMessage(
-                        `<font color="#FFFF00">传送门距离: ${distance.toFixed(0)}</font>`,
-                        playerId,
-                        0
-                    );
-                }
-            } else {
-                print('[Commands] 传送门不存在');
-                GameRules.SendCustomMessage(
-                    '<font color="#FF0000">传送门不存在</font>',
-                    playerId,
-                    0
-                );
-            }
-        }
-    }, '查看传送门位置', 0);
-    
-    // 手动完成副本
-    Convars.RegisterCommand('-complete_dungeon', () => {
-        const player = Convars.GetCommandClient();
-        if (! player) return;
-        
-        const playerId = player.GetPlayerID();
-        const manager = GetDungeonManager();
-        const instanceId = manager.GetPlayerDungeon(playerId);
-        
-        if (!instanceId) {
+        if (! instanceId) {
             print('[Commands] 你不在任何副本中');
             GameRules.SendCustomMessage(
                 '<font color="#FF0000">你不在任何副本中</font>',
@@ -225,7 +203,7 @@ Convars.RegisterCommand('-next', (_, playerIdStr: string) => {
     // 查看副本状态
     Convars.RegisterCommand('-dungeon_status', () => {
         const player = Convars.GetCommandClient();
-        if (!player) return;
+        if (! player) return;
         
         const playerId = player.GetPlayerID();
         const manager = GetDungeonManager();

@@ -4,6 +4,7 @@ import { GetDungeonConfig } from './configs/index';
 import { GetDungeonZoneManager } from './DungeonZoneManager';
 import { MultiStageDungeonInstance } from './MultiStageDungeonInstance';
 import { DUNGEON_FROST_TEMPLE_MULTI } from './configs/dungeon_frost_temple_multi';
+import { CameraSystem, CameraZone } from '../systems/camera';
 
 /**
  * 副本管理器
@@ -122,17 +123,17 @@ class DungeonManager {
             return false;
         }
         
-        // ✅ 添加传送提示
+        // 添加传送提示
         GameRules.SendCustomMessage(
             '<font color="#00FFFF">正在传送到副本...</font>',
             playerId,
             0
         );
         
-        // ✅ 定身1秒
+        // 定身1.5秒
         hero.AddNewModifier(hero, null, 'modifier_stunned', { duration: 1.5 });
         
-        // ✅ 延迟1.5秒后传送
+        // 延迟1.5秒后传送
         Timers.CreateTimer(1.5, () => {
             instance.AddPlayer(playerId);
             this.playerDungeonMap.set(playerId, instanceId);
@@ -169,6 +170,9 @@ class DungeonManager {
             
             // 播放传送音效
             hero.EmitSound('Portal.Hero_Appear');
+            
+            // ✅ 使用正确的摄像头区域：BATTLE_ROOM
+            CameraSystem.SetZone(playerId, CameraZone.BATTLE_ROOM);
             
             // 开始副本
             if (instance.GetState() === DungeonInstanceState.WAITING) {
@@ -213,6 +217,9 @@ class DungeonManager {
             // 播放音效
             hero.EmitSound('Portal.Hero_Appear');
         }
+        
+        // ✅ 使用正确的摄像头区域：TOWN
+        CameraSystem.SetZone(playerId, CameraZone.TOWN);
         
         print(`[DungeonManager] 玩家 ${playerId} 离开副本 ${instanceId}，原因: ${reason}`);
         
