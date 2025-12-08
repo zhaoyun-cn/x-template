@@ -1,169 +1,153 @@
 import { GetDungeonManager } from './DungeonManager';
-import { GetAllDungeonIds } from './configs/index';
-import { BATTLE_ROOM_SPAWN } from '../systems/camera/camera_zones';
+import { GetAllDungeonConfigs } from './configs/index';
+import { GetDungeonZoneManager } from './DungeonZoneManager';
 
 /**
- * 获取执行命令的玩家ID
- */
-function GetExecutingPlayerId(): PlayerID | null {
-    // 遍历所有玩家，找到第一个有效的
-    for (let playerId = 0; playerId < 24; playerId++) {
-        if (PlayerResource.IsValidPlayerID(playerId)) {
-            const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-            if (hero) {
-                return playerId;
-            }
-        }
-    }
-    return null;
-}
-
-/**
- * 注册副本测试命令
+ * 注册副本相关的调试命令
  */
 export function RegisterDungeonCommands(): void {
-    // 创建副本
-    Convars.RegisterCommand(
-        'dungeon_create',
-        (name: string, dungeonId: string) => {
-            const playerId = GetExecutingPlayerId();
-            if (playerId === null) {
-                print('[命令] 错误：找不到玩家');
-                return;
-            }
-            
-            const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-            if (!hero) {
-                print('[命令] 错误：找不到英雄');
-                return;
-            }
-            
-            // 在英雄前方500单位创建副本
-            const heroPos = hero.GetAbsOrigin();
-            const heroForward = hero.GetForwardVector();
-            const spawnPos = Vector(
-                heroPos.x + heroForward.x * 500,
-                heroPos.y + heroForward.y * 500,
-                heroPos.z
-            );
-            
-            const manager = GetDungeonManager();
-            const instanceId = manager.CreateDungeon(dungeonId, spawnPos);
-            
-            if (instanceId) {
-                print(`[命令] 副本创建成功: ${instanceId}`);
-            } else {
-                print(`[命令] 副本创建失败`);
-            }
-        },
-        '创建副本 - 用法: dungeon_create <dungeonId>',
-        0
-    );
+    print('[Commands] 注册副本命令...');
     
-    // 进入副本
-    Convars.RegisterCommand(
-        'dungeon_enter',
-        (name: string, instanceId: string) => {
-            const playerId = GetExecutingPlayerId();
-            if (playerId === null) {
-                print('[命令] 错误：找不到玩家');
-                return;
-            }
-            
-            const manager = GetDungeonManager();
-            const success = manager.EnterDungeon(playerId, instanceId);
-            
-            if (success) {
-                print(`[命令] 进入副本成功: ${instanceId}`);
-            } else {
-                print(`[命令] 进入副本失败`);
-            }
-        },
-        '进入副本 - 用法: dungeon_enter <instanceId>',
-        0
-    );
+    // 列出所有副本
+    Convars.RegisterCommand('-dungeons', () => {
+        const allConfigs = GetAllDungeonConfigs();
+        print('========================================');
+        print('可用副本列表:');
+        print('========================================');
+        allConfigs.forEach(({ id, config }) => {
+            print(`  ${id}: ${config.mapName}`);
+            print(`    描述: ${config.description || '无'}`);
+            print(`    尺寸: ${config.width}x${config.height}`);
+        });
+        print('========================================');
+    }, '列出所有副本', 0);
+    
+    // 创建副本
+    Convars.RegisterCommand('-create_dungeon', (dungeonId: string) => {
+        const player = Convars.GetCommandClient();
+        if (!player) return;
+        
+        const playerId = player.GetPlayerID();
+        
+        if (! dungeonId) {
+            print('[Commands] 用法: -create_dungeon <dungeon_id>');
+            print('[Commands] 可用副本: test_simple, my_dungeon, frost_temple');
+            return;
+        }
+        
+        const manager = GetDungeonManager();
+        const instanceId = manager.CreateDungeon(dungeonId, playerId);
+        
+        if (instanceId) {
+            manager.EnterDungeon(playerId, instanceId);
+            print(`[Commands] 创建并进入副本: ${instanceId}`);
+        } else {
+            print(`[Commands] 创建副本失败`);
+        }
+    }, '创建并进入指定副本', 0);
     
     // 离开副本
-    Convars.RegisterCommand(
-        'dungeon_leave',
-        () => {
-            const playerId = GetExecutingPlayerId();
-            if (playerId === null) {
-                print('[命令] 错误：找不到玩家');
-                return;
-            }
-            
-            const manager = GetDungeonManager();
-            const success = manager.LeaveDungeon(playerId);
-            
-            if (success) {
-                print(`[命令] 离开副本成功`);
-            } else {
-                print(`[命令] 你不在任何副本中`);
-            }
-        },
-        '离开当前副本',
-        0
-    );
+    Convars.RegisterCommand('-leave_dungeon', () => {
+        const player = Convars.GetCommandClient();
+        if (!player) return;
+        
+        const playerId = player.GetPlayerID();
+        const manager = GetDungeonManager();
+        
+        if (manager.LeaveDungeon(playerId, 'manual')) {
+            print(`[Commands] 玩家 ${playerId} 离开副本`);
+        } else {
+            print(`[Commands] 你不在任何副本中`);
+        }
+    }, '离开当前副本', 0);
     
-    // 快速进入副本（创建并进入）
-    Convars.RegisterCommand(
-        'dungeon_quick',
-        (name: string, dungeonId: string) => {
-            const playerId = GetExecutingPlayerId();
-            if (playerId === null) {
-                print('[命令] 错误：找不到玩家');
-                return;
-            }
+    // 手动完成副本
+    Convars.RegisterCommand('-complete_dungeon', () => {
+        const player = Convars.GetCommandClient();
+        if (!player) return;
+        
+        const playerId = player.GetPlayerID();
+        const manager = GetDungeonManager();
+        const instanceId = manager.GetPlayerDungeon(playerId);
+        
+        if (! instanceId) {
+            print('[Commands] 你不在任何副本中');
+            GameRules.SendCustomMessage(
+                '<font color="#FF0000">你不在任何副本中</font>',
+                playerId,
+                0
+            );
+            return;
+        }
+        
+        const instance = manager.GetDungeonInstance(instanceId);
+        if (instance) {
+            print(`[Commands] 手动完成副本: ${instanceId}`);
             
-            const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-            if (! hero) {
-                print('[命令] 错误：找不到英雄');
-                return;
-            }
+            // 直接调用完成方法
+            (instance as any).CompleteDungeon?.();
             
-            // 在副本区域创建副本（所有副本都在统一的BATTLE_ROOM区域）
-            const spawnPos = BATTLE_ROOM_SPAWN;
-            
-            const manager = GetDungeonManager();
-            const instanceId = manager.CreateDungeon(dungeonId, spawnPos);
-            
-            if (instanceId) {
-                manager.EnterDungeon(playerId, instanceId);
-                print(`[命令] 快速进入副本: ${instanceId}`);
-            } else {
-                print(`[命令] 副本创建失败`);
-            }
-        },
-        '快速创建并进入副本 - 用法: dungeon_quick <dungeonId>',
-        0
-    );
+            GameRules.SendCustomMessage(
+                '<font color="#00FF00">副本已手动完成！3秒后返回主城</font>',
+                playerId,
+                0
+            );
+        }
+    }, '手动完成当前副本', 0);
     
-    // 列出所有可用副本
-    Convars.RegisterCommand(
-        'dungeon_list',
-        () => {
-            const dungeonIds = GetAllDungeonIds();
-            print('[命令] 可用副本列表:');
-            for (const id of dungeonIds) {
-                print(`  - ${id}`);
+    // 查看副本状态
+    Convars.RegisterCommand('-dungeon_status', () => {
+        const player = Convars.GetCommandClient();
+        if (!player) return;
+        
+        const playerId = player.GetPlayerID();
+        const manager = GetDungeonManager();
+        const instanceId = manager.GetPlayerDungeon(playerId);
+        
+        if (!instanceId) {
+            print('[Commands] 你不在任何副本中');
+            return;
+        }
+        
+        const instance = manager.GetDungeonInstance(instanceId);
+        if (instance) {
+            print('========================================');
+            print('[Commands] 副本状态');
+            print('========================================');
+            print(`  实例ID: ${instanceId}`);
+            print(`  状态: ${(instance as any).GetState()}`);
+            print(`  玩家数量: ${(instance as any).GetPlayers().length}`);
+            
+            const triggered = (instance as any).GetTriggeredEvents();
+            print(`  已触发事件 (${triggered.size}):`);
+            for (const id of triggered) {
+                print(`    - ${id}`);
             }
-        },
-        '列出所有可用副本',
-        0
-    );
+            
+            const spawnedUnits = (instance as any).GetSpawnedUnits();
+            print(`  刷怪触发器 (${spawnedUnits.size}):`);
+            for (const [triggerId, units] of spawnedUnits.entries()) {
+                const aliveCount = units.filter((u: CDOTA_BaseNPC) => 
+                    u && IsValidEntity(u) && u.IsAlive()
+                ).length;
+                print(`    - ${triggerId}: ${aliveCount}/${units.length} 存活`);
+            }
+            print('========================================');
+        }
+    }, '查看当前副本状态', 0);
+    
+    // 查看区域状态
+    Convars.RegisterCommand('-zones', () => {
+        const zoneManager = GetDungeonZoneManager();
+        print(zoneManager.GetZonesInfo());
+    }, '查看副本区域状态', 0);
     
     // 清理所有副本
-    Convars.RegisterCommand(
-        'dungeon_cleanup_all',
-        () => {
-            const manager = GetDungeonManager();
-            manager.CleanupAll();
-            print('[命令] 已清理所有副本实例');
-        },
-        '清理所有副本实例',
-        0
-    );
+    Convars.RegisterCommand('-cleanup_dungeons', () => {
+        const manager = GetDungeonManager();
+        manager.CleanupAll();
+        print('[Commands] 已清理所有副本');
+    }, '清理所有副本实例', 0);
     
-    print('[DungeonCommands] 副本命令已注册');
+    print('[Commands] 副本命令已注册');
 }

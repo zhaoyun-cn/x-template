@@ -1,34 +1,142 @@
-/**
- * 事件处理器 - 从 addon_game_mode.ts 分离
- */
-
-import { EquipmentVaultSystem } from '../systems/equipment/vault_system';
-import { ClassSystem } from '../systems/player/class_system';
-import { ExternalRewardItem, ExternalItemType, EquipmentAttribute } from '../dungeon/external_reward_pool';
+import { reloadable } from '../utils/tstl-utils';
 import { GetDungeonManager } from '../dungeons/DungeonManager';
 import { GetAllDungeonConfigs, DUNGEON_CONFIGS } from '../dungeons/configs/index';
+import { ClassSystem } from '../systems/player/class_system';
 
-// 最后菜单触发时间记录
-const lastMenuTriggerTime: { [key: number]: number } = {};
+// 全局变量：记录每个玩家最后触发传送门菜单的时间
+const lastMenuTriggerTime: Record<number, number> = {};
 
+/**
+ * 事件处理器
+ * 统一管理所有自定义游戏事件
+ */
+@reloadable
 export class EventHandlers {
     private static dungeonPortalInstance: CDOTA_BaseNPC | undefined = undefined;
-
+    
     /**
-     * 注册所有事件监听器
+     * 注册所有事件处理器
      */
     public static RegisterAllEvents(): void {
-        print("[EventHandlers] 开始注册事件监听器...");
-
+        print('[EventHandlers] 开始注册所有事件处理器');
+        
         this.RegisterPlayerConnectEvent();
         this.RegisterHeroSpawnEvent();
         this.RegisterDungeonEvents();
         this.RegisterEquipmentEvents();
         this.RegisterChatCommands();
-
-        print("[EventHandlers] ✓ 所有事件监听器已注册");
+        this.RegisterCombatEvents();
+        this.RegisterItemEvents();
+        this.RegisterUIEvents();
+        
+        print('[EventHandlers] 所有事件处理器注册完成');
     }
-
+    
+    /**
+     * 注册副本相关事件
+     */
+    private static RegisterDungeonEvents(): void {
+        // 请求副本列表
+        CustomGameEventManager.RegisterListener("request_dungeon_list", (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            
+            print(`[EventHandlers] 玩家 ${playerId} 请求副本列表`);
+            
+            const dungeonList: any[] = [];
+            const allConfigs = GetAllDungeonConfigs();
+            
+            allConfigs.forEach(({ id, config }) => {
+                dungeonList.push({
+                    id: id,
+                    name: config.mapName,
+                    description: config.description || "暂无描述"
+                });
+                print(`[EventHandlers] 副本: ${id} - ${config.mapName} - ${config.description || "暂无描述"}`);
+            });
+            
+            const player = PlayerResource.GetPlayer(playerId);
+            if (player) {
+                (CustomGameEventManager.Send_ServerToPlayer as any)(player, "update_dungeon_list", {
+                    dungeons: dungeonList
+                });
+                print(`[EventHandlers] 发送副本列表: ${dungeonList.length} 个副本`);
+            }
+        });
+        
+        // 选择副本
+        CustomGameEventManager.RegisterListener("select_dungeon", (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            const dungeonId = event.dungeon_id as string;
+            
+            const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+            if (!hero) {
+                print(`[EventHandlers] 错误：玩家 ${playerId} 没有英雄`);
+                return;
+            }
+            
+            print(`[EventHandlers] 玩家 ${playerId} 选择副本: ${dungeonId}`);
+            
+            const manager = GetDungeonManager();
+            
+            // 创建副本（会自动分配区域）
+            const instanceId = manager.CreateDungeon(dungeonId, playerId);
+            
+            if (instanceId) {
+                // 进入副本
+                const success = manager.EnterDungeon(playerId, instanceId);
+                
+                if (success) {
+                    hero.EmitSound("Portal.Hero_Appear");
+                    
+                    GameRules.SendCustomMessage(
+                        `<font color='#00FF00'>正在进入副本...</font>`,
+                        playerId,
+                        0
+                    );
+                    
+                    print(`[EventHandlers] 玩家 ${playerId} 成功进入副本 ${instanceId}`);
+                } else {
+                    print(`[EventHandlers] 玩家 ${playerId} 进入副本失败`);
+                    // 如果进入失败，清理刚创建的副本
+                    manager.CleanupDungeon(instanceId);
+                }
+            } else {
+                print(`[EventHandlers] 副本创建失败: ${dungeonId}`);
+            }
+        });
+        
+        // 离开副本
+        CustomGameEventManager.RegisterListener("leave_dungeon", (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            
+            print(`[EventHandlers] 玩家 ${playerId} 请求离开副本`);
+            
+            const manager = GetDungeonManager();
+            manager.LeaveDungeon(playerId, 'manual');
+        });
+        
+        // 监听玩家死亡（用于副本）
+        ListenToGameEvent("entity_killed", (event) => {
+            const killedUnit = EntIndexToHScript(event.entindex_killed) as CDOTA_BaseNPC;
+            
+            if (killedUnit && killedUnit.IsRealHero()) {
+                const playerId = killedUnit.GetPlayerOwnerID();
+                const manager = GetDungeonManager();
+                const instanceId = manager.GetPlayerDungeon(playerId);
+                
+                if (instanceId) {
+                    print(`[EventHandlers] 玩家 ${playerId} 在副本 ${instanceId} 中死亡`);
+                    
+                    const instance = manager.GetDungeonInstance(instanceId);
+                    if (instance) {
+                        // 通知副本实例玩家死亡
+                        (instance as any).OnPlayerDeath?.(playerId);
+                    }
+                }
+            }
+        }, undefined);
+    }
+    
     /**
      * 生成副本传送门
      */
@@ -60,7 +168,7 @@ export class EventHandlers {
      */
     private static MonitorPortalTrigger(): void {
         Timers.CreateTimer(0.25, () => {
-            if (! this.dungeonPortalInstance || this.dungeonPortalInstance.IsNull()) {
+            if (!this.dungeonPortalInstance || this.dungeonPortalInstance.IsNull()) {
                 return 0.25;
             }
 
@@ -70,7 +178,8 @@ export class EventHandlers {
             for (let i = 0; i < playerCount; i++) {
                 if (! PlayerResource.IsValidPlayerID(i)) continue;
                 
-                if (! ClassSystem.HasSelectedClass(i as PlayerID)) continue;
+                // 检查玩家是否选择了职业
+                if (!ClassSystem.HasSelectedClass(i as PlayerID)) continue;
                 
                 const hero = PlayerResource.GetSelectedHeroEntity(i);
                 if (!hero || ! hero.IsAlive()) continue;
@@ -100,7 +209,7 @@ export class EventHandlers {
             return 0.25;
         });
     }
-
+    
     /**
      * 注册玩家连接事件
      */
@@ -108,6 +217,31 @@ export class EventHandlers {
         ListenToGameEvent("player_connect_full", (event) => {
             const playerId = event.PlayerID as PlayerID;
             print(`[EventHandlers] 玩家${playerId}连接`);
+        }, undefined);
+        
+        // 玩家断开
+        ListenToGameEvent("player_disconnect", (event) => {
+            const playerId = event.PlayerID as PlayerID;
+            print(`[EventHandlers] 玩家 ${playerId} 断开连接`);
+            
+            // 如果玩家在副本中，让其离开
+            const manager = GetDungeonManager();
+            const instanceId = manager.GetPlayerDungeon(playerId);
+            if (instanceId) {
+                manager.LeaveDungeon(playerId, 'manual');
+            }
+        }, undefined);
+        
+        // 游戏状态改变
+        ListenToGameEvent("game_rules_state_change", (event) => {
+            const state = GameRules.State_Get();
+            print(`[EventHandlers] 游戏状态改变: ${state}`);
+            
+            // 游戏结束时清理所有副本
+            if (state === GameState.POST_GAME) {
+                print('[EventHandlers] 游戏结束，清理所有副本');
+                GetDungeonManager().CleanupAll();
+            }
         }, undefined);
     }
 
@@ -123,453 +257,130 @@ export class EventHandlers {
             }
             
             const playerId = spawnedUnit.GetPlayerOwnerID();
-            if (playerId === -1) return;
+            print(`[EventHandlers] 玩家 ${playerId} 的英雄已生成`);
             
-            if (! ClassSystem.HasSelectedClass(playerId)) {
-                print(`[EventHandlers] 玩家${playerId}尚未选择职业，跳过装备初始化`);
-                return;
-            }
-            
-            const equipment = (EquipmentVaultSystem as any).playerEquipment[playerId];
-            if (equipment) {
-                return;
-            }
-            
-            print(`[EventHandlers] 玩家${playerId}的英雄已生成，初始化装备系统...`);
-            
-            EquipmentVaultSystem.InitializePlayer(playerId, spawnedUnit as CDOTA_BaseNPC_Hero);
-            
-            const vault = EquipmentVaultSystem.GetVault(playerId);
-            if (vault.length === 0) {
-                print(`[EventHandlers] 仓库为空，添加测试装备...`);
-                this.AddTestEquipmentToVault(playerId);
-            } else {
-                print(`[EventHandlers] 仓库已有 ${vault.length} 件装备`);
-            }
+            // 这里可以添加英雄生成后的初始化逻辑
         }, undefined);
     }
-
-    /**
-     * 注册副本相关事件
-     */
-  /**
- * 注册副本相关事件
- */
-/**
- * 注册副本相关事件
- */
-private static RegisterDungeonEvents(): void {
-    // 请求副本列表
-    CustomGameEventManager.RegisterListener("request_dungeon_list", (userId, event: any) => {
-        const playerId = event.PlayerID as PlayerID;
-        
-        print(`[EventHandlers] 玩家 ${playerId} 请求副本列表`);
-        
-        const dungeonList: any[] = [];
-        const allConfigs = GetAllDungeonConfigs();
-        
-        allConfigs.forEach(({ id, config }) => {
-            dungeonList.push({
-                id: id,
-                name: config.mapName,
-                description: config.description || "暂无描述"
-            });
-            print(`[EventHandlers] 副本: ${id} - ${config.mapName} - ${config.description || "暂无描述"}`);
-        });
-        
-        const player = PlayerResource.GetPlayer(playerId);
-        if (player) {
-            (CustomGameEventManager.Send_ServerToPlayer as any)(player, "update_dungeon_list", {
-                dungeons: dungeonList
-            });
-            print(`[EventHandlers] 发送副本列表: ${dungeonList.length} 个副本`);
-        }
-    });
     
-    // 选择副本
-    CustomGameEventManager.RegisterListener("select_dungeon", (userId, event: any) => {
-        const playerId = event.PlayerID as PlayerID;
-        const dungeonId = event.dungeon_id as string;
-        
-        const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-        if (!hero) return;
-        
-        print(`[EventHandlers] 玩家 ${playerId} 选择副本: ${dungeonId}`);
-        
-        const manager = GetDungeonManager();
-        
-        // 副本生成位置：战斗区域，高度128
-        // 根据副本ID设置不同的位置，避免重叠
-        // 战斗区域范围: X(-2000 to 2000), Y(2000 to 10000)
-        const baseX = 0;       // X轴中心
-        const baseY = 3500;    // Y轴起始位置（留出一些边距）
-        const allIds = Object.keys(DUNGEON_CONFIGS);
-        const dungeonIndex = allIds.indexOf(dungeonId);
-        const offsetY = dungeonIndex * 3000; // 每个副本沿Y轴间隔3000单位
-        
-        const spawnPosition = Vector(baseX, baseY + offsetY, 128);
-        
-        print(`[EventHandlers] 创建副本在位置: (${spawnPosition.x}, ${spawnPosition.y}, ${spawnPosition.z})`);
-        
-        const instanceId = manager.CreateDungeon(dungeonId, spawnPosition);
-        
-        if (instanceId) {
-            manager.EnterDungeon(playerId, instanceId);
-            
-            hero.EmitSound("Portal.Hero_Appear");
-            
-            GameRules.SendCustomMessage(
-                `<font color='#00FF00'>正在进入副本: ${dungeonId}... </font>`,
-                playerId,
-                0
-            );
-            
-            print(`[EventHandlers] 玩家 ${playerId} 成功进入副本 ${instanceId}`);
-        } else {
-            GameRules.SendCustomMessage(
-                `<font color='#FF0000'>副本创建失败！</font>`,
-                playerId,
-                0
-            );
-            print(`[EventHandlers] 副本创建失败: ${dungeonId}`);
-        }
-    });
-}
-
     /**
      * 注册装备相关事件
      */
     private static RegisterEquipmentEvents(): void {
-        // 请求仓库数据
-        CustomGameEventManager.RegisterListener("request_vault_data", (userId, event: any) => {
+        // 装备穿戴
+        CustomGameEventManager.RegisterListener('equip_item', (userId, event: any) => {
             const playerId = event.PlayerID as PlayerID;
+            const slot = event.slot;
+            const itemId = event.item_id;
             
-            print(`[EventHandlers] ========== 响应仓库数据请求：${playerId} ==========`);
+            print(`[EventHandlers] 玩家 ${playerId} 装备物品 ${itemId} 到槽位 ${slot}`);
             
-            const vault = EquipmentVaultSystem.GetVault(playerId);
-            const serializedItems: any[] = [];
-            
-            vault.forEach((item, index) => {
-                print(`[EventHandlers] === 装备 ${index}: ${item.name} ===`);
-                print(`[EventHandlers]   rarity: ${item.rarity}`);
-                
-                const serialized: any = {
-                    name: item.name,
-                    type: item.type,
-                    icon: item.icon,
-                    stats: item.stats,
-                    rarity: item.rarity,
-                };
-                
-                if (item.affixDetails) {
-                    print(`[EventHandlers]   affixDetails 存在`);
-                    const affixArray: any[] = [];
-                    const entries = Object.entries(item.affixDetails as any);
-                    
-                    for (let i = 0; i < entries.length; i++) {
-                        const [_, affix] = entries[i];
-                        if (affix && typeof affix === 'object') {
-                            print(`[EventHandlers]     [${i}] ${(affix as any).name} (T${(affix as any).tier}): ${(affix as any).description}`);
-                            affixArray.push({
-                                position: (affix as any).position || 'prefix',
-                                tier: (affix as any).tier || 1,
-                                name: (affix as any).name || '',
-                                description: (affix as any).description || '',
-                                color: (affix as any).color || '#ffffff',
-                            });
-                        }
-                    }
-                    
-                    if (affixArray.length > 0) {
-                        serialized.affixDetails = affixArray;
-                        print(`[EventHandlers]   序列化后长度: ${affixArray.length}`);
-                    }
-                } else {
-                    print(`[EventHandlers]   无 affixDetails`);
-                }
-                
-                serializedItems.push(serialized);
-            });
-            
-            print(`[EventHandlers] ========== 准备发送 ${serializedItems.length} 件装备 ==========`);
-            
-            const player = PlayerResource.GetPlayer(playerId);
-            if (player) {
-                (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
-                    items: serializedItems
-                });
-                print(`[EventHandlers] ✓ 已发送数据到客户端`);
+            const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+            if (hero) {
+                print(`[EventHandlers] 装备成功`);
             }
         });
-
-        // 请求装备数据
-        CustomGameEventManager.RegisterListener("request_equipment_data", (userId, event: any) => {
+        
+        // 装备卸下
+        CustomGameEventManager.RegisterListener('unequip_item', (userId, event: any) => {
             const playerId = event.PlayerID as PlayerID;
+            const slot = event.slot;
             
-            print(`[EventHandlers] 响应装备界面数据请求：${playerId}`);
+            print(`[EventHandlers] 玩家 ${playerId} 卸下槽位 ${slot} 的装备`);
             
-            const equipment = EquipmentVaultSystem.GetEquipment(playerId);
-            
-            const serializedEquipment: any = {};
-            for (const slot in equipment) {
-                const item = equipment[slot];
-                if (item) {
-                    const itemData: any = {
-                        name: item.name,
-                        type: item.type,
-                        icon: item.icon,
-                        stats: item.stats.map(stat => ({
-                            attribute: stat.attribute,
-                            value: stat.value
-                        })),
-                        rarity: item.rarity,
-                    };
-                    
-                    if (item.affixDetails) {
-                        const affixArray: any[] = [];
-                        const entries = Object.entries(item.affixDetails as any);
-                        
-                        for (let i = 0; i < entries.length; i++) {
-                            const [_, affix] = entries[i];
-                            if (affix && typeof affix === 'object') {
-                                affixArray.push({
-                                    position: (affix as any).position || 'prefix',
-                                    tier: (affix as any).tier || 1,
-                                    name: (affix as any).name || '',
-                                    description: (affix as any).description || '',
-                                    color: (affix as any).color || '#ffffff',
-                                });
-                            }
-                        }
-                        
-                        if (affixArray.length > 0) {
-                            itemData.affixDetails = affixArray;
-                        }
-                    }
-                    
-                    serializedEquipment[slot] = itemData;
-                } else {
-                    serializedEquipment[slot] = null;
-                }
-            }
-            
-            const player = PlayerResource.GetPlayer(playerId);
-            if (player) {
-                (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
-                    equipment: serializedEquipment
-                });
-                print(`[EventHandlers] 发送装备界面数据`);
+            const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+            if (hero) {
+                print(`[EventHandlers] 卸下成功`);
             }
         });
-
-        // 卸下装备
-        CustomGameEventManager.RegisterListener("unequip_item", (userId, event: any) => {
-            const playerId = event.PlayerID as PlayerID;
-            const slot = event.slot as string;
-            
-            print(`[EventHandlers] 玩家${playerId}卸下槽位${slot}的装备`);
-            
-            if (EquipmentVaultSystem.UnequipItem(playerId, slot)) {
-                const player = PlayerResource.GetPlayer(playerId);
-                if (player) {
-                    // 序列化仓库数据
-                    const vault = EquipmentVaultSystem.GetVault(playerId);
-                    const serializedVault: any[] = [];
-                    vault.forEach((item) => {
-                        const serialized: any = {
-                            name: item.name,
-                            type: item.type,
-                            icon: item.icon,
-                            stats: item.stats,
-                            rarity: item.rarity,
-                        };
-                        
-                        if (item.affixDetails) {
-                            const affixArray: any[] = [];
-                            const entries = Object.entries(item.affixDetails as any);
-                            
-                            for (let i = 0; i < entries.length; i++) {
-                                const [_, affix] = entries[i];
-                                if (affix && typeof affix === 'object') {
-                                    affixArray.push({
-                                        position: (affix as any).position || 'prefix',
-                                        tier: (affix as any).tier || 1,
-                                        name: (affix as any).name || '',
-                                        description: (affix as any).description || '',
-                                        color: (affix as any).color || '#ffffff',
-                                    });
-                                }
-                            }
-                            
-                            if (affixArray.length > 0) {
-                                serialized.affixDetails = affixArray;
-                            }
-                        }
-                        
-                        serializedVault.push(serialized);
-                    });
-                    
-                    // 序列化装备数据
-                    const equipment = EquipmentVaultSystem.GetEquipment(playerId);
-                    const serializedEquipment: any = {};
-                    for (const slot in equipment) {
-                        const item = equipment[slot];
-                        if (item) {
-                            const itemData: any = {
-                                name: item.name,
-                                type: item.type,
-                                icon: item.icon,
-                                stats: item.stats,
-                                rarity: item.rarity,
-                            };
-                            
-                            if (item.affixDetails) {
-                                const affixArray: any[] = [];
-                                const entries = Object.entries(item.affixDetails as any);
-                                
-                                for (let i = 0; i < entries.length; i++) {
-                                    const [_, affix] = entries[i];
-                                    if (affix && typeof affix === 'object') {
-                                        affixArray.push({
-                                            position: (affix as any).position || 'prefix',
-                                            tier: (affix as any).tier || 1,
-                                            name: (affix as any).name || '',
-                                            description: (affix as any).description || '',
-                                            color: (affix as any).color || '#ffffff',
-                                        });
-                                    }
-                                }
-                                
-                                if (affixArray.length > 0) {
-                                    itemData.affixDetails = affixArray;
-                                }
-                            }
-                            
-                            serializedEquipment[slot] = itemData;
-                        } else {
-                            serializedEquipment[slot] = null;
-                        }
-                    }
-                    
-                    (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_vault_ui', {
-                        items: serializedVault
-                    });
-                    
-                    (CustomGameEventManager.Send_ServerToPlayer as any)(player, 'update_equipment_ui', {
-                        equipment: serializedEquipment
-                    });
-                    
-                    print(`[EventHandlers] ✓ 卸下成功，已推送更新数据`);
-                }
-            } else {
-                print(`[EventHandlers] ❌ 卸下失败`);
-            }
-        });
-
-        print("[EventHandlers] 装备系统事件监听已注册");
     }
-
+    
     /**
      * 注册聊天命令
      */
     private static RegisterChatCommands(): void {
-        ListenToGameEvent('player_chat', (event: any) => {
-            const playerId = event.playerid as PlayerID;
-            const text = event.text as string;
-            
-            if (text === '-testequip') {
-                this.AddTestEquipmentToVault(playerId);
-                GameRules.SendCustomMessage(`<font color='#0f0'>✓ 添加了 7 件测试装备到仓库，按 B 打开仓库查看</font>`, playerId, 0);
-            }
-            
-            if (text === '-clearequip') {
-                (EquipmentVaultSystem as any).playerVaults[playerId] = [];
-                (EquipmentVaultSystem as any).SaveToPersistentStorage(playerId);
-                GameRules.SendCustomMessage(`<font color='#f80'>✓ 已清空仓库</font>`, playerId, 0);
-            }
-        }, null);
-
-        print("[EventHandlers] 聊天命令已注册 (-testequip, -clearequip)");
+        // 这里可以添加聊天命令的注册
+        print('[EventHandlers] 聊天命令已注册');
     }
-
+    
     /**
-     * 添加测试装备到仓库
+     * 注册战斗相关事件
      */
-    private static AddTestEquipmentToVault(playerId: PlayerID): void {
-        print(`[EventHandlers] 为玩家${playerId}添加测试装备...`);
-        
-        const testEquipments: ExternalRewardItem[] = [
-            {
-                name: "新手头盔",
-                type: ExternalItemType.HELMET,
-                icon: "file://{images}/items/helm_of_iron_will.png",
-                stats: [
-                    { attribute: EquipmentAttribute.STRENGTH, value: 3 },
-                    { attribute: EquipmentAttribute.ARMOR, value: 2 }
-                ]
-            },
-            {
-                name: "战士头盔",
-                type: ExternalItemType.HELMET,
-                icon: "file://{images}/items/helm_of_the_dominator.png",
-                stats: [
-                    { attribute: EquipmentAttribute.STRENGTH, value: 10 },
-                    { attribute: EquipmentAttribute.ARMOR, value: 5 },
-                    { attribute: EquipmentAttribute.HEALTH, value: 150 }
-                ]
-            },
-            {
-                name: "生锈的剑",
-                type: ExternalItemType.WEAPON,
-                icon: "file://{images}/items/lesser_crit.png",
-                stats: [
-                    { attribute: EquipmentAttribute.AGILITY, value: 5 },
-                    { attribute: EquipmentAttribute.ATTACK_DAMAGE, value: 12 }
-                ]
-            },
-            {
-                name: "精钢之剑",
-                type: ExternalItemType.WEAPON,
-                icon: "file://{images}/items/greater_crit.png",
-                stats: [
-                    { attribute: EquipmentAttribute.AGILITY, value: 10 },
-                    { attribute: EquipmentAttribute.ATTACK_DAMAGE, value: 25 },
-                    { attribute: EquipmentAttribute.ATTACK_SPEED, value: 15 }
-                ]
-            },
-            {
-                name: "布甲",
-                type: ExternalItemType.ARMOR,
-                icon: "file://{images}/items/ring_of_protection.png",
-                stats: [
-                    { attribute: EquipmentAttribute.ARMOR, value: 3 },
-                    { attribute: EquipmentAttribute.HEALTH, value: 100 }
-                ]
-            },
-            {
-                name: "力量戒指",
-                type: ExternalItemType.RING,
-                icon: "file://{images}/items/ring_of_regen.png",
-                stats: [
-                    { attribute: EquipmentAttribute.STRENGTH, value: 6 },
-                    { attribute: EquipmentAttribute.HEALTH, value: 150 }
-                ]
-            },
-            {
-                name: "草鞋",
-                type: ExternalItemType.BOOTS,
-                icon: "file://{images}/items/boots.png",
-                stats: [
-                    { attribute: EquipmentAttribute.AGILITY, value: 4 },
-                    { attribute: EquipmentAttribute.MOVE_SPEED, value: 25 }
-                ]
-            },
-        ];
-        
-        testEquipments.forEach(item => {
-            EquipmentVaultSystem.SaveToVault(playerId, item);
+    private static RegisterCombatEvents(): void {
+        // 监听伤害事件
+        CustomGameEventManager.RegisterListener('damage_dealt', (userId, event: any) => {
+            const attackerId = event.attacker_id;
+            const targetId = event.target_id;
+            const damage = event.damage;
+            
+            // print(`[EventHandlers] 伤害事件: ${attackerId} -> ${targetId}, 伤害: ${damage}`);
         });
         
-        print(`[EventHandlers] ✓ 已添加 ${testEquipments.length} 件测试装备到仓库`);
+        // 监听治疗事件
+        CustomGameEventManager.RegisterListener('heal_dealt', (userId, event: any) => {
+            const healerId = event.healer_id;
+            const targetId = event.target_id;
+            const heal = event.heal;
+            
+            // print(`[EventHandlers] 治疗事件: ${healerId} -> ${targetId}, 治疗: ${heal}`);
+        });
+    }
+    
+    /**
+     * 注册物品相关事件
+     */
+    private static RegisterItemEvents(): void {
+        // 物品拾取
+        CustomGameEventManager.RegisterListener('item_picked_up', (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            const itemName = event.item_name;
+            
+            print(`[EventHandlers] 玩家 ${playerId} 拾取物品: ${itemName}`);
+        });
+        
+        // 物品使用
+        CustomGameEventManager.RegisterListener('item_used', (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            const itemName = event.item_name;
+            
+            print(`[EventHandlers] 玩家 ${playerId} 使用物品: ${itemName}`);
+        });
+        
+        // 物品丢弃
+        CustomGameEventManager.RegisterListener('item_dropped', (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            const itemName = event.item_name;
+            
+            print(`[EventHandlers] 玩家 ${playerId} 丢弃物品: ${itemName}`);
+        });
+    }
+    
+    /**
+     * 注册UI相关事件
+     */
+    private static RegisterUIEvents(): void {
+        // 打开背包
+        CustomGameEventManager.RegisterListener('open_inventory', (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            print(`[EventHandlers] 玩家 ${playerId} 打开背包`);
+        });
+        
+        // 关闭背包
+        CustomGameEventManager.RegisterListener('close_inventory', (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            print(`[EventHandlers] 玩家 ${playerId} 关闭背包`);
+        });
+        
+        // 打开商店
+        CustomGameEventManager.RegisterListener('open_shop', (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            print(`[EventHandlers] 玩家 ${playerId} 打开商店`);
+        });
+        
+        // 关闭商店
+        CustomGameEventManager.RegisterListener('close_shop', (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            print(`[EventHandlers] 玩家 ${playerId} 关闭商店`);
+        });
     }
 }

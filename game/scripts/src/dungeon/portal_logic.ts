@@ -57,7 +57,7 @@ export class portal_logic extends BaseAbility {
         // 在副本区域创建副本实例（所有副本都在统一的BATTLE_ROOM区域）
         const spawnPosition = BATTLE_ROOM_SPAWN;
         
-        const instanceId = manager.CreateDungeon(dungeonId, spawnPosition);
+        const instanceId = manager.CreateDungeon(dungeonId, playerId);
         
         if (instanceId) {
             // 进入副本（会自动切换摄像头）
