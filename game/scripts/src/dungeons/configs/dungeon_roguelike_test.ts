@@ -7,7 +7,7 @@ export const ROGUELIKE_TEST_CONFIG: RoguelikeDungeonConfig = {
     dungeonId: 'roguelike_test',
     dungeonName: 'Roguelike测试副本',
     description: '包含积分、清怪、生存和Boss房间的完整Roguelike体验',
-    mapName: 'Roguelike测试副本', // 兼容性字段
+    mapName: 'Roguelike测试副本', // 兼容旧的副本列表UI，使用mapName字段显示名称
     
     startRoomId: 'room_1_score',
     

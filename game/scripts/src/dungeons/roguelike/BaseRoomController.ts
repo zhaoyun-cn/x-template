@@ -59,7 +59,7 @@ export abstract class BaseRoomController {
             
             this.OnUpdate();
             return 0.1;
-        }) as any;
+        }) as string;
     }
     
     /**

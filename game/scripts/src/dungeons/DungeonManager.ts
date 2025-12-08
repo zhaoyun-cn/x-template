@@ -142,7 +142,7 @@ class DungeonManager {
         const instance = new RoguelikeDungeonInstance(instanceId, spawnPosition, config);
         instance.Initialize();
         
-        this.instances.set(instanceId, instance as any);
+        this.instances.set(instanceId, instance);
         this.instanceZoneMap.set(instanceId, zone.id);
         
         // 注册到事件系统

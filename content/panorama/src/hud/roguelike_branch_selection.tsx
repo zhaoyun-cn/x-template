@@ -51,8 +51,7 @@ export const RoguelikeBranchSelection: React.FC<RoguelikeBranchSelectionProps> =
         setSelectedOption(roomId);
 
         // 发送选择事件到服务器
-        // @ts-ignore
-        GameEvents.SendCustomGameEventToServer('roguelike_select_branch', {
+        (GameEvents.SendCustomGameEventToServer as any)('roguelike_select_branch', {
             PlayerID: Players.GetLocalPlayer(),
             instanceId: data.instanceId,
             roomId: roomId

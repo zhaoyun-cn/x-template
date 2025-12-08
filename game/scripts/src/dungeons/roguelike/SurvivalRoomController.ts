@@ -34,6 +34,8 @@ export class SurvivalRoomController extends BaseRoomController {
         this.SpawnWave();
     }
     
+    private lastMessageTime: number = 0;
+    
     protected OnUpdate(): void {
         const currentTime = GameRules.GetGameTime();
         const elapsed = currentTime - this.startTime;
@@ -49,13 +51,14 @@ export class SurvivalRoomController extends BaseRoomController {
         }
         
         // 每5秒更新一次倒计时
-        if (Math.floor(elapsed) % 5 === 0 && Math.floor(elapsed * 10) % 10 === 0) {
+        if (currentTime - this.lastMessageTime >= 5) {
             for (const playerId of this.players) {
                 this.SendMessageToPlayer(
                     playerId,
                     `<font color="#00FFFF">⏱️ 剩余时间: ${remaining.toFixed(0)}秒</font>`
                 );
             }
+            this.lastMessageTime = currentTime;
         }
         
         // 检查是否到达时间
