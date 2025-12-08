@@ -1,6 +1,7 @@
 import { GetDungeonManager } from './DungeonManager';
 import { GetAllDungeonConfigs } from './configs/index';
 import { GetDungeonZoneManager } from './DungeonZoneManager';
+import { MultiStageDungeonInstance } from './MultiStageDungeonInstance';
 
 /**
  * 注册副本相关的调试命令
@@ -15,9 +16,12 @@ export function RegisterDungeonCommands(): void {
         print('可用副本列表:');
         print('========================================');
         allConfigs.forEach(({ id, config }) => {
-            print(`  ${id}: ${config.mapName}`);
+            const mapName = (config as any).mapName || (config as any).dungeonName || id;
+            print(`  ${id}: ${mapName}`);
             print(`    描述: ${config.description || '无'}`);
-            print(`    尺寸: ${config.width}x${config.height}`);
+            if ((config as any).width) {
+                print(`    尺寸: ${(config as any).width}x${(config as any).height}`);
+            }
         });
         print('========================================');
     }, '列出所有副本', 0);
@@ -29,9 +33,9 @@ export function RegisterDungeonCommands(): void {
         
         const playerId = player.GetPlayerID();
         
-        if (! dungeonId) {
+        if (!dungeonId) {
             print('[Commands] 用法: -create_dungeon <dungeon_id>');
-            print('[Commands] 可用副本: test_simple, my_dungeon, frost_temple');
+            print('[Commands] 可用副本: test_simple, my_dungeon, frost_temple, frost_temple_multi');
             return;
         }
         
@@ -61,8 +65,85 @@ export function RegisterDungeonCommands(): void {
         }
     }, '离开当前副本', 0);
     
-    // 手动完成副本
-    Convars.RegisterCommand('-complete_dungeon', () => {
+   // ✅ 修复：进入下一阶段
+Convars.RegisterCommand('-next', (_, playerIdStr: string) => {
+    // ✅ 从命令参数获取玩家ID
+    let playerId: PlayerID = 0;
+    
+    const player = Convars.GetCommandClient();
+    if (player) {
+        playerId = player.GetPlayerID();
+    } else {
+        // 如果无法获取玩家，尝试使用第一个玩家（单人测试）
+        playerId = 0;
+    }
+    
+    print(`[Commands] 玩家 ${playerId} 尝试使用传送门`);
+    
+    const manager = GetDungeonManager();
+    const instanceId = manager.GetPlayerDungeon(playerId);
+    
+    if (! instanceId) {
+        print('[Commands] 你不在任何副本中');
+        GameRules.SendCustomMessage(
+            '<font color="#FF0000">你不在任何副本中</font>',
+            playerId,
+            0
+        );
+        return;
+    }
+    
+    const instance = manager. GetDungeonInstance(instanceId);
+    if (instance && instance instanceof MultiStageDungeonInstance) {
+        const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+        if (! hero) {
+            print('[Commands] 错误：找不到英雄');
+            return;
+        }
+        
+        const portalEntity = (instance as any).portalEntity;
+        if (! portalEntity || portalEntity.IsNull()) {
+            print('[Commands] 找不到传送门');
+            GameRules.SendCustomMessage(
+                '<font color="#FF0000">找不到传送门，请先完成当前阶段</font>',
+                playerId,
+                0
+            );
+            return;
+        }
+        
+        // 检查距离
+        const heroPos = hero.GetAbsOrigin();
+        const portalPos = portalEntity.GetAbsOrigin();
+        const dx = portalPos.x - heroPos. x;
+        const dy = portalPos.y - heroPos. y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        print(`[Commands] 玩家距离传送门: ${distance. toFixed(2)}`);
+        
+        if (distance > 800) {
+            GameRules.SendCustomMessage(
+                `<font color="#FF0000">你离传送门太远了（当前${distance.toFixed(0)}，需要<800）</font>`,
+                playerId,
+                0
+            );
+            return;
+        }
+        
+        // 开始传送
+        print(`[Commands] 玩家 ${playerId} 使用传送门`);
+        instance.StartPortalChanneling(playerId);
+    } else {
+        GameRules.SendCustomMessage(
+            '<font color="#FF0000">当前副本不支持此命令</font>',
+            playerId,
+            0
+        );
+    }
+}, '进入下一阶段', 0);
+    
+    // ✅ 查看传送门位置
+    Convars.RegisterCommand('-portal_pos', () => {
         const player = Convars.GetCommandClient();
         if (!player) return;
         
@@ -70,7 +151,54 @@ export function RegisterDungeonCommands(): void {
         const manager = GetDungeonManager();
         const instanceId = manager.GetPlayerDungeon(playerId);
         
-        if (! instanceId) {
+        if (!instanceId) {
+            print('[Commands] 你不在任何副本中');
+            return;
+        }
+        
+        const instance = manager.GetDungeonInstance(instanceId);
+        if (instance && instance instanceof MultiStageDungeonInstance) {
+            const portalEntity = (instance as any).portalEntity;
+            if (portalEntity && ! portalEntity.IsNull()) {
+                const pos = portalEntity.GetAbsOrigin();
+                print(`[Commands] 传送门位置: (${pos.x}, ${pos.y}, ${pos.z})`);
+                
+                const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+                if (hero) {
+                    const heroPos = hero.GetAbsOrigin();
+                    const dx = pos.x - heroPos.x;
+                    const dy = pos.y - heroPos.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    print(`[Commands] 你的位置: (${heroPos.x}, ${heroPos.y}, ${heroPos.z})`);
+                    print(`[Commands] 距离传送门: ${distance.toFixed(2)}`);
+                    
+                    GameRules.SendCustomMessage(
+                        `<font color="#FFFF00">传送门距离: ${distance.toFixed(0)}</font>`,
+                        playerId,
+                        0
+                    );
+                }
+            } else {
+                print('[Commands] 传送门不存在');
+                GameRules.SendCustomMessage(
+                    '<font color="#FF0000">传送门不存在</font>',
+                    playerId,
+                    0
+                );
+            }
+        }
+    }, '查看传送门位置', 0);
+    
+    // 手动完成副本
+    Convars.RegisterCommand('-complete_dungeon', () => {
+        const player = Convars.GetCommandClient();
+        if (! player) return;
+        
+        const playerId = player.GetPlayerID();
+        const manager = GetDungeonManager();
+        const instanceId = manager.GetPlayerDungeon(playerId);
+        
+        if (!instanceId) {
             print('[Commands] 你不在任何副本中');
             GameRules.SendCustomMessage(
                 '<font color="#FF0000">你不在任何副本中</font>',
@@ -84,7 +212,6 @@ export function RegisterDungeonCommands(): void {
         if (instance) {
             print(`[Commands] 手动完成副本: ${instanceId}`);
             
-            // 直接调用完成方法
             (instance as any).CompleteDungeon?.();
             
             GameRules.SendCustomMessage(
@@ -118,23 +245,47 @@ export function RegisterDungeonCommands(): void {
             print(`  状态: ${(instance as any).GetState()}`);
             print(`  玩家数量: ${(instance as any).GetPlayers().length}`);
             
-            const triggered = (instance as any).GetTriggeredEvents();
-            print(`  已触发事件 (${triggered.size}):`);
-            for (const id of triggered) {
-                print(`    - ${id}`);
+            const triggered = (instance as any).GetTriggeredEvents?.();
+            if (triggered) {
+                print(`  已触发事件 (${triggered.size}):`);
+                for (const id of triggered) {
+                    print(`    - ${id}`);
+                }
             }
             
-            const spawnedUnits = (instance as any).GetSpawnedUnits();
-            print(`  刷怪触发器 (${spawnedUnits.size}):`);
-            for (const [triggerId, units] of spawnedUnits.entries()) {
-                const aliveCount = units.filter((u: CDOTA_BaseNPC) => 
-                    u && IsValidEntity(u) && u.IsAlive()
-                ).length;
-                print(`    - ${triggerId}: ${aliveCount}/${units.length} 存活`);
+            const spawnedUnits = (instance as any).GetSpawnedUnits?.();
+            if (spawnedUnits) {
+                print(`  刷怪触发器 (${spawnedUnits.size}):`);
+                for (const [triggerId, units] of spawnedUnits.entries()) {
+                    const aliveCount = units.filter((u: CDOTA_BaseNPC) => 
+                        u && IsValidEntity(u) && u.IsAlive()
+                    ).length;
+                    print(`    - ${triggerId}: ${aliveCount}/${units.length} 存活`);
+                }
             }
             print('========================================');
         }
     }, '查看当前副本状态', 0);
+    
+    // 查看自己位置
+    Convars.RegisterCommand('-pos', () => {
+        const player = Convars.GetCommandClient();
+        if (!player) return;
+        
+        const playerId = player.GetPlayerID();
+        const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+        
+        if (hero) {
+            const pos = hero.GetAbsOrigin();
+            print(`[Commands] 你的位置: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`);
+            
+            GameRules.SendCustomMessage(
+                `<font color="#FFFF00">位置: (${pos.x.toFixed(0)}, ${pos.y.toFixed(0)})</font>`,
+                playerId,
+                0
+            );
+        }
+    }, '查看自己位置', 0);
     
     // 查看区域状态
     Convars.RegisterCommand('-zones', () => {
