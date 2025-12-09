@@ -153,7 +153,7 @@ class DungeonManager {
         return instanceId;
     }
     
-    public EnterDungeon(playerId: PlayerID, instanceId: string): boolean {
+   public EnterDungeon(playerId: PlayerID, instanceId: string): boolean {
     const instance = this.instances.get(instanceId);
     if (!instance) {
         print(`[DungeonManager] 错误：找不到副本实例 ${instanceId}`);
@@ -166,7 +166,7 @@ class DungeonManager {
         return false;
     }
     
-    // 🔧 关键：提前标记玩家进入副本
+    // 🔧 关键：提前标记玩家进入副本，防止眩晕期间重复触发
     this.playerDungeonMap.set(playerId, instanceId);
     print(`[DungeonManager] ✅ 玩家 ${playerId} 已标记进入副本 ${instanceId}`);
     
@@ -183,12 +183,14 @@ class DungeonManager {
     // 延迟1.5秒后传送
     Timers.CreateTimer(1.5, () => {
         // 检查玩家是否还在副本中（可能中途退出）
-        if (this. playerDungeonMap.get(playerId) !== instanceId) {
+        if (this.playerDungeonMap.get(playerId) !== instanceId) {
             print(`[DungeonManager] 玩家 ${playerId} 已不在副本 ${instanceId}，取消传送`);
             return undefined;
         }
         
         instance.AddPlayer(playerId);
+        // ❌ 删除这一行（已经在前面设置了）
+        // this.playerDungeonMap.set(playerId, instanceId);
         
         // 获取地图数据和入口点
         let mapData;
@@ -203,7 +205,7 @@ class DungeonManager {
             }
         } else if (instance instanceof MultiStageDungeonInstance) {
             generator = (instance as any).currentGenerator;
-            mapData = (instance as any).config?. stages[0]?.mapData;
+            mapData = (instance as any).config?.stages[0]?.mapData;
         } else {
             generator = (instance as DungeonInstance).GetGenerator();
             mapData = (instance as DungeonInstance).GetMapData();
@@ -214,7 +216,7 @@ class DungeonManager {
             return undefined;
         }
         
-        const entryPoint = mapData?. entryPoints?.[0] || { x: 0, y: 0 };
+        const entryPoint = mapData?.entryPoints?.[0] || { x: 0, y: 0 };
         const worldPos = generator.GridToWorld(entryPoint.x, entryPoint.y);
         
         print(`[DungeonManager] 传送玩家 ${playerId} 到副本入口 (${worldPos.x}, ${worldPos.y})`);
@@ -224,10 +226,10 @@ class DungeonManager {
         hero.Stop();
         
         // 播放传送音效
-        hero.EmitSound('Portal. Hero_Appear');
+        hero.EmitSound('Portal.Hero_Appear');
         
         // 切换摄像头（会自动跟随英雄）
-        CameraSystem.SetZone(playerId, CameraZone. BATTLE_ROOM);
+        CameraSystem.SetZone(playerId, CameraZone.BATTLE_ROOM);
         
         // 开始副本
         if ('GetState' in instance) {
@@ -363,7 +365,7 @@ class DungeonManager {
      * 获取所有副本实例
      */
     public GetAllInstances(): Map<string, DungeonInstance | MultiStageDungeonInstance | RoguelikeDungeonInstance> {
-    return this. instances;
+    return this.instances;
 }
 }
 

@@ -163,31 +163,29 @@ export class EventHandlers {
         }
     }
 
-    /**
-     * 监控传送门触发
-     */
-   private static MonitorPortalTrigger(): void {
+   /**
+ * 监控传送门触发
+ */
+private static MonitorPortalTrigger(): void {
     Timers.CreateTimer(0.25, () => {
-        if (!this.dungeonPortalInstance || this.dungeonPortalInstance.IsNull()) {
+        if (! this.dungeonPortalInstance || this.dungeonPortalInstance.IsNull()) {
             return 0.25;
         }
 
         const currentTime = GameRules.GetGameTime();
         const playerCount = PlayerResource.GetPlayerCount();
-        const manager = GetDungeonManager(); // 🆕 获取副本管理器
+        const manager = GetDungeonManager(); // 🆕 添加这行
 
         for (let i = 0; i < playerCount; i++) {
             if (! PlayerResource.IsValidPlayerID(i)) continue;
             
             // 检查玩家是否选择了职业
             if (!ClassSystem.HasSelectedClass(i as PlayerID)) continue;
-
-             // 🆕 检查玩家是否已在副本中
+            
+            // 🆕 添加副本状态检查
             if (manager.GetPlayerDungeon(i as PlayerID)) {
                 continue; // 玩家已在副本中，跳过检测
             }
-            
-            
             
             const hero = PlayerResource.GetSelectedHeroEntity(i);
             if (!hero || !hero.IsAlive()) continue;

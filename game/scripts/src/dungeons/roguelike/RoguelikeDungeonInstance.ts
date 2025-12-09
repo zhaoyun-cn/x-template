@@ -372,7 +372,7 @@ for (const playerId of this.players) {
         });
     }
     
-  /**
+ /**
  * 副本完成
  */
 private OnDungeonCompleted(): void {
@@ -387,12 +387,12 @@ private OnDungeonCompleted(): void {
     }
     
     // 计算奖励
-    const breakdown = RoguelikeRewardSystem. CalculateReward(this. config.rewardConfig, this. stats);
+    const breakdown = RoguelikeRewardSystem. CalculateReward(this.config.rewardConfig, this.stats);
     
     // 显示奖励
     for (const playerId of this.players) {
-        RoguelikeRewardSystem.ShowRewardSummary(playerId, breakdown);
-        RoguelikeRewardSystem.ShowRewardUI(playerId, breakdown, this. stats);
+        RoguelikeRewardSystem. ShowRewardSummary(playerId, breakdown);
+        RoguelikeRewardSystem.ShowRewardUI(playerId, breakdown, this.stats);
         
         GameRules.SendCustomMessage(
             '<font color="#FFD700">🎉 副本完成！恭喜通关！</font>',
@@ -404,27 +404,19 @@ private OnDungeonCompleted(): void {
     // 5秒后传送回城
     print(`[RoguelikeDungeon] 5秒后传送玩家回城`);
     
-    Timers. CreateTimer(5, () => {
-        // 🔧 导入摄像头系统
-      
+    Timers.CreateTimer(5, () => {
+        // 🔧 使用 DungeonManager 的 LeaveDungeon 方法
+        const { GetDungeonManager } = require('../DungeonManager');
+        const manager = GetDungeonManager();
         
-        for (const playerId of this.players) {
-            const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-            if (hero) {
-                const townPos = Vector(0, 0, 192);
-                FindClearSpaceForUnit(hero, townPos, true);
-                hero.Stop();
-                hero.EmitSound('Portal. Hero_Appear');
-                
-                // 🔧 切换摄像头回城镇
-                CameraSystem.SetZone(playerId, CameraZone. TOWN);
-                
-                print(`[RoguelikeDungeon] 玩家 ${playerId} 已传送回城，摄像头已切换`);
-            }
+        // 复制玩家列表，因为 LeaveDungeon 会修改原列表
+        const playersCopy = [...this.players];
+        
+        for (const playerId of playersCopy) {
+            print(`[RoguelikeDungeon] 让玩家 ${playerId} 离开副本`);
+            // 🔧 调用 DungeonManager. LeaveDungeon() 来清除 playerDungeonMap
+            manager.LeaveDungeon(playerId, 'complete');
         }
-        
-        // 清理副本
-        this.Cleanup();
         
         return undefined;
     });
