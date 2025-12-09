@@ -78,6 +78,8 @@ export class RoguelikeDungeonInstance {
         return [...this.players];
     }
     
+    
+    
     /**
      * 开始房间
      */
@@ -253,10 +255,14 @@ export class RoguelikeDungeonInstance {
         for (const playerId of this.players) {
             const player = PlayerResource.GetPlayer(playerId);
             if (player) {
-                CustomGameEventManager.Send_ServerToPlayer(player, 'roguelike_show_branch_selection', {
-                    instanceId: this.instanceId,
-                    options: options
-                });
+                CustomGameEventManager.Send_ServerToPlayer(
+    player, 
+    'roguelike_show_branch_selection' as any, 
+    {
+        instanceId: this.instanceId,
+        options: options
+    } as any
+);
             }
         }
     }

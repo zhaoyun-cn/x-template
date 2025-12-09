@@ -46,17 +46,21 @@ export class RoguelikeRewardSystem {
         if (!player) return;
         
         // 发送奖励数据到客户端
-        CustomGameEventManager.Send_ServerToPlayer(player, 'roguelike_show_reward', {
-            baseReward: breakdown.baseReward,
-            roomBonus: breakdown.roomBonus,
-            bossReward: breakdown.bossReward,
-            perfectClearBonus: breakdown.perfectClearBonus,
-            killBonus: breakdown.killBonus,
-            totalReward: breakdown.totalReward,
-            totalKills: stats.totalKills,
-            totalDeaths: stats.totalDeaths,
-            roomsCompleted: stats.roomsCompleted
-        });
+        CustomGameEventManager.Send_ServerToPlayer(
+    player, 
+    'roguelike_show_reward' as any, 
+    {
+        baseReward: breakdown.baseReward,
+        roomBonus: breakdown.roomBonus,
+        bossReward: breakdown.bossReward,
+        perfectClearBonus: breakdown.perfectClearBonus,
+        killBonus: breakdown.killBonus,
+        totalReward: breakdown. totalReward,
+        totalKills: stats.totalKills,
+        totalDeaths: stats. totalDeaths,
+        roomsCompleted: stats.roomsCompleted
+    } as any
+);
         
         print(`[RoguelikeReward] 玩家 ${playerId} 获得奖励: ${breakdown.totalReward}`);
     }
