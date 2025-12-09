@@ -276,38 +276,50 @@ export class DungeonGenerator {
         print(`[DungeonGenerator] ✅ Boss属性已设置`);
         
         // 🔧 重要：延迟初始化Boss系统
-        Timers.CreateTimer(0.5, () => {
-            try {
-                print(`[DungeonGenerator] 正在初始化影魔Boss系统...`);
-                
-                // 动态导入Boss类
-                const { ShadowFiendBoss } = require('../dungeon/boss/shadow_fiend_boss');
-                
-                // 获取第一个有效玩家ID
-                let playerId:  PlayerID = 0;
-                for (let i = 0; i < DOTA_MAX_TEAM_PLAYERS; i++) {
-                    if (PlayerResource.IsValidPlayerID(i)) {
-                        playerId = i as PlayerID;
-                        break;
-                    }
-                }
-                
-                // 初始化Boss系统
-                const bossInstance = new ShadowFiendBoss(hero, playerId);
-                
-                // 🔧 将Boss实例保存到hero上，方便后续访问
-                (hero as any)._bossInstance = bossInstance;
-                
-                print(`[DungeonGenerator] ✅ 影魔Boss系统已初始化，玩家ID: ${playerId}`);
-                
-            } catch (error) {
-                print(`[DungeonGenerator] ❌ Boss系统初始化失败:  ${error}`);
-            }
-            
-            return undefined;
-        });
+Timers.CreateTimer(0.5, () => {
+    try {
+        print(`[DungeonGenerator] 正在初始化影魔Boss系统...`);
         
-        return hero;
+        // 动态导入Boss类
+        const { ShadowFiendBoss } = require('../dungeon/boss/shadow_fiend_boss');
+        
+        // 获取第一个有效玩家ID
+        let playerId:  PlayerID = 0;
+        for (let i = 0; i < DOTA_MAX_TEAM_PLAYERS; i++) {
+            if (PlayerResource.IsValidPlayerID(i)) {
+                playerId = i as PlayerID;
+                break;
+            }
+        }
+        
+        // 初始化Boss系统
+        const bossInstance = new ShadowFiendBoss(hero, playerId);
+        
+        // 🔧 将Boss实例保存到hero上，方便后续清理
+        (hero as any)._bossInstance = bossInstance;
+        
+        // 🔧 监听Boss死亡，自动清理
+        const deathListener = ListenToGameEvent('entity_killed', (event) => {
+            const killedUnit = EntIndexToHScript(event.entindex_killed);
+            if (killedUnit === hero) {
+                print(`[DungeonGenerator] Boss已死亡，清理Boss系统`);
+                if (bossInstance) {
+                    bossInstance.Cleanup();
+                }
+                StopListeningToGameEvent(deathListener);
+            }
+        }, undefined);
+        
+        print(`[DungeonGenerator] ✅ 影魔Boss系统已初始化，玩家ID: ${playerId}`);
+        
+    } catch (error) {
+        print(`[DungeonGenerator] ❌ Boss系统初始化失败:  ${error}`);
+    }
+    
+    return undefined;
+});
+
+return hero;
     }
     
     /**

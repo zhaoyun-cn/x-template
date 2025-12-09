@@ -29,27 +29,34 @@ export class ShadowFiendBoss {
     }
 
     private StartHealthCheck(): void {
-        this.checkInterval = Timers.CreateTimer(0.5, () => {
-            if (this.boss && this.boss.IsAlive()) {
-                this.CheckHealthThreshold();
-                return 0.5;
-            }
+    this.checkInterval = Timers.CreateTimer(0.5, () => {
+        // 🔧 添加Boss存活检查
+        if (! this.boss || !IsValidEntity(this.boss) || !this.boss.IsAlive()) {
+            print("[ShadowFiendBoss] Boss已死亡，停止血量检测");
+            this.Cleanup(); // 🔧 清理所有计时器
             return undefined;
-        });
-    }
+        }
+        
+        this.CheckHealthThreshold();
+        return 0.5;
+    });
+}
 
     // ✅✅✅ 新增：自动释放技能系统 ✅✅✅
     private StartAbilityCast(): void {
-        print("[ShadowFiendBoss] Starting auto ability cast (every 10s)...");
-        
-        this.abilityInterval = Timers.CreateTimer(10, () => {
-            if (this.boss && this.boss.IsAlive()) {
-                this.CastPhaseAbility();
-                return 10;  // ✅ 每10秒重复
-            }
+    print("[ShadowFiendBoss] Starting auto ability cast (every 10s)...");
+    
+    this.abilityInterval = Timers.CreateTimer(10, () => {
+        // 🔧 添加Boss存活检查
+        if (!this.boss || !IsValidEntity(this.boss) || !this.boss.IsAlive()) {
+            print("[ShadowFiendBoss] Boss已死亡，停止技能释放");
             return undefined;
-        });
-    }
+        }
+        
+        this.CastPhaseAbility();
+        return 10;
+    });
+}
 
     private CheckHealthThreshold(): void {
         const healthPercent = this.boss.GetHealthPercent();
@@ -244,6 +251,34 @@ export class ShadowFiendBoss {
         
         print("[ShadowFiendBoss] ✓ Boss Manager destroyed");
     }
+
+    /**
+ * 清理Boss系统
+ */
+public Cleanup(): void {
+    print("[ShadowFiendBoss] 清理Boss系统");
+    
+    // 停止血量检测
+    if (this.checkInterval) {
+        Timers.RemoveTimer(this.checkInterval);
+        this.checkInterval = undefined;
+    }
+    
+    // 停止技能释放
+    if (this.abilityInterval) {
+        Timers.RemoveTimer(this. abilityInterval);
+        this.abilityInterval = undefined;
+    }
+    
+    // 清理粒子特效
+    for (const particle of this.phaseParticles) {
+        if (particle) {
+            ParticleManager.DestroyParticle(particle, false);
+            ParticleManager.ReleaseParticleIndex(particle);
+        }
+    }
+    this.phaseParticles = [];
+}
 }
 
 // 狂暴Modifier

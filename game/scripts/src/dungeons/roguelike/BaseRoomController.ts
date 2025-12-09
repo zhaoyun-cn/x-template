@@ -105,29 +105,36 @@ export abstract class BaseRoomController {
     }
     
     /**
-     * 清理房间
-     */
-    public Cleanup(): void {
-        print(`[BaseRoomController] 清理房间: ${this.config.roomName}`);
-        
-        // 🔧 停止更新循环
-        if (this.updateTimer) {
-            Timers.RemoveTimer(this.updateTimer);
-            this.updateTimer = null;
-        }
-        
-        // 🔧 清理所有生成的单位
-        for (const unit of this.spawnedUnits) {
-            if (unit && IsValidEntity(unit) && ! unit.IsNull()) {
-                unit.ForceKill(false);
-                UTIL_Remove(unit);
-            }
-        }
-        this.spawnedUnits = [];
-        
-        // 🔧 调用子类清理逻辑
-        this.OnCleanup();
+ * 清理房间
+ */
+public Cleanup(): void {
+    print(`[BaseRoomController] 清理房间: ${this.config.roomName}`);
+    
+    // 停止更新循环
+    if (this.updateTimer) {
+        Timers.RemoveTimer(this.updateTimer);
+        this.updateTimer = null;
     }
+    
+    // 清理所有生成的单位
+    for (const unit of this.spawnedUnits) {
+        if (unit && IsValidEntity(unit) && ! unit.IsNull()) {
+            // 🔧 如果单位有Boss实例，先清理
+            if ((unit as any)._bossInstance) {
+                print(`[BaseRoomController] 清理Boss实例`);
+                (unit as any)._bossInstance.Cleanup();
+                (unit as any)._bossInstance = null;
+            }
+            
+            unit.ForceKill(false);
+            UTIL_Remove(unit);
+        }
+    }
+    this.spawnedUnits = [];
+    
+    // 调用子类清理逻辑
+    this.OnCleanup();
+}
     
     /**
      * 获取房间状态

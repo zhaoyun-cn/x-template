@@ -6,7 +6,7 @@ import { ClearRoomController } from './ClearRoomController';
 import { SurvivalRoomController } from './SurvivalRoomController';
 import { BossRoomController } from './BossRoomController';
 import { RoguelikeRewardSystem } from './RoguelikeRewardSystem';
-import { GetDungeonManager } from '../DungeonManager'; // 🆕 在顶部导入
+import { CameraSystem, CameraZone } from '../../systems/camera'; // 🔧 修改路径（两个 .. ）
 /**
  * Roguelike副本实例
  * 主控制器，管理房间流程和分支选择
@@ -372,10 +372,7 @@ for (const playerId of this.players) {
         });
     }
     
-    /**
-     * 副本完成
-     */
-    /**
+  /**
  * 副本完成
  */
 private OnDungeonCompleted(): void {
@@ -383,21 +380,20 @@ private OnDungeonCompleted(): void {
     
     this.stats.endTime = GameRules.GetGameTime();
     
-    // 🔧 立即停止房间更新，防止继续刷怪
+    // 立即停止房间更新
     if (this.currentRoomController) {
         this.currentRoomController. Cleanup();
         this.currentRoomController = null;
     }
     
     // 计算奖励
-    const breakdown = RoguelikeRewardSystem. CalculateReward(this.config.rewardConfig, this.stats);
+    const breakdown = RoguelikeRewardSystem. CalculateReward(this. config.rewardConfig, this. stats);
     
     // 显示奖励
     for (const playerId of this.players) {
-        RoguelikeRewardSystem. ShowRewardSummary(playerId, breakdown);
-        RoguelikeRewardSystem. ShowRewardUI(playerId, breakdown, this.stats);
+        RoguelikeRewardSystem.ShowRewardSummary(playerId, breakdown);
+        RoguelikeRewardSystem.ShowRewardUI(playerId, breakdown, this. stats);
         
-        // 🔧 显示完成消息
         GameRules.SendCustomMessage(
             '<font color="#FFD700">🎉 副本完成！恭喜通关！</font>',
             playerId,
@@ -405,21 +401,30 @@ private OnDungeonCompleted(): void {
         );
     }
     
-    // 🔧 5秒后传送回城
+    // 5秒后传送回城
     print(`[RoguelikeDungeon] 5秒后传送玩家回城`);
     
-    Timers.CreateTimer(5, () => {
-        // 🔧 使用 DungeonManager 传送玩家回城
+    Timers. CreateTimer(5, () => {
+        // 🔧 导入摄像头系统
+      
         
-        const manager = GetDungeonManager();
-        
-        // 复制玩家列表，因为 LeaveDungeon 会修改原列表
-        const playersCopy = [...this.players];
-        
-        for (const playerId of playersCopy) {
-            print(`[RoguelikeDungeon] 传送玩家 ${playerId} 回城`);
-            manager.LeaveDungeon(playerId, 'complete');
+        for (const playerId of this.players) {
+            const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+            if (hero) {
+                const townPos = Vector(0, 0, 192);
+                FindClearSpaceForUnit(hero, townPos, true);
+                hero.Stop();
+                hero.EmitSound('Portal. Hero_Appear');
+                
+                // 🔧 切换摄像头回城镇
+                CameraSystem.SetZone(playerId, CameraZone. TOWN);
+                
+                print(`[RoguelikeDungeon] 玩家 ${playerId} 已传送回城，摄像头已切换`);
+            }
         }
+        
+        // 清理副本
+        this.Cleanup();
         
         return undefined;
     });
