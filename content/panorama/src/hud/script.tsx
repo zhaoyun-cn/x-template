@@ -4,6 +4,8 @@ import 'panorama-polyfill-x/lib/console';
 import 'panorama-polyfill-x/lib/timers';
 import { ExternalRewardItem } from "./../../../../game/scripts/src/dungeon/external_reward_pool";
 import { VaultUI } from './vault_ui';
+import { MFDisplay } from './mf_display'; // 顶部导入
+import { RoomChoicesUI } from './room_choices_ui'; // 🆕 添加这行
 
 import '../utils/hide-default-hud';
 import { RewardSelection } from "./reward_selection";
@@ -340,6 +342,7 @@ const Root: FC = () => {
     const [materialsVisible, setMaterialsVisible] = useState(false);
     const [skillTreeVisible, setSkillTreeVisible] = useState(false);
     const [branchSelectionVisible, setBranchSelectionVisible] = useState(false);
+    const [roomChoicesVisible, setRoomChoicesVisible] = useState(false); // 🆕 添加这行
     
     const [showClassSelection, setShowClassSelection] = useState(true);
     const [classSelected, setClassSelected] = useState(false);
@@ -425,6 +428,11 @@ const Root: FC = () => {
             $.Msg('[Root] 收到 roguelike_show_branch_selection 事件');
             setBranchSelectionVisible(true);
         });
+        // 🆕 添加房间选择事件监听
+const listenerRoomChoices = GameEvents.Subscribe('show_room_choices', () => {
+    $.Msg('[Root] 收到 show_room_choices 事件');
+    setRoomChoicesVisible(true);
+});
 
         return () => {
             GameEvents.Unsubscribe(listenerMenu);
@@ -433,6 +441,7 @@ const Root: FC = () => {
             GameEvents.Unsubscribe(listenerSkillTree);
             GameEvents.Unsubscribe(listenerClassConfirmed);
             GameEvents.Unsubscribe(listenerBranchSelection);
+               GameEvents.Unsubscribe(listenerRoomChoices); // 🆕 添加这行
         };
     }, []);
 
@@ -468,6 +477,16 @@ const Root: FC = () => {
                                 backgroundColor: '#000000cc',
                             }}
                         >
+                            {classSelected && (
+    <>
+        <RageBar />
+        <MFDisplay /> {/* 🆕 添加这行 */}
+        
+        <DungeonMenu visible={menuVisible} onClose={() => {
+            // ... 
+        }} />
+    </>
+)}
                             {vaultVisible && (
                                 <Panel
                                     style={{
@@ -504,6 +523,11 @@ const Root: FC = () => {
                         visible={branchSelectionVisible} 
                         onClose={() => setBranchSelectionVisible(false)} 
                     />
+                    {/* 🆕 添加房间选择UI */}
+<RoomChoicesUI 
+    visible={roomChoicesVisible} 
+    onClose={() => setRoomChoicesVisible(false)} 
+/>
                     
                     {/* 右下角按钮区 */}
                     <Panel style={{
