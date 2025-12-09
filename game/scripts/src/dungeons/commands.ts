@@ -425,10 +425,29 @@ Convars.RegisterCommand('-clear_all', () => {
         print('[Commands] 你不在多阶段副本中');
     }, '列出可选关卡', 0);
     
+    // 🆕 快速进入Roguelike副本
+    Convars.RegisterCommand('-roguelike', () => {
+        for (let playerId = 0; playerId < DOTA_MAX_TEAM_PLAYERS; playerId++) {
+            if (!PlayerResource.IsValidPlayerID(playerId)) continue;
+            
+            const manager = GetDungeonManager();
+            const instanceId = manager.CreateDungeon('roguelike_test', playerId);
+            
+            if (instanceId) {
+                manager.EnterDungeon(playerId, instanceId);
+                print(`[Commands] 创建并进入Roguelike副本: ${instanceId}`);
+            } else {
+                print(`[Commands] 创建Roguelike副本失败`);
+            }
+            return;
+        }
+    }, '创建并进入Roguelike测试副本', 0);
+    
     print('[Commands] 副本命令已注册');
     print('[Commands] 可用命令:');
     print('  -dungeons          列出所有副本');
     print('  -create_dungeon <id>  创建副本');
+    print('  -roguelike         快速进入Roguelike副本');
     print('  -leave_dungeon     离开副本');
     print('  -stage <n>         选择关卡');
     print('  -stages            列出可选关卡');

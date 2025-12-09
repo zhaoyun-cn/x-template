@@ -5,6 +5,9 @@ import { GetDungeonZoneManager } from './DungeonZoneManager';
 import { MultiStageDungeonInstance } from './MultiStageDungeonInstance';
 import { DUNGEON_FROST_TEMPLE_MULTI } from './configs/dungeon_frost_temple_multi';
 import { CameraSystem, CameraZone } from '../systems/camera';
+import { RoguelikeDungeonInstance } from './roguelike/RoguelikeDungeonInstance';
+import { ROGUELIKE_TEST_CONFIG } from './configs/dungeon_roguelike_test';
+import { RoguelikeEvents } from './roguelike/RoguelikeEvents';
 
 /**
  * 副本管理器
@@ -12,7 +15,7 @@ import { CameraSystem, CameraZone } from '../systems/camera';
  */
 class DungeonManager {
     private static instance: DungeonManager;
-    private instances: Map<string, DungeonInstance | MultiStageDungeonInstance> = new Map();
+    private instances: Map<string, DungeonInstance | MultiStageDungeonInstance | RoguelikeDungeonInstance> = new Map();
     private playerDungeonMap: Map<PlayerID, string> = new Map();
     private nextInstanceId: number = 1;
     private instanceZoneMap: Map<string, number> = new Map();
@@ -32,6 +35,11 @@ class DungeonManager {
      * 创建新的副本实例
      */
     public CreateDungeon(dungeonId: string, playerId?: PlayerID): string | null {
+        // 检查是否是 Roguelike 副本
+        if (dungeonId === 'roguelike_test') {
+            return this.CreateRoguelikeDungeon(playerId);
+        }
+        
         // 检查是否是多阶段副本
         if (dungeonId === 'frost_temple_multi') {
             return this.CreateMultiStageDungeon(playerId);
@@ -108,88 +116,131 @@ class DungeonManager {
     }
     
     /**
-     * 玩家进入副本
+     * 创建 Roguelike 副本
      */
+    private CreateRoguelikeDungeon(playerId?: PlayerID): string | null {
+        const config = ROGUELIKE_TEST_CONFIG;
+        const dungeonId = config.dungeonId;
+        
+        const instanceId = `${dungeonId}_${this.nextInstanceId++}`;
+        const zoneManager = GetDungeonZoneManager();
+        const zone = zoneManager.AllocateZone(instanceId);
+        
+        if (!zone) {
+            print(`[DungeonManager] 错误：无法分配区域给副本 ${instanceId}`);
+            if (playerId !== undefined) {
+                GameRules.SendCustomMessage(
+                    `<font color='#FF0000'>副本区域已满，请稍后再试</font>`,
+                    playerId,
+                    0
+                );
+            }
+            return null;
+        }
+        
+        const spawnPosition = Vector(zone.centerX, zone.centerY, 128);
+        const instance = new RoguelikeDungeonInstance(instanceId, spawnPosition, config);
+        instance.Initialize();
+        
+        this.instances.set(instanceId, instance);
+        this.instanceZoneMap.set(instanceId, zone.id);
+        
+        // 注册到事件系统
+        RoguelikeEvents.RegisterInstance(instanceId, instance);
+        
+        print(`[DungeonManager] 创建Roguelike副本: ${instanceId} at 区域${zone.id}`);
+        
+        return instanceId;
+    }
+    
     public EnterDungeon(playerId: PlayerID, instanceId: string): boolean {
-        const instance = this.instances.get(instanceId);
-        if (!instance) {
-            print(`[DungeonManager] 错误：找不到副本实例 ${instanceId}`);
-            return false;
+    const instance = this.instances.get(instanceId);
+    if (!instance) {
+        print(`[DungeonManager] 错误：找不到副本实例 ${instanceId}`);
+        return false;
+    }
+    
+    const hero = PlayerResource.GetSelectedHeroEntity(playerId);
+    if (!hero) {
+        print(`[DungeonManager] 错误：玩家 ${playerId} 没有英雄`);
+        return false;
+    }
+    
+    // 添加传送提示
+    GameRules.SendCustomMessage(
+        '<font color="#00FFFF">正在传送到副本...</font>',
+        playerId,
+        0
+    );
+    
+    // 定身1. 5秒
+    hero.AddNewModifier(hero, null, 'modifier_stunned', { duration: 1.5 });
+    
+    // 延迟1. 5秒后传送
+    Timers. CreateTimer(1.5, () => {
+        instance.AddPlayer(playerId);
+        this.playerDungeonMap.set(playerId, instanceId);
+        
+        // 获取地图数据和入口点
+        let mapData;
+        let generator;
+        
+        // 🔧 修复：针对 RoguelikeDungeonInstance 的特殊处理
+        if (instance instanceof RoguelikeDungeonInstance) {
+            generator = (instance as any).GetCurrentGenerator();
+            const currentRoom = (instance as any).GetCurrentRoom();
+            if (currentRoom && currentRoom.GetRoomConfig) {
+                mapData = currentRoom.GetRoomConfig().mapData;
+            }
+        } else if (instance instanceof MultiStageDungeonInstance) {
+            generator = (instance as any). currentGenerator;
+            mapData = (instance as any).config?. stages[0]?.mapData;
+        } else {
+            generator = (instance as DungeonInstance).GetGenerator();
+            mapData = (instance as DungeonInstance).GetMapData();
         }
         
-        const hero = PlayerResource.GetSelectedHeroEntity(playerId);
-        if (!hero) {
-            print(`[DungeonManager] 错误：玩家 ${playerId} 没有英雄`);
-            return false;
+        if (! generator) {
+            print(`[DungeonManager] 错误：找不到副本生成器`);
+            return undefined;
         }
         
-        // 添加传送提示
+        const entryPoint = mapData?.entryPoints?.[0] || { x: 0, y: 0 };
+        const worldPos = generator.GridToWorld(entryPoint.x, entryPoint.y);
+        
+        print(`[DungeonManager] 传送玩家 ${playerId} 到副本入口 (${worldPos.x}, ${worldPos.y})`);
+        
+        // 🔧 关键：使用 FindClearSpaceForUnit 传送英雄
+        FindClearSpaceForUnit(hero, worldPos, true);
+        hero.Stop();
+        
+        // 播放传送音效
+        hero.EmitSound('Portal. Hero_Appear');
+        
+        // 切换摄像头
+        CameraSystem.SetZone(playerId, CameraZone.BATTLE_ROOM);
+        
+        
+       // 开始副本
+if ('GetState' in instance) {
+    if ((instance as DungeonInstance).GetState() === DungeonInstanceState.WAITING) {
+        (instance as any).Start();
+    }
+} else {
+    (instance as any).Start();
+}
+        
         GameRules.SendCustomMessage(
-            '<font color="#00FFFF">正在传送到副本...</font>',
+            '<font color="#00FF00">已进入副本</font>',
             playerId,
             0
         );
         
-        // 定身1.5秒
-        hero.AddNewModifier(hero, null, 'modifier_stunned', { duration: 1.5 });
-        
-        // 延迟1.5秒后传送
-        Timers.CreateTimer(1.5, () => {
-            instance.AddPlayer(playerId);
-            this.playerDungeonMap.set(playerId, instanceId);
-            
-            // 获取地图数据
-            let mapData;
-            if (instance instanceof MultiStageDungeonInstance) {
-                mapData = (instance as any).config?.stages[0]?.mapData;
-            } else {
-                mapData = (instance as DungeonInstance).GetMapData();
-            }
-            
-            const entryPoint = mapData?.entryPoints?.[0] || { x: -2, y: 10 };
-            
-            // 获取生成器
-            let generator;
-            if (instance instanceof MultiStageDungeonInstance) {
-                generator = (instance as any).currentGenerator;
-            } else {
-                generator = (instance as DungeonInstance).GetGenerator();
-            }
-            
-            if (! generator) {
-                print(`[DungeonManager] 错误：找不到副本生成器`);
-                return undefined;
-            }
-            
-            const worldPos = generator.GridToWorld(entryPoint.x, entryPoint.y);
-            
-            print(`[DungeonManager] 传送玩家 ${playerId} 到副本入口 (${worldPos.x}, ${worldPos.y})`);
-            
-            FindClearSpaceForUnit(hero, worldPos, true);
-            hero.Stop();
-            
-            // 播放传送音效
-            hero.EmitSound('Portal.Hero_Appear');
-            
-            // ✅ 使用正确的摄像头区域：BATTLE_ROOM
-            CameraSystem.SetZone(playerId, CameraZone.BATTLE_ROOM);
-            
-            // 开始副本
-            if (instance.GetState() === DungeonInstanceState.WAITING) {
-                instance.Start();
-            }
-            
-            GameRules.SendCustomMessage(
-                '<font color="#00FF00">已进入副本</font>',
-                playerId,
-                0
-            );
-            
-            return undefined;
-        });
-        
-        return true;
-    }
+        return undefined;
+    });
+    
+    return true;
+}
     
     /**
      * 玩家离开副本
@@ -289,9 +340,9 @@ class DungeonManager {
     /**
      * 获取副本实例
      */
-    public GetDungeonInstance(instanceId: string): DungeonInstance | MultiStageDungeonInstance | undefined {
-        return this.instances.get(instanceId);
-    }
+   public GetDungeonInstance(instanceId: string): DungeonInstance | MultiStageDungeonInstance | RoguelikeDungeonInstance | undefined {
+    return this.instances.get(instanceId);
+}
     
     /**
      * 获取玩家所在的副本ID
@@ -303,9 +354,9 @@ class DungeonManager {
     /**
      * 获取所有副本实例
      */
-    public GetAllInstances(): Map<string, DungeonInstance | MultiStageDungeonInstance> {
-        return this.instances;
-    }
+    public GetAllInstances(): Map<string, DungeonInstance | MultiStageDungeonInstance | RoguelikeDungeonInstance> {
+    return this. instances;
+}
 }
 
 /**
