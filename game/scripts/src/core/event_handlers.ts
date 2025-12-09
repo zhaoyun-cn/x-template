@@ -183,7 +183,8 @@ export class EventHandlers {
                 if (!ClassSystem.HasSelectedClass(i as PlayerID)) continue;
                 
                 // 🆕 检查玩家是否已经在副本中
-                if (manager.GetPlayerDungeon(i as PlayerID)) {
+                const playerDungeon = manager.GetPlayerDungeon(i as PlayerID);
+                if (playerDungeon) {
                     continue; // 玩家已在副本中，跳过检测
                 }
                 
