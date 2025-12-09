@@ -20,6 +20,7 @@ import { MaterialsUI } from './materials_ui';
 import { ClassSelection } from './class_selection';
 import { SkillTreeUI } from './skill_tree_ui';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { RoguelikeBranchSelection } from './roguelike_branch_selection';
 
 registerCustomKey('D');
 registerCustomKey('F');
@@ -338,6 +339,7 @@ const Root: FC = () => {
     const [equipmentVisible, setEquipmentVisible] = useState(false);
     const [materialsVisible, setMaterialsVisible] = useState(false);
     const [skillTreeVisible, setSkillTreeVisible] = useState(false);
+    const [branchSelectionVisible, setBranchSelectionVisible] = useState(false);
     
     const [showClassSelection, setShowClassSelection] = useState(true);
     const [classSelected, setClassSelected] = useState(false);
@@ -419,12 +421,18 @@ const Root: FC = () => {
             setShowClassSelection(false);
         });
 
+        const listenerBranchSelection = GameEvents.Subscribe('roguelike_show_branch_selection', () => {
+            $.Msg('[Root] 收到 roguelike_show_branch_selection 事件');
+            setBranchSelectionVisible(true);
+        });
+
         return () => {
             GameEvents.Unsubscribe(listenerMenu);
             GameEvents.Unsubscribe(listenerReward);
             GameEvents.Unsubscribe(listenerEquipment);
             GameEvents.Unsubscribe(listenerSkillTree);
             GameEvents.Unsubscribe(listenerClassConfirmed);
+            GameEvents.Unsubscribe(listenerBranchSelection);
         };
     }, []);
 
@@ -490,6 +498,11 @@ const Root: FC = () => {
                     <SkillTreeUI 
                         visible={skillTreeVisible} 
                         onClose={() => setSkillTreeVisible(false)} 
+                    />
+                    
+                    <RoguelikeBranchSelection 
+                        visible={branchSelectionVisible} 
+                        onClose={() => setBranchSelectionVisible(false)} 
                     />
                     
                     {/* 右下角按钮区 */}
