@@ -166,6 +166,10 @@ class DungeonManager {
         return false;
     }
     
+    // 🔧 关键：提前标记玩家进入副本
+    this.playerDungeonMap.set(playerId, instanceId);
+    print(`[DungeonManager] ✅ 玩家 ${playerId} 已标记进入副本 ${instanceId}`);
+    
     // 添加传送提示
     GameRules.SendCustomMessage(
         '<font color="#00FFFF">正在传送到副本...</font>',
@@ -173,19 +177,24 @@ class DungeonManager {
         0
     );
     
-    // 定身1. 5秒
+    // 定身1.5秒
     hero.AddNewModifier(hero, null, 'modifier_stunned', { duration: 1.5 });
     
-    // 延迟1. 5秒后传送
-    Timers. CreateTimer(1.5, () => {
+    // 延迟1.5秒后传送
+    Timers.CreateTimer(1.5, () => {
+        // 检查玩家是否还在副本中（可能中途退出）
+        if (this. playerDungeonMap.get(playerId) !== instanceId) {
+            print(`[DungeonManager] 玩家 ${playerId} 已不在副本 ${instanceId}，取消传送`);
+            return undefined;
+        }
+        
         instance.AddPlayer(playerId);
-        this.playerDungeonMap.set(playerId, instanceId);
         
         // 获取地图数据和入口点
         let mapData;
         let generator;
         
-        // 🔧 修复：针对 RoguelikeDungeonInstance 的特殊处理
+        // 修复：针对 RoguelikeDungeonInstance 的特殊处理
         if (instance instanceof RoguelikeDungeonInstance) {
             generator = (instance as any).GetCurrentGenerator();
             const currentRoom = (instance as any).GetCurrentRoom();
@@ -193,7 +202,7 @@ class DungeonManager {
                 mapData = currentRoom.GetRoomConfig().mapData;
             }
         } else if (instance instanceof MultiStageDungeonInstance) {
-            generator = (instance as any). currentGenerator;
+            generator = (instance as any).currentGenerator;
             mapData = (instance as any).config?. stages[0]?.mapData;
         } else {
             generator = (instance as DungeonInstance).GetGenerator();
@@ -205,30 +214,29 @@ class DungeonManager {
             return undefined;
         }
         
-        const entryPoint = mapData?.entryPoints?.[0] || { x: 0, y: 0 };
+        const entryPoint = mapData?. entryPoints?.[0] || { x: 0, y: 0 };
         const worldPos = generator.GridToWorld(entryPoint.x, entryPoint.y);
         
         print(`[DungeonManager] 传送玩家 ${playerId} 到副本入口 (${worldPos.x}, ${worldPos.y})`);
         
-        // 🔧 关键：使用 FindClearSpaceForUnit 传送英雄
+        // 关键：使用 FindClearSpaceForUnit 传送英雄
         FindClearSpaceForUnit(hero, worldPos, true);
         hero.Stop();
         
         // 播放传送音效
         hero.EmitSound('Portal. Hero_Appear');
         
-        // 切换摄像头
-        CameraSystem.SetZone(playerId, CameraZone.BATTLE_ROOM);
+        // 切换摄像头（会自动跟随英雄）
+        CameraSystem.SetZone(playerId, CameraZone. BATTLE_ROOM);
         
-        
-       // 开始副本
-if ('GetState' in instance) {
-    if ((instance as DungeonInstance).GetState() === DungeonInstanceState.WAITING) {
-        (instance as any).Start();
-    }
-} else {
-    (instance as any).Start();
-}
+        // 开始副本
+        if ('GetState' in instance) {
+            if ((instance as DungeonInstance).GetState() === DungeonInstanceState.WAITING) {
+                (instance as any).Start();
+            }
+        } else {
+            (instance as any).Start();
+        }
         
         GameRules.SendCustomMessage(
             '<font color="#00FF00">已进入副本</font>',
