@@ -54,10 +54,9 @@ export class ClearRoomController extends BaseRoomController {
         return `<font color="#FF6347">⚔️ 剿灭战开始！消灭所有怪物</font>`;
     }
     
-    protected HandleUnitKilled(killedUnit: CDOTA_BaseNPC, killer: CDOTA_BaseNPC | undefined): void {
-        // 🔧 修复：检查怪物是否属于本房间（使用 entindex 比较）
+    protected HandleUnitKilled(killedUnit: CDOTA_BaseNPC, killer:  CDOTA_BaseNPC | undefined): void {
+        // 🔧 使用 IsOurMonster 检查
         if (!this.IsOurMonster(killedUnit)) {
-            // 不是我们刷的怪物，忽略
             return;
         }
         
@@ -70,7 +69,7 @@ export class ClearRoomController extends BaseRoomController {
         for (const playerId of this.players) {
             this.SendMessageToPlayer(
                 playerId,
-                `<font color="#FFA500">击杀进度: ${killedCount}/${this.totalMonsters}</font>`
+                `<font color="#FFA500">击杀进度:  ${killedCount}/${this.totalMonsters}</font>`
             );
         }
         

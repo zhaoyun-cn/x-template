@@ -6,7 +6,7 @@ import { ClearRoomController } from './ClearRoomController';
 import { SurvivalRoomController } from './SurvivalRoomController';
 import { BossRoomController } from './BossRoomController';
 import { RoguelikeRewardSystem } from './RoguelikeRewardSystem';
-
+import { GetDungeonManager } from '../DungeonManager'; // 🆕 在顶部导入
 /**
  * Roguelike副本实例
  * 主控制器，管理房间流程和分支选择
@@ -50,6 +50,15 @@ export class RoguelikeDungeonInstance {
         this.StartRoom(this.currentRoomId);
     }
     
+    /**
+ * 开始副本
+ */
+public Start(): void {
+    print(`[RoguelikeDungeon] 开始副本:  ${this.instanceId}`);
+    // 副本在 Initialize 时已经启动了第一个房间
+    // 这个方法主要是为了兼容 DungeonManager 的调用
+}
+
     /**
      * 添加玩家
      */
@@ -251,20 +260,29 @@ export class RoguelikeDungeonInstance {
             };
         });
         
-        // 发送到所有玩家
-        for (const playerId of this.players) {
-            const player = PlayerResource.GetPlayer(playerId);
-            if (player) {
-                CustomGameEventManager.Send_ServerToPlayer(
-    player, 
-    'roguelike_show_branch_selection' as any, 
-    {
-        instanceId: this.instanceId,
-        options: options
-    } as any
-);
-            }
-        }
+       // 发送到所有玩家
+for (const playerId of this.players) {
+    const player = PlayerResource.GetPlayer(playerId);
+    if (player) {
+        // 🔧 修复：将数组转为对象，并确保索引从0开始
+        const optionsObj:  Record<number, any> = {};
+        options.forEach((opt, index) => {
+            optionsObj[index] = opt;
+        });
+        
+        CustomGameEventManager.Send_ServerToPlayer(
+            player, 
+            'roguelike_show_branch_selection' as any, 
+            {
+                instanceId: this.instanceId,
+                options: optionsObj,
+                optionCount: options.length  // 🆕 添加数量字段
+            } as any
+        );
+        
+        print(`[RoguelikeDungeon] 发送分支选择给玩家 ${playerId}，选项数:  ${options.length}`);
+    }
+}
     }
     
     /**
@@ -357,26 +375,55 @@ export class RoguelikeDungeonInstance {
     /**
      * 副本完成
      */
-    private OnDungeonCompleted(): void {
-        print(`[RoguelikeDungeon] 副本完成`);
+    /**
+ * 副本完成
+ */
+private OnDungeonCompleted(): void {
+    print(`[RoguelikeDungeon] 🎉 副本完成！`);
+    
+    this.stats.endTime = GameRules.GetGameTime();
+    
+    // 🔧 立即停止房间更新，防止继续刷怪
+    if (this.currentRoomController) {
+        this.currentRoomController. Cleanup();
+        this.currentRoomController = null;
+    }
+    
+    // 计算奖励
+    const breakdown = RoguelikeRewardSystem. CalculateReward(this.config.rewardConfig, this.stats);
+    
+    // 显示奖励
+    for (const playerId of this.players) {
+        RoguelikeRewardSystem. ShowRewardSummary(playerId, breakdown);
+        RoguelikeRewardSystem. ShowRewardUI(playerId, breakdown, this.stats);
         
-        this.stats.endTime = GameRules.GetGameTime();
+        // 🔧 显示完成消息
+        GameRules.SendCustomMessage(
+            '<font color="#FFD700">🎉 副本完成！恭喜通关！</font>',
+            playerId,
+            0
+        );
+    }
+    
+    // 🔧 5秒后传送回城
+    print(`[RoguelikeDungeon] 5秒后传送玩家回城`);
+    
+    Timers.CreateTimer(5, () => {
+        // 🔧 使用 DungeonManager 传送玩家回城
         
-        // 计算奖励
-        const breakdown = RoguelikeRewardSystem.CalculateReward(this.config.rewardConfig, this.stats);
+        const manager = GetDungeonManager();
         
-        // 显示奖励
-        for (const playerId of this.players) {
-            RoguelikeRewardSystem.ShowRewardSummary(playerId, breakdown);
-            RoguelikeRewardSystem.ShowRewardUI(playerId, breakdown, this.stats);
+        // 复制玩家列表，因为 LeaveDungeon 会修改原列表
+        const playersCopy = [...this.players];
+        
+        for (const playerId of playersCopy) {
+            print(`[RoguelikeDungeon] 传送玩家 ${playerId} 回城`);
+            manager.LeaveDungeon(playerId, 'complete');
         }
         
-        // 5秒后返回城镇
-        Timers.CreateTimer(5, () => {
-            this.Cleanup();
-            return undefined;
-        });
-    }
+        return undefined;
+    });
+}
     
     /**
      * 清理副本
@@ -422,4 +469,30 @@ export class RoguelikeDungeonInstance {
     public GetInstanceId(): string {
         return this.instanceId;
     }
+
+
+
+
+/**
+ * 获取副本状态
+ */
+public GetState(): number {
+    // Roguelike 副本始终运行中，直到完成或失败
+    return 1; // RUNNING
+}
+
+/**
+ * 获取当前生成器
+ */
+public GetCurrentGenerator(): DungeonGenerator | null {
+    return this.currentGenerator;
+}
+
+/**
+ * 获取当前房间控制器
+ */
+public GetCurrentRoom(): BaseRoomController | null {
+    return this.currentRoomController;
+}
+
 }

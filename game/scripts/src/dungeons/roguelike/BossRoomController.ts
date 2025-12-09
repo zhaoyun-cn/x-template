@@ -41,17 +41,21 @@ export class BossRoomController extends BaseRoomController {
         }
     }
     
-    protected OnUpdate(): void {
-        // 检查Boss是否被击败
-        if (this.bossUnit && (!IsValidEntity(this.bossUnit) || this.bossUnit.IsNull() || !this.bossUnit.IsAlive())) {
+   protected OnUpdate(): void {
+    // 🔧 修复：只要Boss死了就立即完成，不等待下次Update
+    if (this.bossUnit) {
+        if (!IsValidEntity(this.bossUnit) || this.bossUnit.IsNull() || !this.bossUnit.IsAlive()) {
+            print(`[BossRoom] 检测到Boss已死亡，完成房间`);
             this.CompleteRoom();
-        }
-        
-        // 检查是否所有玩家都死了
-        if (!this.IsAnyPlayerAlive()) {
-            this.FailRoom('所有玩家阵亡');
+            return; // 立即返回，不再继续检查
         }
     }
+    
+    // 检查是否所有玩家都死了
+    if (!this.IsAnyPlayerAlive()) {
+        this.FailRoom('所有玩家阵亡');
+    }
+}
     
     protected OnComplete(): void {
         print(`[BossRoom] Boss房间完成`);

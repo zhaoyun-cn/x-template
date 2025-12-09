@@ -37,20 +37,21 @@ export class RoguelikeEvents {
         print('[RoguelikeEvents] 初始化事件系统');
         
         // 监听分支选择事件
-        CustomGameEventManager.RegisterListener('roguelike_select_branch', (userId, event: any) => {
-            const playerId = event.PlayerID as PlayerID;
-            const instanceId = event.instanceId as string;
-            const roomId = event.roomId as string;
-            
-            print(`[RoguelikeEvents] 玩家 ${playerId} 选择分支: ${roomId} in ${instanceId}`);
-            
-            const instance = this.instances.get(instanceId);
-            if (instance) {
-                instance.OnBranchSelected(playerId, roomId);
-            } else {
-                print(`[RoguelikeEvents] 错误：找不到副本实例 ${instanceId}`);
-            }
-        });
+        // 注册分支选择事件
+CustomGameEventManager.RegisterListener('roguelike_select_branch', (userId, event:  any) => {
+    const playerId = event.PlayerID as PlayerID;
+    const instanceId = event.instanceId as string;
+    const roomId = event.roomId as string;
+    
+    print(`[RoguelikeEvents] 玩家 ${playerId} 选择分支:   ${roomId}`);
+    
+    const instance = this.instances.get(instanceId);
+    if (instance) {
+        instance.OnBranchSelected(playerId, roomId);
+    } else {
+        print(`[RoguelikeEvents] 错误：找不到副本实例 ${instanceId}`);
+    }
+});
         
         // 🔧 监听单位击杀事件（用于Roguelike副本）
         ListenToGameEvent('entity_killed', (event) => {

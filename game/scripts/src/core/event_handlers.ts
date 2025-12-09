@@ -166,56 +166,57 @@ export class EventHandlers {
     /**
      * 监控传送门触发
      */
-    private static MonitorPortalTrigger(): void {
-        Timers.CreateTimer(0.25, () => {
-            if (!this.dungeonPortalInstance || this.dungeonPortalInstance.IsNull()) {
-                return 0.25;
-            }
+   private static MonitorPortalTrigger(): void {
+    Timers.CreateTimer(0.25, () => {
+        if (!this.dungeonPortalInstance || this.dungeonPortalInstance.IsNull()) {
+            return 0.25;
+        }
 
-            const currentTime = GameRules.GetGameTime();
-            const playerCount = PlayerResource.GetPlayerCount();
-            const manager = GetDungeonManager(); // 🆕 获取副本管理器
+        const currentTime = GameRules.GetGameTime();
+        const playerCount = PlayerResource.GetPlayerCount();
+        const manager = GetDungeonManager(); // 🆕 获取副本管理器
 
-            for (let i = 0; i < playerCount; i++) {
-                if (! PlayerResource.IsValidPlayerID(i)) continue;
-                
-                // 检查玩家是否选择了职业
-                if (!ClassSystem.HasSelectedClass(i as PlayerID)) continue;
-                
-                // 🆕 检查玩家是否已经在副本中
-                const playerDungeon = manager.GetPlayerDungeon(i as PlayerID);
-                if (playerDungeon) {
-                    continue; // 玩家已在副本中，跳过检测
-                }
-                
-                const hero = PlayerResource.GetSelectedHeroEntity(i);
-                if (!hero || ! hero.IsAlive()) continue;
+        for (let i = 0; i < playerCount; i++) {
+            if (! PlayerResource.IsValidPlayerID(i)) continue;
+            
+            // 检查玩家是否选择了职业
+            if (!ClassSystem.HasSelectedClass(i as PlayerID)) continue;
 
-                const portalPos = this.dungeonPortalInstance.GetAbsOrigin();
-                const heroPos = hero.GetAbsOrigin();
-                const dx = portalPos.x - heroPos.x;
-                const dy = portalPos.y - heroPos.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance <= 200) {
-                    const lastTrigger = lastMenuTriggerTime[i] || 0;
-                    if (currentTime - lastTrigger < 3.0) {
-                        continue;
-                    }
-                    
-                    lastMenuTriggerTime[i] = currentTime;
-                    
-                    CustomGameEventManager.Send_ServerToPlayer<{}>(
-                        PlayerResource.GetPlayer(i)!,
-                        "show_dungeon_menu",
-                        {}
-                    );
-                }
+             // 🆕 检查玩家是否已在副本中
+            if (manager.GetPlayerDungeon(i as PlayerID)) {
+                continue; // 玩家已在副本中，跳过检测
             }
             
-            return 0.25;
-        });
-    }
+            
+            
+            const hero = PlayerResource.GetSelectedHeroEntity(i);
+            if (!hero || !hero.IsAlive()) continue;
+
+            const portalPos = this.dungeonPortalInstance.GetAbsOrigin();
+            const heroPos = hero.GetAbsOrigin();
+            const dx = portalPos.x - heroPos. x;
+            const dy = portalPos.y - heroPos. y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance <= 200) {
+                const lastTrigger = lastMenuTriggerTime[i] || 0;
+                if (currentTime - lastTrigger < 3.0) {
+                    continue;
+                }
+                
+                lastMenuTriggerTime[i] = currentTime;
+                
+                CustomGameEventManager.Send_ServerToPlayer<{}>(
+                    PlayerResource.GetPlayer(i)! ,
+                    "show_dungeon_menu",
+                    {}
+                );
+            }
+        }
+        
+        return 0.25;
+    });
+}
     
     /**
      * 注册玩家连接事件

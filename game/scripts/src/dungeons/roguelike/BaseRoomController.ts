@@ -27,7 +27,7 @@ export abstract class BaseRoomController {
      * 初始化房间
      */
     public Initialize(): void {
-        print(`[BaseRoomController] 初始化房间: ${this.config.roomName}`);
+        print(`[BaseRoomController] 初始化房间:  ${this.config.roomName}`);
         this.state = RoomState.PREPARING;
         this.OnInitialize();
     }
@@ -36,7 +36,7 @@ export abstract class BaseRoomController {
      * 开始房间挑战
      */
     public Start(): void {
-        print(`[BaseRoomController] 开始房间: ${this.config.roomName}`);
+        print(`[BaseRoomController] 开始房间:  ${this.config.roomName}`);
         this.state = RoomState.IN_PROGRESS;
         
         // 通知所有玩家
@@ -110,20 +110,22 @@ export abstract class BaseRoomController {
     public Cleanup(): void {
         print(`[BaseRoomController] 清理房间: ${this.config.roomName}`);
         
-        // 停止更新循环
+        // 🔧 停止更新循环
         if (this.updateTimer) {
             Timers.RemoveTimer(this.updateTimer);
             this.updateTimer = null;
         }
         
-        // 清理所有生成的单位
+        // 🔧 清理所有生成的单位
         for (const unit of this.spawnedUnits) {
-            if (unit && IsValidEntity(unit) && !unit.IsNull() && unit.IsAlive()) {
+            if (unit && IsValidEntity(unit) && ! unit.IsNull()) {
                 unit.ForceKill(false);
+                UTIL_Remove(unit);
             }
         }
         this.spawnedUnits = [];
         
+        // 🔧 调用子类清理逻辑
         this.OnCleanup();
     }
     
@@ -135,33 +137,21 @@ export abstract class BaseRoomController {
     }
     
     /**
-     * 处理单位死亡
+     * 获取房间配置
      */
-    public OnUnitKilled(killedUnit: CDOTA_BaseNPC, killer: CDOTA_BaseNPC | undefined): void {
-        this.HandleUnitKilled(killedUnit, killer);
+    public GetRoomConfig(): RoomConfig {
+        return this.config;
     }
     
     /**
-     * 处理玩家死亡
-     */
-    public OnPlayerDeath(playerId: PlayerID): void {
-        this.stats.totalDeaths++;
-        this.HandlePlayerDeath(playerId);
-    }
-    
-    /**
-     * 发送消息给玩家
-     */
-    protected SendMessageToPlayer(playerId: PlayerID, message: string): void {
-        GameRules.SendCustomMessage(message, playerId, 0);
-    }
-    
-    /**
-     * 生成怪物
+     * 刷新怪物（通过spawner ID）
      */
     protected SpawnMonsters(spawnerId: string): void {
         const spawner = this.config.mapData.spawners.find(s => s.id === spawnerId);
-        if (!spawner) return;
+        if (!spawner) {
+            print(`[BaseRoomController] 警告：找不到刷怪点 ${spawnerId}`);
+            return;
+        }
         
         const worldPos = this.generator.GridToWorld(spawner.x, spawner.y);
         const units = this.generator.SpawnUnits(worldPos, spawner);
@@ -198,14 +188,25 @@ export abstract class BaseRoomController {
     }
     
     /**
-     * 检查击杀的单位是否属于本房间的怪物
-     * 使用 entindex 进行比较，更可靠
+     * 发送消息给玩家
      */
-    protected IsOurMonster(killedUnit: CDOTA_BaseNPC): boolean {
-        const killedIndex = killedUnit.entindex();
+    protected SendMessageToPlayer(playerId: PlayerID, message: string): void {
+        GameRules.SendCustomMessage(message, playerId, 0);
+    }
+    
+    /**
+     * 🆕 检查单位是否是本房间生成的怪物
+     */
+    protected IsOurMonster(unit: CDOTA_BaseNPC): boolean {
+        if (!unit || !IsValidEntity(unit)) {
+            return false;
+        }
         
-        for (const unit of this.spawnedUnits) {
-            if (unit && IsValidEntity(unit) && unit.entindex() === killedIndex) {
+        const unitIndex = unit.entindex();
+        
+        for (const spawnedUnit of this.spawnedUnits) {
+            if (spawnedUnit && IsValidEntity(spawnedUnit) && 
+                spawnedUnit.entindex() === unitIndex) {
                 return true;
             }
         }
@@ -213,50 +214,29 @@ export abstract class BaseRoomController {
         return false;
     }
     
-    // ========== 抽象方法，子类必须实现 ==========
+    /**
+     * 单位被击杀事件
+     */
+    public OnUnitKilled(killedUnit: CDOTA_BaseNPC, killer: CDOTA_BaseNPC | undefined): void {
+        this.HandleUnitKilled(killedUnit, killer);
+    }
     
     /**
-     * 子类初始化逻辑
+     * 玩家死亡事件
      */
+    public OnPlayerDeath(playerId: PlayerID): void {
+        this.HandlePlayerDeath(playerId);
+    }
+    
+    // ===== 抽象方法，由子类实现 =====
+    
     protected abstract OnInitialize(): void;
-    
-    /**
-     * 子类开始逻辑
-     */
     protected abstract OnStart(): void;
-    
-    /**
-     * 子类更新逻辑
-     */
     protected abstract OnUpdate(): void;
-    
-    /**
-     * 子类完成逻辑
-     */
     protected abstract OnComplete(): void;
-    
-    /**
-     * 子类失败逻辑
-     */
     protected abstract OnFail(): void;
-    
-    /**
-     * 子类清理逻辑
-     */
     protected abstract OnCleanup(): void;
-    
-    /**
-     * 获取开始消息
-     */
     protected abstract GetStartMessage(): string;
-    
-    /**
-     * 处理单位击杀
-     */
     protected abstract HandleUnitKilled(killedUnit: CDOTA_BaseNPC, killer: CDOTA_BaseNPC | undefined): void;
-    
-    /**
-     * 处理玩家死亡
-     */
     protected abstract HandlePlayerDeath(playerId: PlayerID): void;
 }
