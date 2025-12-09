@@ -91,7 +91,7 @@ export interface RoguelikeDungeonConfig {
     description: string;
     
     // 房间配置
-    rooms: Record<string, RoomConfig>;
+    rooms: Map<string, RoomConfig>;
     startRoomId: string;
     
     // 奖励配置
