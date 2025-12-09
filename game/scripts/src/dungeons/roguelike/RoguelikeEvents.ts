@@ -52,6 +52,19 @@ export class RoguelikeEvents {
             }
         });
         
+        // 🔧 监听单位击杀事件（用于Roguelike副本）
+        ListenToGameEvent('entity_killed', (event) => {
+            const killedUnit = EntIndexToHScript(event.entindex_killed) as CDOTA_BaseNPC;
+            const killerUnit = event.entindex_attacker ? EntIndexToHScript(event.entindex_attacker) as CDOTA_BaseNPC : undefined;
+            
+            if (!killedUnit) return;
+            
+            // 通知所有副本实例
+            for (const [instanceId, instance] of this.instances) {
+                instance.OnUnitKilled(killedUnit, killerUnit);
+            }
+        }, undefined);
+        
         this.initialized = true;
     }
 }

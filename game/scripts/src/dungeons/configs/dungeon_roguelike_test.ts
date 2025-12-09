@@ -11,9 +11,8 @@ export const ROGUELIKE_TEST_CONFIG: RoguelikeDungeonConfig = {
     
     startRoomId: 'room_1_score',
     
-    rooms: {
-        // 起始房间 - 积分模式
-        'room_1_score': {
+    rooms: new Map([
+        ['room_1_score', {
             roomId: 'room_1_score',
             roomName: '初始挑战',
             roomType: RoomType.SCORE,
@@ -89,10 +88,8 @@ export const ROGUELIKE_TEST_CONFIG: RoguelikeDungeonConfig = {
             },
             
             nextRooms: ['room_2a_clear', 'room_2b_survival']
-        },
-        
-        // 分支A - 清怪模式
-        'room_2a_clear': {
+        }],
+        ['room_2a_clear', {
             roomId: 'room_2a_clear',
             roomName: '剿灭战',
             roomType: RoomType.CLEAR,
@@ -179,10 +176,8 @@ export const ROGUELIKE_TEST_CONFIG: RoguelikeDungeonConfig = {
             },
             
             nextRooms: ['room_3_boss']
-        },
-        
-        // 分支B - 生存模式
-        'room_2b_survival': {
+        }],
+        ['room_2b_survival', {
             roomId: 'room_2b_survival',
             roomName: '生存挑战',
             roomType: RoomType.SURVIVAL,
@@ -230,10 +225,8 @@ export const ROGUELIKE_TEST_CONFIG: RoguelikeDungeonConfig = {
             },
             
             nextRooms: ['room_3_boss']
-        },
-        
-        // Boss房间
-        'room_3_boss': {
+        }],
+        ['room_3_boss', {
             roomId: 'room_3_boss',
             roomName: 'Boss战',
             roomType: RoomType.BOSS,
@@ -344,8 +337,8 @@ export const ROGUELIKE_TEST_CONFIG: RoguelikeDungeonConfig = {
             },
             
             isFinalRoom: true
-        }
-    },
+        }]
+    ]),
     
     rewardConfig: {
         baseReward: 100,

@@ -197,6 +197,22 @@ export abstract class BaseRoomController {
         return false;
     }
     
+    /**
+     * 检查击杀的单位是否属于本房间的怪物
+     * 使用 entindex 进行比较，更可靠
+     */
+    protected IsOurMonster(killedUnit: CDOTA_BaseNPC): boolean {
+        const killedIndex = killedUnit.entindex();
+        
+        for (const unit of this.spawnedUnits) {
+            if (unit && IsValidEntity(unit) && unit.entindex() === killedIndex) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
     // ========== 抽象方法，子类必须实现 ==========
     
     /**

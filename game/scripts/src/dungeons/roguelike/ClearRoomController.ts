@@ -55,6 +55,12 @@ export class ClearRoomController extends BaseRoomController {
     }
     
     protected HandleUnitKilled(killedUnit: CDOTA_BaseNPC, killer: CDOTA_BaseNPC | undefined): void {
+        // 🔧 修复：检查怪物是否属于本房间（使用 entindex 比较）
+        if (!this.IsOurMonster(killedUnit)) {
+            // 不是我们刷的怪物，忽略
+            return;
+        }
+        
         this.stats.totalKills++;
         
         const aliveCount = this.GetAliveMonsterCount();

@@ -174,12 +174,19 @@ export class EventHandlers {
 
             const currentTime = GameRules.GetGameTime();
             const playerCount = PlayerResource.GetPlayerCount();
+            const manager = GetDungeonManager(); // 🆕 获取副本管理器
 
             for (let i = 0; i < playerCount; i++) {
                 if (! PlayerResource.IsValidPlayerID(i)) continue;
                 
                 // 检查玩家是否选择了职业
                 if (!ClassSystem.HasSelectedClass(i as PlayerID)) continue;
+                
+                // 🆕 检查玩家是否已经在副本中
+                const playerDungeon = manager.GetPlayerDungeon(i as PlayerID);
+                if (playerDungeon) {
+                    continue; // 玩家已在副本中，跳过检测
+                }
                 
                 const hero = PlayerResource.GetSelectedHeroEntity(i);
                 if (!hero || ! hero.IsAlive()) continue;

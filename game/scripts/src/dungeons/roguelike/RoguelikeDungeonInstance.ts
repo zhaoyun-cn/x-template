@@ -86,7 +86,7 @@ export class RoguelikeDungeonInstance {
     private StartRoom(roomId: string): void {
         print(`[RoguelikeDungeon] 开始房间: ${roomId}`);
         
-        const roomConfig = this.config.rooms[roomId];
+        const roomConfig = this.config.rooms.get(roomId);
         if (!roomConfig) {
             print(`[RoguelikeDungeon] 错误：找不到房间配置 ${roomId}`);
             return;
@@ -193,7 +193,7 @@ export class RoguelikeDungeonInstance {
         this.completedRooms.add(this.currentRoomId);
         this.stats.roomsCompleted++;
         
-        const roomConfig = this.config.rooms[this.currentRoomId];
+        const roomConfig = this.config.rooms.get(this.currentRoomId)!;
         
         // 检查是否是最终房间
         if (roomConfig.isFinalRoom) {
@@ -243,7 +243,7 @@ export class RoguelikeDungeonInstance {
         
         // 构建选项数据
         const options = nextRoomIds.map(roomId => {
-            const room = this.config.rooms[roomId];
+            const room = this.config.rooms.get(roomId)!;
             return {
                 roomId: roomId,
                 roomName: room.roomName,
@@ -301,7 +301,7 @@ export class RoguelikeDungeonInstance {
         
         // 通知玩家选择成功
         GameRules.SendCustomMessage(
-            `<font color="#00FF00">✅ 已选择: ${this.config.rooms[roomId].roomName}</font>`,
+            `<font color="#00FF00">✅ 已选择: ${this.config.rooms.get(roomId)!.roomName}</font>`,
             playerId,
             0
         );
@@ -342,7 +342,7 @@ export class RoguelikeDungeonInstance {
         // 3秒后开始新房间
         for (const playerId of this.players) {
             GameRules.SendCustomMessage(
-                `<font color="#FFD700">3秒后进入: ${this.config.rooms[selectedRoom].roomName}</font>`,
+                `<font color="#FFD700">3秒后进入: ${this.config.rooms.get(selectedRoom)!.roomName}</font>`,
                 playerId,
                 0
             );
