@@ -6,17 +6,20 @@ import { ClearRoomController } from './ClearRoomController';
 import { SurvivalRoomController } from './SurvivalRoomController';
 import { BossRoomController } from './BossRoomController';
 import { RoguelikeRewardSystem } from './RoguelikeRewardSystem';
+import { CameraSystem, CameraZone } from '../../systems/camera';
+import { MagicFindSystem } from './MagicFindSystem';
+import { GetChoicesForRoom } from './RoomChoicesConfig';
 
 /**
  * Roguelike副本实例
  * 主控制器，管理房间流程和分支选择
  */
 export class RoguelikeDungeonInstance {
-    private instanceId: string;
+    private instanceId:  string;
     private basePosition: Vector;
     private config: RoguelikeDungeonConfig;
     private players: PlayerID[] = [];
-    
+    private difficultyMultiplier: number = 1.0; // 🆕 难度系数
     private currentRoomId: string;
     private currentRoomController: BaseRoomController | null = null;
     private currentGenerator: DungeonGenerator | null = null;
@@ -25,7 +28,12 @@ export class RoguelikeDungeonInstance {
     private completedRooms: Set<string> = new Set();
     
     private isWaitingForBranchSelection: boolean = false;
-    private branchSelections: Map<PlayerID, string> = new Map();
+    private branchSelections:  Map<PlayerID, string> = new Map();
+    
+    // 🆕 MF 系统相关
+    private isWaitingForRoomChoice: boolean = false;
+    private roomChoiceSelections: Map<PlayerID, string> = new Map();
+    private pendingRoomConfig: RoomConfig | null = null;
     
     constructor(instanceId: string, basePosition: Vector, config: RoguelikeDungeonConfig) {
         this.instanceId = instanceId;
@@ -46,15 +54,26 @@ export class RoguelikeDungeonInstance {
      * 初始化副本
      */
     public Initialize(): void {
-        print(`[RoguelikeDungeon] 初始化Roguelike副本: ${this.instanceId}`);
-        this.StartRoom(this.currentRoomId);
+        print(`[RoguelikeDungeon] 初始化Roguelike副本:  ${this.instanceId}`);
+        
+        // ✅ 使用正确的字段名，直接开始第一个房间
+        this.StartRoom(this.config.startRoomId);
     }
     
+    /**
+     * 开始副本
+     */
+    public Start(): void {
+        print(`[RoguelikeDungeon] 开始副本: ${this.instanceId}`);
+        // 副本在 Initialize 时已经启动了第一个房间
+        // 这个方法主要是为了兼容 DungeonManager 的调用
+    }
+
     /**
      * 添加玩家
      */
     public AddPlayer(playerId: PlayerID): void {
-        if (!this.players.includes(playerId)) {
+        if (! this.players.includes(playerId)) {
             this.players.push(playerId);
             print(`[RoguelikeDungeon] 添加玩家 ${playerId} 到副本`);
         }
@@ -78,19 +97,129 @@ export class RoguelikeDungeonInstance {
         return [...this.players];
     }
     
-    
-    
     /**
      * 开始房间
      */
     private StartRoom(roomId: string): void {
-        print(`[RoguelikeDungeon] 开始房间: ${roomId}`);
+        print(`[RoguelikeDungeon] 准备开始房间: ${roomId}`);
         
-        const roomConfig = this.config.rooms[roomId];
+        const roomConfig = this.config.rooms.get(roomId);
         if (!roomConfig) {
             print(`[RoguelikeDungeon] 错误：找不到房间配置 ${roomId}`);
             return;
         }
+        
+        this.currentRoomId = roomId;
+        
+        // 🆕 如果不是第一个房间，显示房间选择界面
+        if (roomId !== this.config.startRoomId) {
+            this.ShowRoomChoices(roomConfig);
+        } else {
+            // 第一个房间直接开始
+            this.StartRoomAfterChoice(roomConfig);
+        }
+    }
+    
+    /**
+     * 🆕 显示房间选择（Buff/Debuff 选择）
+     */
+    private ShowRoomChoices(roomConfig: RoomConfig): void {
+        print(`[RoguelikeDungeon] 显示房间选择:  ${roomConfig.roomName}`);
+        
+        this.isWaitingForRoomChoice = true;
+        this.roomChoiceSelections.clear();
+        this.pendingRoomConfig = roomConfig;
+        
+        // 确定房间类型
+        const roomType = roomConfig.roomType === RoomType.BOSS ? 'boss' : 
+                         roomConfig.roomType === RoomType.CLEAR ? 'elite' : 'normal';
+        
+        // 发送选择界面给所有玩家
+        for (const playerId of this.players) {
+            const currentMF = MagicFindSystem.GetTotalMF(playerId);
+            const choices = GetChoicesForRoom(roomType, currentMF);
+            
+            const player = PlayerResource.GetPlayer(playerId);
+            if (player) {
+                CustomGameEventManager.Send_ServerToPlayer(player, 'show_room_choices' as never, {
+                    instanceId: this.instanceId,
+                    roomName: roomConfig.roomName,
+                    roomDescription: this.GetRoomDescription(roomConfig),
+                    currentMF:  currentMF,
+                    choices: choices
+                } as never);
+                
+                print(`[RoguelikeDungeon] 发送房间选择给玩家 ${playerId}, 当前MF: ${currentMF}%`);
+            }
+        }
+    }
+    
+    /**
+     * 🆕 处理房间选择
+     */
+    public OnRoomChoiceSelected(playerId: PlayerID, choiceId: string): void {
+        print(`[RoguelikeDungeon] 玩家 ${playerId} 选择房间增益: ${choiceId}`);
+        
+        if (!this.isWaitingForRoomChoice) {
+            print(`[RoguelikeDungeon] 警告：当前不在等待房间选择状态`);
+            return;
+        }
+        
+        // 获取选择
+        const { BUFF_CHOICES, DEBUFF_CHOICES, ELITE_CHOICES, NEUTRAL_CHOICES } = require('./RoomChoicesConfig');
+        const allChoices = [...BUFF_CHOICES, ...DEBUFF_CHOICES, ...ELITE_CHOICES, ...NEUTRAL_CHOICES];
+        
+        const choice = allChoices.find((c:  any) => c.id === choiceId);
+        if (!choice) {
+            print(`[RoguelikeDungeon] 错误：找不到选择 ${choiceId}`);
+            return;
+        }
+        
+        // 应用选择
+        MagicFindSystem.ApplyRoomChoice(playerId, choice);
+        
+        // 记录选择
+        this.roomChoiceSelections.set(playerId, choiceId);
+        
+        // 通知玩家
+        GameRules.SendCustomMessage(
+            `<font color="${choice.type === 'buff' ? '#00FF00' : '#FF6600'}">✅ 已选择:  ${choice.name}</font>`,
+            playerId,
+            0
+        );
+        
+        // 检查是否所有玩家都选择了
+        if (this.roomChoiceSelections.size === this.players.length) {
+            this.ProcessRoomChoiceSelection();
+        }
+    }
+    
+    /**
+     * 🆕 处理房间选择完成
+     */
+    private ProcessRoomChoiceSelection(): void {
+        print(`[RoguelikeDungeon] 所有玩家完成房间选择`);
+        
+        this.isWaitingForRoomChoice = false;
+        this.roomChoiceSelections.clear();
+        
+        if (this.pendingRoomConfig) {
+            // 延迟1秒后开始房间
+            Timers.CreateTimer(1, () => {
+                if (this.pendingRoomConfig) {
+                    this.StartRoomAfterChoice(this.pendingRoomConfig);
+                    this.pendingRoomConfig = null;
+                }
+                return undefined;
+            });
+        }
+    }
+    
+    /**
+     * 🆕 选择完成后开始房间
+     */
+    private StartRoomAfterChoice(roomConfig: RoomConfig): void {
+        print(`[RoguelikeDungeon] 开始房间:  ${roomConfig.roomId}`);
         
         // 清理上一个房间
         if (this.currentRoomController) {
@@ -100,8 +229,26 @@ export class RoguelikeDungeonInstance {
             this.currentGenerator.Cleanup();
         }
         
-        // 创建新房间
-        this.currentRoomId = roomId;
+        // 🆕 更新难度递增 MF
+        if (this.completedRooms.size > 0) {
+            this.difficultyMultiplier += 0.2; // 每个房间 +20% 难度
+            
+            for (const playerId of this.players) {
+                // 移除旧的难度 MF
+                MagicFindSystem.RemoveModifiersByType(playerId, 'difficulty');
+                
+                // 添加新的难度 MF
+                const difficultyMF = Math.floor(this.completedRooms.size * 10); // 每房间 +10% MF
+                MagicFindSystem.AddModifier(playerId, {
+                    source: '难度递增',
+                    value: difficultyMF,
+                    type: 'difficulty',
+                    description: `完成 ${this.completedRooms.size} 个房间`
+                });
+            }
+        }
+        
+        // 生成新房间
         this.currentGenerator = new DungeonGenerator(this.basePosition, roomConfig.mapData);
         this.currentGenerator.Generate();
         
@@ -166,7 +313,7 @@ export class RoguelikeDungeonInstance {
      */
     private StartRoomMonitoring(): void {
         Timers.CreateTimer(0.5, () => {
-            if (!this.currentRoomController) {
+            if (! this.currentRoomController) {
                 return undefined;
             }
             
@@ -188,12 +335,17 @@ export class RoguelikeDungeonInstance {
      * 房间完成
      */
     private OnRoomCompleted(): void {
-        print(`[RoguelikeDungeon] 房间完成: ${this.currentRoomId}`);
+        print(`[RoguelikeDungeon] 房间完成:  ${this.currentRoomId}`);
         
         this.completedRooms.add(this.currentRoomId);
         this.stats.roomsCompleted++;
         
-        const roomConfig = this.config.rooms[this.currentRoomId];
+        // 🆕 清除本房间的 Buff/Debuff 效果
+        for (const playerId of this.players) {
+            MagicFindSystem.ClearRoomChoices(playerId);
+        }
+        
+        const roomConfig = this.config.rooms.get(this.currentRoomId)!;
         
         // 检查是否是最终房间
         if (roomConfig.isFinalRoom) {
@@ -227,7 +379,15 @@ export class RoguelikeDungeonInstance {
         }
         
         Timers.CreateTimer(3, () => {
-            this.Cleanup();
+            // 使用 DungeonManager 离开副本
+            const { GetDungeonManager } = require('../DungeonManager');
+            const manager = GetDungeonManager();
+            
+            const playersCopy = [...this.players];
+            for (const playerId of playersCopy) {
+                manager.LeaveDungeon(playerId, 'death');
+            }
+            
             return undefined;
         });
     }
@@ -243,7 +403,7 @@ export class RoguelikeDungeonInstance {
         
         // 构建选项数据
         const options = nextRoomIds.map(roomId => {
-            const room = this.config.rooms[roomId];
+            const room = this.config.rooms.get(roomId)!;
             return {
                 roomId: roomId,
                 roomName: room.roomName,
@@ -255,14 +415,23 @@ export class RoguelikeDungeonInstance {
         for (const playerId of this.players) {
             const player = PlayerResource.GetPlayer(playerId);
             if (player) {
+                // 🔧 修复：将数组转为对象，并确保索引从0开始
+                const optionsObj:  Record<number, any> = {};
+                options.forEach((opt, index) => {
+                    optionsObj[index] = opt;
+                });
+                
                 CustomGameEventManager.Send_ServerToPlayer(
-    player, 
-    'roguelike_show_branch_selection' as any, 
-    {
-        instanceId: this.instanceId,
-        options: options
-    } as any
-);
+                    player, 
+                    'roguelike_show_branch_selection' as any, 
+                    {
+                        instanceId: this.instanceId,
+                        options:  optionsObj,
+                        optionCount: options.length
+                    } as any
+                );
+                
+                print(`[RoguelikeDungeon] 发送分支选择给玩家 ${playerId}，选项数:  ${options.length}`);
             }
         }
     }
@@ -301,7 +470,7 @@ export class RoguelikeDungeonInstance {
         
         // 通知玩家选择成功
         GameRules.SendCustomMessage(
-            `<font color="#00FF00">✅ 已选择: ${this.config.rooms[roomId].roomName}</font>`,
+            `<font color="#00FF00">✅ 已选择: ${this.config.rooms.get(roomId)! .roomName}</font>`,
             playerId,
             0
         );
@@ -342,7 +511,7 @@ export class RoguelikeDungeonInstance {
         // 3秒后开始新房间
         for (const playerId of this.players) {
             GameRules.SendCustomMessage(
-                `<font color="#FFD700">3秒后进入: ${this.config.rooms[selectedRoom].roomName}</font>`,
+                `<font color="#FFD700">3秒后进入:  ${this.config.rooms.get(selectedRoom)!.roomName}</font>`,
                 playerId,
                 0
             );
@@ -358,9 +527,25 @@ export class RoguelikeDungeonInstance {
      * 副本完成
      */
     private OnDungeonCompleted(): void {
-        print(`[RoguelikeDungeon] 副本完成`);
+        print(`[RoguelikeDungeon] 🎉 副本完成！`);
         
         this.stats.endTime = GameRules.GetGameTime();
+        
+        // 立即停止房间更新
+        if (this.currentRoomController) {
+            this.currentRoomController.Cleanup();
+            this.currentRoomController = null;
+        }
+        
+        // 🆕 计算最终掉落（应用 MF）
+        for (const playerId of this.players) {
+            const totalMF = MagicFindSystem.GetTotalMF(playerId);
+            const lootMultiplier = MagicFindSystem.CalculateLootMultiplier(playerId);
+            
+            print(`[RoguelikeDungeon] 玩家 ${playerId} 最终MF: ${totalMF}%, 掉落倍率: ${lootMultiplier.toFixed(2)}x`);
+            
+            // TODO: 应用掉落倍率到实际奖励
+        }
         
         // 计算奖励
         const breakdown = RoguelikeRewardSystem.CalculateReward(this.config.rewardConfig, this.stats);
@@ -369,11 +554,30 @@ export class RoguelikeDungeonInstance {
         for (const playerId of this.players) {
             RoguelikeRewardSystem.ShowRewardSummary(playerId, breakdown);
             RoguelikeRewardSystem.ShowRewardUI(playerId, breakdown, this.stats);
+            
+            GameRules.SendCustomMessage(
+                '<font color="#FFD700">🎉 副本完成！恭喜通关！</font>',
+                playerId,
+                0
+            );
         }
         
-        // 5秒后返回城镇
+        // 5秒后传送回城
+        print(`[RoguelikeDungeon] 5秒后传送玩家回城`);
+        
         Timers.CreateTimer(5, () => {
-            this.Cleanup();
+            // 使用 DungeonManager 的 LeaveDungeon 方法
+            const { GetDungeonManager } = require('../DungeonManager');
+            const manager = GetDungeonManager();
+            
+            // 复制玩家列表，因为 LeaveDungeon 会修改原列表
+            const playersCopy = [...this.players];
+            
+            for (const playerId of playersCopy) {
+                print(`[RoguelikeDungeon] 让玩家 ${playerId} 离开副本`);
+                manager.LeaveDungeon(playerId, 'complete');
+            }
+            
             return undefined;
         });
     }
@@ -382,7 +586,7 @@ export class RoguelikeDungeonInstance {
      * 清理副本
      */
     public Cleanup(): void {
-        print(`[RoguelikeDungeon] 清理副本: ${this.instanceId}`);
+        print(`[RoguelikeDungeon] 清理副本:  ${this.instanceId}`);
         
         if (this.currentRoomController) {
             this.currentRoomController.Cleanup();
@@ -401,7 +605,7 @@ export class RoguelikeDungeonInstance {
     /**
      * 处理单位死亡
      */
-    public OnUnitKilled(killedUnit: CDOTA_BaseNPC, killer: CDOTA_BaseNPC | undefined): void {
+    public OnUnitKilled(killedUnit:  CDOTA_BaseNPC, killer:  CDOTA_BaseNPC | undefined): void {
         if (this.currentRoomController) {
             this.currentRoomController.OnUnitKilled(killedUnit, killer);
         }
@@ -421,5 +625,27 @@ export class RoguelikeDungeonInstance {
      */
     public GetInstanceId(): string {
         return this.instanceId;
+    }
+
+    /**
+     * 获取副本状态
+     */
+    public GetState(): number {
+        // Roguelike 副本始终运行中，直到完成或失败
+        return 1; // RUNNING
+    }
+
+    /**
+     * 获取当前生成器
+     */
+    public GetCurrentGenerator(): DungeonGenerator | null {
+        return this.currentGenerator;
+    }
+
+    /**
+     * 获取当前房间控制器
+     */
+    public GetCurrentRoom(): BaseRoomController | null {
+        return this.currentRoomController;
     }
 }

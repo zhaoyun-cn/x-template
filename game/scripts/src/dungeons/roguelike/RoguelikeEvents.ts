@@ -5,7 +5,7 @@ import { RoguelikeDungeonInstance } from './RoguelikeDungeonInstance';
  * 处理玩家的分支选择等事件
  */
 export class RoguelikeEvents {
-    private static instances: Map<string, RoguelikeDungeonInstance> = new Map();
+    private static instances:  Map<string, RoguelikeDungeonInstance> = new Map();
     private static initialized: boolean = false;
     
     /**
@@ -25,7 +25,7 @@ export class RoguelikeEvents {
      */
     public static UnregisterInstance(instanceId: string): void {
         this.instances.delete(instanceId);
-        print(`[RoguelikeEvents] 取消注册副本实例: ${instanceId}`);
+        print(`[RoguelikeEvents] 取消注册副本实例:  ${instanceId}`);
     }
     
     /**
@@ -37,12 +37,12 @@ export class RoguelikeEvents {
         print('[RoguelikeEvents] 初始化事件系统');
         
         // 监听分支选择事件
-        CustomGameEventManager.RegisterListener('roguelike_select_branch', (userId, event: any) => {
+        CustomGameEventManager.RegisterListener('roguelike_select_branch', (userId, event:  any) => {
             const playerId = event.PlayerID as PlayerID;
             const instanceId = event.instanceId as string;
             const roomId = event.roomId as string;
             
-            print(`[RoguelikeEvents] 玩家 ${playerId} 选择分支: ${roomId} in ${instanceId}`);
+            print(`[RoguelikeEvents] 玩家 ${playerId} 选择分支:   ${roomId}`);
             
             const instance = this.instances.get(instanceId);
             if (instance) {
@@ -52,6 +52,36 @@ export class RoguelikeEvents {
             }
         });
         
+        // 🆕 监听房间选择事件（MF系统）
+        CustomGameEventManager.RegisterListener('roguelike_room_choice', (userId, event: any) => {
+            const playerId = event.PlayerID as PlayerID;
+            const instanceId = event.instanceId as string;
+            const choiceId = event.choiceId as string;
+            
+            print(`[RoguelikeEvents] 玩家 ${playerId} 选择房间增益: ${choiceId}`);
+            
+            const instance = this.instances.get(instanceId);
+            if (instance) {
+                (instance as any).OnRoomChoiceSelected(playerId, choiceId);
+            } else {
+                print(`[RoguelikeEvents] 错误：找不到副本实例 ${instanceId}`);
+            }
+        });
+        
+        // 🔧 监听单位击杀事件（用于Roguelike副本）
+        ListenToGameEvent('entity_killed', (event) => {
+            const killedUnit = EntIndexToHScript(event.entindex_killed) as CDOTA_BaseNPC;
+            const killerUnit = event.entindex_attacker ? EntIndexToHScript(event.entindex_attacker) as CDOTA_BaseNPC : undefined;
+            
+            if (!killedUnit) return;
+            
+            // 通知所有副本实例
+            for (const [instanceId, instance] of this.instances) {
+                instance.OnUnitKilled(killedUnit, killerUnit);
+            }
+        }, undefined);
+        
         this.initialized = true;
+        print('[RoguelikeEvents] ✅ 事件系统初始化完成');
     }
 }

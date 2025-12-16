@@ -17,6 +17,7 @@ import { GameManager } from './core/game_manager';
 import { EventHandlers } from './core/event_handlers';
 import { MaterialUseSystem } from './systems/inventory/material_system';
 import { TestCommands } from './dev/test_commands';
+import { MFTestCommands } from './dungeons/roguelike/MFTestCommands';
 
 // ==================== Lua Modifier 初始化 ====================
 if (IsServer()) {
@@ -61,6 +62,10 @@ Object.assign(getfenv(), {
         
         print("[GameMode] All modules loaded!");
         print("=".repeat(50));
+
+        MFTestCommands.RegisterCommands();
+        
+        print("[GameMode] All modules loaded!");
     },
     Precache: Precache,
 });

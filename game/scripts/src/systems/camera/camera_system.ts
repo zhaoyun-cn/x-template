@@ -53,29 +53,36 @@ export class CameraSystem {
     }
 
     public static SetZone(playerId: PlayerID, zone: CameraZone): void {
-        this.playerZones.set(playerId, zone);
+    this.playerZones.set(playerId, zone);
 
-        const player = PlayerResource.GetPlayer(playerId);
-        if (player) {
-            const bounds = CAMERA_ZONES[zone];
-            // ⭐ 使用 as never 来绕过类型检查
-            CustomGameEventManager.Send_ServerToPlayer(
-                player,
-                "camera_set_zone" as never,
-                { 
-                    zone: zone, 
-                    bounds: {
-                        minX: bounds.minX,
-                        maxX: bounds.maxX,
-                        minY: bounds.minY,
-                        maxY: bounds.maxY
-                    }
-                } as never
-            );
-        }
-
-        print(`[CameraSystem] 玩家 ${playerId} 区域设置为: ${zone}`);
+    const player = PlayerResource.GetPlayer(playerId);
+    if (player) {
+        const bounds = CAMERA_ZONES[zone];
+        // 使用 as never 来绕过类型检查
+        CustomGameEventManager.Send_ServerToPlayer(
+            player,
+            "camera_set_zone" as never,
+            { 
+                zone: zone, 
+                bounds: {
+                    minX: bounds.minX,
+                    maxX: bounds.maxX,
+                    minY:  bounds.minY,
+                    maxY: bounds.maxY
+                }
+            } as never
+        );
     }
+
+    print(`[CameraSystem] 玩家 ${playerId} 区域设置为: ${zone}`);
+    
+    // 🆕 自动跟随英雄镜头
+    Timers.CreateTimer(0.1, () => {
+        this.SnapCameraToHero(playerId);
+        print(`[CameraSystem] 镜头已自动跟随玩家 ${playerId}`);
+        return undefined;
+    });
+}
 
     public static GetZone(playerId: PlayerID): CameraZone {
         return this.playerZones.get(playerId) || CameraZone.TOWN;

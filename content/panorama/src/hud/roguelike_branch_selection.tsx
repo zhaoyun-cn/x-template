@@ -28,15 +28,32 @@ export const RoguelikeBranchSelection: React.FC<RoguelikeBranchSelectionProps> =
         $.Msg('[RoguelikeBranchSelection] 组件挂载，注册事件监听');
 
         const listener = GameEvents.Subscribe('roguelike_show_branch_selection', (eventData: any) => {
-            $.Msg('[RoguelikeBranchSelection] 收到分支选择事件');
-            $.Msg(`[RoguelikeBranchSelection] instanceId: ${eventData.instanceId}`);
-            $.Msg(`[RoguelikeBranchSelection] options: ${JSON.stringify(eventData.options)}`);
-            
-            setData({
-                instanceId: eventData.instanceId,
-                options: eventData.options || []
-            });
-        });
+    $.Msg('[RoguelikeBranchSelection] 收到分支选择事件');
+    $.Msg(`[RoguelikeBranchSelection] instanceId: ${eventData.instanceId}`);
+    $.Msg(`[RoguelikeBranchSelection] options 原始数据: ${JSON.stringify(eventData.options)}`);
+    
+    // 🔧 修复：将对象 {"0": {...}, "1": {... }} 转换为数组
+    let optionsArray: BranchOption[] = [];
+    
+    if (eventData.options) {
+        if (Array.isArray(eventData.options)) {
+            // 如果已经是数组，直接使用
+            optionsArray = eventData.options;
+        } else {
+            // 如果是对象，转换为数组
+            optionsArray = Object.keys(eventData.options)
+                .sort((a, b) => parseInt(a) - parseInt(b))
+                .map(key => eventData.options[key]);
+        }
+    }
+    
+    $. Msg(`[RoguelikeBranchSelection] 转换后的数组长度: ${optionsArray.length}`);
+    
+    setData({
+        instanceId: eventData.instanceId,
+        options: optionsArray
+    });
+});
 
         return () => {
             GameEvents.Unsubscribe(listener);

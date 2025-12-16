@@ -4,6 +4,8 @@ import 'panorama-polyfill-x/lib/console';
 import 'panorama-polyfill-x/lib/timers';
 import { ExternalRewardItem } from "./../../../../game/scripts/src/dungeon/external_reward_pool";
 import { VaultUI } from './vault_ui';
+import { MFDisplay } from './mf_display';
+import { RoomChoicesUI } from './room_choices_ui';
 
 import '../utils/hide-default-hud';
 import { RewardSelection } from "./reward_selection";
@@ -33,7 +35,7 @@ registerCustomKey('K');
 interface CameraZoneBounds {
     minX: number;
     maxX: number;
-    minY: number;
+    minY:  number;
     maxY: number;
 }
 
@@ -50,7 +52,7 @@ const CameraOverlay: FC = () => {
 
         // 淡出（变黑）
         const fadeOutListener = GameEvents.Subscribe("camera_fade_out", (data: any) => {
-            $.Msg(`[CameraOverlay] camera_fade_out: ${data.duration}s`);
+            $.Msg(`[CameraOverlay] camera_fade_out:  ${data.duration}s`);
             setTransitionDuration(data.duration);
             setIsVisible(true);
             $.Schedule(0.01, () => {
@@ -92,7 +94,7 @@ const CameraOverlay: FC = () => {
         let isCheckingBounds = true;
         
         const checkBounds = () => {
-            if (!isCheckingBounds) return;
+            if (! isCheckingBounds) return;
             
             if (isLockedRef.current && boundsRef.current) {
                 const cameraPos = GameUI.GetCameraLookAtPosition();
@@ -137,7 +139,7 @@ const CameraOverlay: FC = () => {
     }, []);
 
     // 只有需要显示黑屏时才渲染遮罩
-    if (! isVisible && opacity === 0) {
+    if (!isVisible && opacity === 0) {
         return null;
     }
 
@@ -160,7 +162,6 @@ const CameraOverlay: FC = () => {
 };
 
 // ==================== 副本菜单组件 ====================
-// ==================== 副本菜单组件 ====================
 
 interface DungeonInfo {
     id: string;
@@ -168,9 +169,6 @@ interface DungeonInfo {
     description: string;
 }
 
-
-
-    
 const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, onClose }) => {
     const [dungeons, setDungeons] = useState<DungeonInfo[]>([]);
 
@@ -180,7 +178,7 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
             $.Msg(`[DungeonMenu] 收到副本列表`);
             
             if (data && data.dungeons) {
-                let dungeonArray: DungeonInfo[];
+                let dungeonArray:  DungeonInfo[];
                 
                 // DOTA 2 会将 Lua 数组转为 JavaScript 对象
                 if (Array.isArray(data.dungeons)) {
@@ -245,7 +243,7 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
             }}>
                 <Label text="选择副本" style={{ 
                     fontSize: '42px', 
-                    color: '#ffd700', 
+                    color:  '#ffd700', 
                     textAlign: 'center', 
                     marginBottom: '30px' 
                 }} />
@@ -259,7 +257,7 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
                         <Label text="加载副本列表中..." style={{
                             fontSize: '24px',
                             color: '#999999',
-                            textAlign: 'center',
+                            textAlign:  'center',
                             marginTop: '50px'
                         }} />
                     ) : (
@@ -268,7 +266,7 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
                                 key={dungeon.id}
                                 onactivate={() => selectDungeon(dungeon.id)}
                                 style={{
-                                    width: '100%',
+                                    width:  '100%',
                                     height: '100px',
                                     backgroundColor: '#2a2a3a',
                                     border: '2px solid #4a4a6a',
@@ -287,13 +285,13 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
                             >
                                 <Label text={dungeon.name} style={{
                                     fontSize: '30px',
-                                    color: '#ffd700',
+                                    color:  '#ffd700',
                                     marginBottom: '5px'
                                 }} />
                                 
                                 <Label text={dungeon.description} style={{
                                     fontSize: '20px',
-                                    color: '#cccccc'
+                                    color:  '#cccccc'
                                 }} />
                             </Panel>
                         ))
@@ -306,7 +304,7 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
                     style={{
                         width: '200px',
                         height: '50px',
-                        backgroundColor: '#aa2222',
+                        backgroundColor:  '#aa2222',
                         border: '2px solid #ff4444',
                         marginTop: '20px',
                         horizontalAlign: 'center',
@@ -330,9 +328,10 @@ const DungeonMenu: FC<{ visible: boolean; onClose: () => void }> = ({ visible, o
         </Panel>
     );
 };
+
 // ==================== Root 主组件 ====================
 
-const Root: FC = () => {
+const Root:  FC = () => {
     const [menuVisible, setMenuVisible] = useState(false);
     const [rewardVisible, setRewardVisible] = useState(false);
     const [vaultVisible, setVaultVisible] = useState(false);
@@ -340,6 +339,7 @@ const Root: FC = () => {
     const [materialsVisible, setMaterialsVisible] = useState(false);
     const [skillTreeVisible, setSkillTreeVisible] = useState(false);
     const [branchSelectionVisible, setBranchSelectionVisible] = useState(false);
+    const [roomChoicesVisible, setRoomChoicesVisible] = useState(false);
     
     const [showClassSelection, setShowClassSelection] = useState(true);
     const [classSelected, setClassSelected] = useState(false);
@@ -350,7 +350,7 @@ const Root: FC = () => {
     };
 
     const onClassSelected = (classId: string) => {
-        $.Msg('[Root] 职业选择完成: ' + classId);
+        $.Msg('[Root] 职业选择完成:  ' + classId);
         setClassSelected(true);
         setShowClassSelection(false);
     };
@@ -426,6 +426,11 @@ const Root: FC = () => {
             setBranchSelectionVisible(true);
         });
 
+        const listenerRoomChoices = GameEvents.Subscribe('show_room_choices', () => {
+            $.Msg('[Root] 收到 show_room_choices 事件');
+            setRoomChoicesVisible(true);
+        });
+
         return () => {
             GameEvents.Unsubscribe(listenerMenu);
             GameEvents.Unsubscribe(listenerReward);
@@ -433,6 +438,7 @@ const Root: FC = () => {
             GameEvents.Unsubscribe(listenerSkillTree);
             GameEvents.Unsubscribe(listenerClassConfirmed);
             GameEvents.Unsubscribe(listenerBranchSelection);
+            GameEvents.Unsubscribe(listenerRoomChoices);
         };
     }, []);
 
@@ -450,15 +456,20 @@ const Root: FC = () => {
             {/* 以下内容只在选择职业后显示 */}
             {classSelected && (
                 <>
+                    {/* ✅ 固定显示的HUD组件 */}
                     <RageBar />
+                    <MFDisplay />
 
+                    {/* 副本菜单 */}
                     <DungeonMenu visible={menuVisible} onClose={() => {
                         $.Msg('[Root] 关闭副本菜单');
                         setMenuVisible(false);
                     }} />
 
+                    {/* 奖励选择 */}
                     <RewardSelection visible={rewardVisible} onSelect={onSelectReward} />
                     
+                    {/* 仓库和材料界面 */}
                     {(vaultVisible || materialsVisible) && (
                         <Panel
                             style={{
@@ -493,16 +504,25 @@ const Root: FC = () => {
                         </Panel>
                     )}
                     
+                    {/* 装备界面 */}
                     <EquipmentUI visible={equipmentVisible} onClose={() => setEquipmentVisible(false)} />
                     
+                    {/* 技能树 */}
                     <SkillTreeUI 
                         visible={skillTreeVisible} 
                         onClose={() => setSkillTreeVisible(false)} 
                     />
                     
+                    {/* Roguelike分支选择 */}
                     <RoguelikeBranchSelection 
                         visible={branchSelectionVisible} 
                         onClose={() => setBranchSelectionVisible(false)} 
+                    />
+                    
+                    {/* Roguelike房间选择（MF系统） */}
+                    <RoomChoicesUI 
+                        visible={roomChoicesVisible} 
+                        onClose={() => setRoomChoicesVisible(false)} 
                     />
                     
                     {/* 右下角按钮区 */}
@@ -510,7 +530,7 @@ const Root: FC = () => {
                         width: '140px',
                         height: '400px',
                         horizontalAlign: 'right',
-                        verticalAlign: 'bottom',
+                        verticalAlign:  'bottom',
                         marginRight: '20px',
                         marginBottom: '20px',
                         flowChildren: 'down',
@@ -540,7 +560,7 @@ const Root: FC = () => {
                         >
                             <Panel style={{
                                 width: '100%',
-                                height: '100%',
+                                height:  '100%',
                                 flowChildren: 'down',
                             }}>
                                 <Label 
@@ -567,9 +587,9 @@ const Root: FC = () => {
                                     text="(K)"
                                     style={{
                                         fontSize: '16px',
-                                        color: '#cccccc',
+                                        color:  '#cccccc',
                                         textAlign: 'center',
-                                        horizontalAlign: 'center',
+                                        horizontalAlign:  'center',
                                     }}
                                 />
                             </Panel>
@@ -607,7 +627,7 @@ const Root: FC = () => {
                                     text="👤"
                                     style={{
                                         fontSize: '50px',
-                                        textAlign: 'center',
+                                        textAlign:  'center',
                                         horizontalAlign: 'center',
                                         marginTop: '15px',
                                     }}
@@ -616,7 +636,7 @@ const Root: FC = () => {
                                     text="角色"
                                     style={{
                                         fontSize: '22px',
-                                        color: '#ba68c8',
+                                        color:  '#ba68c8',
                                         textAlign: 'center',
                                         horizontalAlign: 'center',
                                         fontWeight: 'bold',
@@ -645,8 +665,8 @@ const Root: FC = () => {
                             style={{
                                 width: '120px',
                                 height: '120px',
-                                backgroundColor: '#8b4513',
-                                border: '3px solid #ffd700',
+                                backgroundColor:  '#8b4513',
+                                border:  '3px solid #ffd700',
                             }}
                             onmouseover={(panel) => {
                                 panel.style.backgroundColor = '#a0522d';
@@ -667,7 +687,7 @@ const Root: FC = () => {
                                     text="🎒"
                                     style={{
                                         fontSize: '50px',
-                                        textAlign: 'center',
+                                        textAlign:  'center',
                                         horizontalAlign: 'center',
                                         marginTop: '15px',
                                     }}
@@ -675,12 +695,12 @@ const Root: FC = () => {
                                 <Label 
                                     text="仓库"
                                     style={{
-                                        fontSize: '22px',
+                                        fontSize:  '22px',
                                         color: '#ffd700',
                                         textAlign: 'center',
                                         horizontalAlign: 'center',
                                         fontWeight: 'bold',
-                                        marginTop: '5px',
+                                        marginTop:  '5px',
                                     }}
                                 />
                                 <Label 
